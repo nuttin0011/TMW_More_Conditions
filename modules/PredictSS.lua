@@ -89,7 +89,7 @@ PredictSSFrame = CreateFrame("Frame")
 PredictSSFrame:RegisterEvent("COMBAT_LOG_EVENT_UNFILTERED")
 PredictSSFrame:SetScript("OnEvent", PredictSSFrameEvent)
 
-local ConditionCategory = CNDT:GetCategory("ATTRIBUTES_TMWMC", 12, "More Conditions", false, false)
+local ConditionCategory = CNDT:GetCategory("ATTRIBUTES_TMWMC", 12, "More Conditions", true, false)
 
 ConditionCategory:RegisterCondition(8.5,  "TMWMCPREDICTSS", {
     text = "Predict Warlock Soul Shard",

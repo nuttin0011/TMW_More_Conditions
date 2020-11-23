@@ -24,6 +24,7 @@ local ConditionCategory = CNDT:GetCategory("ATTRIBUTES_TMWMC", 11, "More Conditi
 ConditionCategory:RegisterCondition(8.3,  "TMWMCPREDICTSS", {
     text = "Predict Warlock Soul Stone",
     tooltip = "Predict Warlock SS after casting spell.",
+    step = 0.1,
     min = 0,
     max = 5,
     unit="player",

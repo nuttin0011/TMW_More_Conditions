@@ -9,22 +9,19 @@ local _UnitReaction = UnitReaction
 local CNDT = TMW.CNDT
 local Env = CNDT.Env
 
---expose CountInRange to condition functions
-Env.CountInRange = function()
-    return TMW_ST:CountInRange()
-end
+local PredictSSFrame = CreateFrame("Frame")
+PredictSSFrame:RegisterEvent("UNIT_SPELLCAST_FAILED")
+PredictSSFrame:SetScript("OnEvent", PredictSSFrameEvent)
 
-local BB = 5
-
-local CC = 6
-print('TMWMC running')
-
-printdebug = function()
+function PredictSSFrameEvent(self, event, ...)
+    if event=="UNIT_SPELLCAST_FAILED" then
+    end
     
-    print('TMWMC debug : '..CC)
-    CC = CC+1
-end
+    local m1,m2 = ...
+    
+    print(m1..'  '..m2)
 
+end
 
 local ConditionCategory = CNDT:GetCategory("ATTRIBUTES_TMWMC", 11, "More Conditions", false, false)
 

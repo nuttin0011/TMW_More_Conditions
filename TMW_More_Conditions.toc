@@ -8,3 +8,4 @@
 TMW_More_Conditions.lua
 
 modules/PredictSS.lua
+modules/WarlockPet.lua

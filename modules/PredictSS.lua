@@ -9,19 +9,25 @@ local _UnitReaction = UnitReaction
 local CNDT = TMW.CNDT
 local Env = CNDT.Env
 
-local PredictSSFrame = CreateFrame("Frame")
-PredictSSFrame:RegisterEvent("UNIT_SPELLCAST_FAILED")
-PredictSSFrame:SetScript("OnEvent", PredictSSFrameEvent)
+print('TMW_MC_1')
 
 function PredictSSFrameEvent(self, event, ...)
     if event=="UNIT_SPELLCAST_FAILED" then
     end
     
     local m1,m2 = ...
-    
-    print(m1..'  '..m2)
+    print(event)
+    print(m1)
+    print(m2)
 
 end
+
+PredictSSFrame = CreateFrame("Frame")
+PredictSSFrame:RegisterEvent("UNIT_SPELLCAST_FAILED")
+PredictSSFrame:RegisterEvent("PLAYER_REGEN_DISABLED")
+PredictSSFrame:SetScript("OnEvent", PredictSSFrameEvent)
+
+
 
 local ConditionCategory = CNDT:GetCategory("ATTRIBUTES_TMWMC", 11, "More Conditions", false, false)
 

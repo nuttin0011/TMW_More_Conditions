@@ -14,6 +14,7 @@ Env.CountInRange = function()
     return TMW_ST:CountInRange()
 end
 
+local BB = 5
 
 local ConditionCategory = CNDT:GetCategory("ATTRIBUTES_TMWMC", 11, "More Conditions", false, false)
 

@@ -23,7 +23,7 @@ local ConditionCategory = CNDT:GetCategory("ATTRIBUTES_TMWMC", 11, "More Conditi
 
 ConditionCategory:RegisterCondition(8.3,  "TMWMCPREDICTSS", {
     text = "Predict Warlock Soul Stone",
-    tooltip = "Predict Warlock SS after casting spell.\n, 1.0 mean 1 SS, 1.1 mean 1 SS and 1 SS Fragment(in destruction)",
+    tooltip = "Predict Warlock SS after casting spell.\n1.0 mean 1 SS\n1.1 mean 1 SS and 1 SS Fragment(in destruction)",
     step = 0.1,
     min = 0,
     max = 5,

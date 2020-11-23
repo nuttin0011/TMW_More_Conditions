@@ -16,7 +16,7 @@ end
 
 local BB = 5
 
-local CC = 7
+local CC = 6
 
 
 local ConditionCategory = CNDT:GetCategory("ATTRIBUTES_TMWMC", 11, "More Conditions", false, false)

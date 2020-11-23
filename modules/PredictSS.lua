@@ -17,6 +17,13 @@ end
 local BB = 5
 
 local CC = 6
+print('TMWMC running')
+
+printdebug = function()
+    
+    print('TMWMC debug : '..CC)
+    CC = CC+1
+end
 
 
 local ConditionCategory = CNDT:GetCategory("ATTRIBUTES_TMWMC", 11, "More Conditions", false, false)

@@ -23,20 +23,20 @@ Env.PredictLockSS = function()
 end
 
 local LockSpellModSS = {
-["Hand of Gul'dan"]=-3,
-["Shadow Bolt"]=1,
-["Call Dreadstalkers"]=-1,
-["Summon Vilefiend"]=-1,
-["Nether Portal"]=-1,
-["Summon Demonic Tyrant"]=5,
-["Demonbolt"]=2,
+	["Hand of Gul'dan"]=-3,
+	["Shadow Bolt"]=1,
+	["Call Dreadstalkers"]=-1,
+	["Summon Vilefiend"]=-1,
+	["Nether Portal"]=-1,
+	["Summon Demonic Tyrant"]=5,
+	["Demonbolt"]=2,
 }
 
 local function PredictSSFrameEvent(self, event, ...)
     local _,subevent,_,sourceGUID,_,_,_,_,_,_,_,_,SpellName = _CombatLogGetCurrentEventInfo()
 
         if (sourceGUID==playerGUID)  and (subevent=="SPELL_CAST_FAILED") then
-	trust_segment_cast = true
+			trust_segment_cast = true
        end
 end
 
@@ -63,8 +63,12 @@ function TMW_MC:PredictSS()
 	local spellName,_,_, startTimeMS, endTimeMS = _UnitCastingInfo("player")
 
 	if spellName then
-		-- if in 6/10 of spell bar ?
-		trust_segment_cast = 0.6>((currentTime*1000)-startTimeMS)/(endTimeMS-startTimeMS)
+		-- if > 6/10 of spell cast bar ?
+		-- trust_segment_cast = 0.6>((currentTime*1000)-startTimeMS)/(endTimeMS-startTimeMS)
+
+		-- if spell < 0.3 sec befor finish casting
+		trust_segment_cast = ((endTimeMS/1000)-currentTime)<0.3
+	
 		if trust_segment_cast then
 			currentSS = currentSS+(LockSpellModSS[spellName] or 0)
 			currentSS = (currentSS<=5)and currentSS or 5

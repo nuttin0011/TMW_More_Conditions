@@ -1,0 +1,10 @@
+## Interface: 80000
+## Title: |cffffffffTellMeWhen More Conditions|r
+## Version: 1.0.0
+## Author: fochon kukki
+## Notes: TellMeWhen More Conditions.
+## Dependencies: TellMeWhen
+
+TMW_More_Conditions.lua
+
+modules/PredictSS.lua

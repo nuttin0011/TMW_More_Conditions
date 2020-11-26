@@ -7,16 +7,44 @@ local _GetTime = GetTime
 local _UnitPower = UnitPower
 local _UnitCastingInfo = UnitCastingInfo
 local _CombatLogGetCurrentEventInfo = CombatLogGetCurrentEventInfo
+local _GetSpellInfo = GetSpellInfo
 
 local CNDT = TMW.CNDT
 local Env = CNDT.Env
-
-print('lockpet')
 
 local function printtable(a)
 local k,v
     for k,v in pairs(a) do
         print(k,v)
+    end
+
+end
+
+
+
+Env.WarlockPet = function(PetBitCode,reverse)
+
+        return TMW_MC:WarlockPet(PetBitCode,reverse)
+
+end
+
+function TMW_MC:WarlockPet(PetBitCode,reverse)
+    -- "Felguard", "Succubus", "Felhunter", "Voidwalker", "Imp"
+    -- 1 , 10, 100,1000,10000
+    local spellName = _GetSpellInfo("Command Demon")
+    --print(spellName)
+    local bitCheck = 0
+    if spellName == "Axe Toss" then bitCheck=1 
+    elseif spellName == "Seduction" then bitCheck=2 
+    elseif spellName == "Spell Lock" then bitCheck=4 
+    elseif spellName == "Shadow Bulwark" then bitCheck=8 
+    elseif spellName == "Singe Magic" then bitCheck=16 
+    end
+    --print(bitCheck)
+   if reverse then
+        return not (bit.band(PetBitCode,bitCheck)>0)
+    else
+        return (bit.band(PetBitCode,bitCheck)>0)
     end
 
 end
@@ -34,7 +62,10 @@ ConditionCategory:RegisterCondition(8.6,  "TMWMCWARLOCKPET", {
 
     funcstr = function(c)
         --printtable(c)
-        return [[true]]
-    end
+        --print(c.BitFlags)
+        --print(c.Checked)
+        return [[(WarlockPet(c.BitFlags,c.Checked))]]
+    end,
+
 })
 

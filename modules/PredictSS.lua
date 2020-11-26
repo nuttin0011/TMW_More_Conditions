@@ -125,7 +125,7 @@ ConditionCategory:RegisterCondition(8.5,  "TMWMCPREDICTSS", {
     end
 })
 
---*****************************************************************************
+--****************************percentCastBar*******************************
 
 Env.percentCastBar = function(SpellN)
     return TMW_MC:PercentCastBar(SpellN)

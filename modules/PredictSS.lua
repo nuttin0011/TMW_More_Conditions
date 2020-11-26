@@ -18,6 +18,14 @@ local old_spell_finish_cast_check = 0
 local old_val = 0
 local trust_segment_cast = true
 
+local function printtable(a)
+	local k,v
+		for k,v in pairs(a) do
+			print(k,v)
+		end
+	
+	end
+
 Env.PredictLockSS = function()
     return TMW_MC:PredictSS()
 end
@@ -114,5 +122,68 @@ ConditionCategory:RegisterCondition(8.5,  "TMWMCPREDICTSS", {
 
     funcstr = function(c, parent)
         return [[(PredictLockSS() c.Operator c.Level)]]
+    end
+})
+
+--*****************************************************************************
+
+Env.percentCastBar = function(SpellN)
+    return TMW_MC:PercentCastBar(SpellN)
+end
+
+local old_val_PercentCastBar = 0
+local old_timer_PercentCastBar = 0
+
+function TMW_MC:PercentCastBar(SpellN)
+	local currentTimeMS = _GetTime()
+	if currentTimeMS==old_timer_PercentCastBar then
+		return old_val_PercentCastBar
+	end
+
+	old_timer_PercentCastBar = currentTimeMS
+
+	local spellName,_,_, startTimeMS, endTimeMS = _UnitCastingInfo("player")
+
+	if spellName then
+		if (spellName==SpellN) or (SpellN==nil) or (SpellN=="") then
+			local currentTimeMS = currentTimeMS*1000
+			local PercentCast = (currentTimeMS-startTimeMS)/(endTimeMS-startTimeMS)
+			old_val_PercentCastBar = PercentCast
+			print(PercentCast)
+			return PercentCast
+		else
+			old_val_PercentCastBar = 0
+			return 0
+		end
+	else
+		old_val_PercentCastBar = 0
+		return 0
+	end
+end
+
+ConditionCategory:RegisterCondition(8.6,  "TMWMCPERCENTCAST", {
+    text = "% cast bar this spell",
+    tooltip = "% cast bar this spell",
+	step = 5,
+	percent = true,
+    min = 0,
+	max = 100,
+    unit="player",
+
+    icon = "Interface\\Icons\\ability_druid_bash",
+    tcoords = CNDT.COMMON.standardtcoords,
+
+    specificOperators = {["<="] = true, [">="] = true, ["=="]=true, ["~="]=true},
+
+    applyDefaults = function(conditionData, conditionSettings)
+        local op = conditionSettings.Operator
+
+        if not conditionData.specificOperators[op] then
+            conditionSettings.Operator = ">="
+        end
+    end,
+
+	funcstr = function(c, parent)
+        return [[(percentCastBar() c.Operator c.Level)]]
     end
 })

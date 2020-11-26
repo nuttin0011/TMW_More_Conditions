@@ -149,7 +149,7 @@ function TMW_MC:PercentCastBar(SpellN)
 			local currentTimeMS = currentTimeMS*1000
 			local PercentCast = (currentTimeMS-startTimeMS)/(endTimeMS-startTimeMS)
 			old_val_PercentCastBar = PercentCast
-			print(PercentCast)
+			--print(PercentCast)
 			return PercentCast
 		else
 			old_val_PercentCastBar = 0

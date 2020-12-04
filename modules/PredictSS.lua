@@ -33,11 +33,13 @@ end
 local LockSpellModSS = {
 	["Hand of Gul'dan"]=-3,
 	["Shadow Bolt"]=1,
-	["Call Dreadstalkers"]=-1,
+	["Call Dreadstalkers"]=-2,
 	["Summon Vilefiend"]=-1,
 	["Nether Portal"]=-1,
 	["Summon Demonic Tyrant"]=5,
 	["Demonbolt"]=2,
+	["Seed of Corruption"]=-1,
+	["Malefic Rapture"]=-1,
 }
 
 local function PredictSSFrameEvent(self, event, ...)

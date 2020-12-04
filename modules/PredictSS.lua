@@ -189,3 +189,78 @@ ConditionCategory:RegisterCondition(8.6,  "TMWMCPERCENTCAST", {
         return [[(percentCastBar() c.Operator c.Level)]]
     end
 })
+
+--******************HowManyMobHasMyDot()****************
+
+Env.HowManyMobHasMyDot = function()
+    return TMW_MC:HowManyMobHasMyDot()
+end
+
+local old_val_HowManyMobHasMyDot = 0
+local old_timer_HowManyMobHasMyDot = 0
+
+function TMW_MC:HowManyMobHasMyDot()
+
+    local ii,nn,n
+	local currentTime = _GetTime()
+	if old_timer_HowManyMobHasMyDot==currentTime then
+		return old_val_HowManyMobHasMyDot
+	end
+	old_timer_HowManyMobHasMyDot=currentTime
+    n = 0
+
+        for ii = 1,30 do
+
+        nn = 'nameplate'..ii
+
+        if UnitExists(nn) and UnitDebuff(nn, 1,"PLAYER") then
+
+            
+            
+            n = n+1
+
+        end
+
+    end
+
+old_val_HowManyMobHasMyDot=n
+  return n
+
+end
+
+ConditionCategory:RegisterCondition(8.7,  "TMWMCHOWMANYMOBHASMYDOT", {
+    text = "number of Mob has my DOT",
+    tooltip = "number of Mob has my DOT",
+	step = 1,
+	percent = false,
+    min = 0,
+	max = 30,
+    unit="player",
+
+    icon = "Interface\\Icons\\ability_druid_bash",
+    tcoords = CNDT.COMMON.standardtcoords,
+
+    specificOperators = {["<="] = true, [">="] = true, ["=="]=true, ["~="]=true},
+
+    applyDefaults = function(conditionData, conditionSettings)
+        local op = conditionSettings.Operator
+
+        if not conditionData.specificOperators[op] then
+            conditionSettings.Operator = ">="
+        end
+    end,
+
+	funcstr = function(c, parent)
+        return [[(HowManyMobHasMyDot() c.Operator c.Level)]]
+    end
+})
+
+
+
+
+
+
+
+
+
+

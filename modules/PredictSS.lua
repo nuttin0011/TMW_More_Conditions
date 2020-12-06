@@ -255,8 +255,23 @@ ConditionCategory:RegisterCondition(8.7,  "TMWMCHOWMANYMOBHASMYDOT", {
     end
 })
 
+--******************HowManyMyDotOnThisMob()****************
+
+Env.HowManyMyDotOnThisMob = function()
+    return TMW_MC:HowManyMyDotOnThisMob()
+end
 
 
+
+function TMW_MC:HowManyMyDotOnThisMob(nTarget,nDotTimerRemaining)
+	nTarget = nTarget or "target"
+	nDotTimerRemaining = nDotTimerRemaining or 3
+
+	
+
+	return 0
+
+end
 
 
 

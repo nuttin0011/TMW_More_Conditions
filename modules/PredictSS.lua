@@ -259,8 +259,8 @@ ConditionCategory:RegisterCondition(8.7,  "TMWMCHOWMANYMOBHASMYDOT", {
 
 --******************HowManyMyDotOnThisMob()****************
 
-Env.HowManyMyDotOnThisMob = function(nTarget)
-    return TMW_MC:HowManyMyDotOnThisMob(nTarget)
+Env.HowManyMyDotOnThisMob = function(nTarget,greaterThan,nDotTimer,DotSpecific)
+    return TMW_MC:HowManyMyDotOnThisMob(nTarget,greaterThan,nDotTimer,DotSpecific)
 end
 
 local function allDeBuffByMe(unit)
@@ -281,37 +281,53 @@ end
 local old_val_HowManyMyDotOnThisMob = 0
 local old_timer_HowManyMyDotOnThisMob = 0
 local old_nTarget_HowManyMyDotOnThisMob = ""
-local old_nDotTimerRemaining_HowManyMyDotOnThisMob = 0
-local old_DotSpecificTable_HowManyMyDotOnThisMob = nil
+local old_nDotTimer_HowManyMyDotOnThisMob = 0
+local old_DotSpecific_HowManyMyDotOnThisMob = ""
+local old_greaterThan_HowManyMyDotOnThisMob = false
 
-function TMW_MC:HowManyMyDotOnThisMob(nTarget,nDotTimerRemaining,DotSpecificTable)
---TMW_MC:HowManyMyDotOnThisMob("target",3,{["Corruption"]=true,["Agony"]=true,["Unstable Affliction"]=true,["Siphon Life"]=true})
+function TMW_MC:HowManyMyDotOnThisMob(nTarget,greaterThan,nDotTimer,DotSpecific)
 	nTarget = nTarget or "target"
-	nDotTimerRemaining = nDotTimerRemaining or 3
-	
-	-- DotSpecificTable = nil or {["Dot1"]=true,["Dot2"]=true,["Dot3"]=true,.....}
+	nDotTimer = nDotTimer or 3
+	greaterThan = greaterThan or false
+	DotSpecific = DotSpecific or ""
+	DotSpecific = strlower(DotSpecific)
 	
 	if not _UnitExists(nTarget) then return 0 end
 	
 	local currentTime = _GetTime()
-	if (old_timer_HowManyMyDotOnThisMob==currentTime)and(old_nTarget_HowManyMyDotOnThisMob==nTarget)
-		and(old_nDotTimerRemaining_HowManyMyDotOnThisMob==nDotTimerRemaining)
-		and(old_DotSpecificTable_HowManyMyDotOnThisMob==DotSpecificTable)then
+	if (old_timer_HowManyMyDotOnThisMob==currentTime)
+		and(old_nTarget_HowManyMyDotOnThisMob==nTarget)
+		and(old_greaterThan_HowManyMyDotOnThisMob==greaterThan)
+		and(old_nDotTimer_HowManyMyDotOnThisMob==nDotTimer)
+		and(old_DotSpecific_HowManyMyDotOnThisMob==DotSpecific)then
 		
 		return old_val_HowManyMyDotOnThisMob
 	end
 	
+	--strfind(string, pattern [, initpos [, plain]])
+	local function isBuffInList(nBuff,nList)
+		-- return true/false
+		-- e.g. nBuff = "corruption"
+		-- e.g. nList = "Corruption; agony"
+		return strfind(nList,strlower(nBuff))~=nil
+	end
+	
 	old_timer_HowManyMyDotOnThisMob = currentTime
 	old_nTarget_HowManyMyDotOnThisMob = nTarget
-	old_nDotTimerRemaining_HowManyMyDotOnThisMob = nDotTimerRemaining
-	old_DotSpecificTable_HowManyMyDotOnThisMob = DotSpecificTable
+	old_nDotTimer_HowManyMyDotOnThisMob = nDotTimer
+	old_DotSpecific_HowManyMyDotOnThisMob = DotSpecific
+	old_greaterThan_HowManyMyDotOnThisMob = greaterThan
 	
 	local allDeBuff = allDeBuffByMe(nTarget)
 	local nDebuff = 0
 	
 	local k,v
 	for k,v in pairs(allDeBuff) do
-		if (v>=nDotTimerRemaining)and((DotSpecificTable==nil)or(DotSpecificTable[k])) then nDebuff=nDebuff+1 end
+		if greaterThan then
+			if (v>=nDotTimer)and((DotSpecific=="")or isBuffInList(k,DotSpecific)) then nDebuff=nDebuff+1 end
+		else
+			if (v<=nDotTimer)and((DotSpecific=="")or isBuffInList(k,DotSpecific)) then nDebuff=nDebuff+1 end
+		end
 	end
 
 	old_val_HowManyMyDotOnThisMob = nDebuff
@@ -321,18 +337,20 @@ function TMW_MC:HowManyMyDotOnThisMob(nTarget,nDotTimerRemaining,DotSpecificTabl
 end
 
 ConditionCategory:RegisterCondition(8.8,  "TMWMCHOWMANYMYDOTONTHISMOB", {
-    text = "number of My DOT",
-    tooltip = "number of My DOT",
-	step = 0.1,
+    text = "number of My DOT that has duration > 3 Sec",
+    tooltip = "Count My DOT.",
+	step = 1,
 	percent = false,
     min = 0,
-	max = 10,
-    unit="target",
-
+	range = 10,
+    unit=nil,
+	name = function(editbox) 
+			editbox:SetTexts("specific Dot","leave blank = check all dot.\ne.g. Corruption; Agony")
+		end,
     icon = "Interface\\Icons\\ability_druid_bash",
     tcoords = CNDT.COMMON.standardtcoords,
 
-    specificOperators = {["<="] = true, [">="] = true, ["=="]=true, ["~="]=true},
+    specificOperators = {["<="] = true,[">="] = true},
 
     applyDefaults = function(conditionData, conditionSettings)
         local op = conditionSettings.Operator
@@ -343,7 +361,7 @@ ConditionCategory:RegisterCondition(8.8,  "TMWMCHOWMANYMYDOTONTHISMOB", {
     end,
 
 	funcstr = function(c, parent)
-        return [[true]]
+		return [[(HowManyMyDotOnThisMob(c.Unit,true,3,c.Name) c.Operator c.Level)]]
     end
 })
 

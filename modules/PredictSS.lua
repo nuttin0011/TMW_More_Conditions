@@ -42,6 +42,7 @@ local LockSpellModSS = {
 	["Demonbolt"]=2,
 	["Seed of Corruption"]=-1,
 	["Malefic Rapture"]=-1,
+	["Seed of Corruption"]=-1,
 }
 
 local function PredictSSFrameEvent(self, event, ...)
@@ -364,8 +365,13 @@ ConditionCategory:RegisterCondition(8.8,  "TMWMCHOWMANYMYDOTONTHISMOB", {
 		return [[(HowManyMyDotOnThisMob(c.Unit,true,3,c.Name) c.Operator c.Level)]]
     end
 })
+--********************** SpecificDot ratio to All Mob Has My Dot ********
+Env.SpecificDotRatioToAllMob = function(DotSpecific)
+    return TMW_MC:SpecificDotRatioToAllMob(DotSpecific)
+end
 
+function TMW_MC:SpecificDotRatioToAllMob(DotSpecific)
 
-
-
-
+	return 0
+	
+end

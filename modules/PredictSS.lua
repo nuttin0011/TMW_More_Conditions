@@ -292,7 +292,8 @@ function TMW_MC:HowManyMyDotOnThisMob(nTarget,greaterThan,nDotTimer,DotSpecific)
 	greaterThan = greaterThan or false
 	DotSpecific = DotSpecific or ""
 	DotSpecific = strlower(DotSpecific)
-	
+	if DotSpecific==";" then DotSpecific="" end
+	--print(DotSpecific)
 	if not _UnitExists(nTarget) then return 0 end
 	
 	local currentTime = _GetTime()
@@ -325,9 +326,9 @@ function TMW_MC:HowManyMyDotOnThisMob(nTarget,greaterThan,nDotTimer,DotSpecific)
 	local k,v
 	for k,v in pairs(allDeBuff) do
 		if greaterThan then
-			if (v>=nDotTimer)and((DotSpecific=="")or isBuffInList(k,DotSpecific)) then nDebuff=nDebuff+1 end
+			if (v>=nDotTimer)and((DotSpecific=="") or isBuffInList(k,DotSpecific)) then nDebuff=nDebuff+1 end
 		else
-			if (v<=nDotTimer)and((DotSpecific=="")or isBuffInList(k,DotSpecific)) then nDebuff=nDebuff+1 end
+			if (v<=nDotTimer)and((DotSpecific=="") or isBuffInList(k,DotSpecific)) then nDebuff=nDebuff+1 end
 		end
 	end
 

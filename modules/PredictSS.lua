@@ -7,6 +7,7 @@ local _GetTime = GetTime
 local _UnitPower = UnitPower
 local _UnitCastingInfo = UnitCastingInfo
 local _CombatLogGetCurrentEventInfo = CombatLogGetCurrentEventInfo
+local _UnitAura = UnitAura
 
 local CNDT = TMW.CNDT
 local Env = CNDT.Env
@@ -257,15 +258,49 @@ ConditionCategory:RegisterCondition(8.7,  "TMWMCHOWMANYMOBHASMYDOT", {
 
 --******************HowManyMyDotOnThisMob()****************
 
-Env.HowManyMyDotOnThisMob = function()
-    return TMW_MC:HowManyMyDotOnThisMob()
+Env.HowManyMyDotOnThisMob = function(nTarget)
+    return TMW_MC:HowManyMyDotOnThisMob(nTarget)
 end
 
+local old_val_HowManyMobHasMyDot = 0
+local old_timer_HowManyMobHasMyDot = 0
+local old_nTarget_HowManyMobHasMyDot = 0
+local old_nDotTimerRemaining_HowManyMobHasMyDot = 0
 
+local function allDeBuffByMe(unit)
+    -- return table of [Debuff name] = Debuff time remaining
+    
+    local DebuffName,expTime,i
+    local DeallBuff={}
+    for i=1,40 do
+        DebuffName,_,_,_,_,expTime = _UnitAura(unit, i, "PLAYER|HARMFUL")
+        if DebuffName then 
+            allDeBuff[buffName]=expTime-GetTime()
+        else break end
+    end
+    
+    return allDeBuff
+end
 
 function TMW_MC:HowManyMyDotOnThisMob(nTarget,nDotTimerRemaining)
 	nTarget = nTarget or "target"
 	nDotTimerRemaining = nDotTimerRemaining or 3
+	
+	local currentTime = _GetTime()
+	if (old_timer_HowManyMobHasMyDot==currentTime)and(old_nTarget_HowManyMobHasMyDot==nTarget)and(old_nDotTimerRemaining_HowManyMobHasMyDot==nDotTimerRemaining)then
+		return old_val_HowManyMobHasMyDot
+	end
+	
+	old_timer_HowManyMobHasMyDot = currentTime
+	
+	print(nTarget)
+	
+	local allDeBuff = allDeBuffByMe(nTarget)
+	
+	local k,v
+	for k,v in pairs(allDeBuff) do
+		print(k,v)
+	end
 
 	
 

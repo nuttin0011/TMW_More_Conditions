@@ -8,6 +8,7 @@ local _UnitPower = UnitPower
 local _UnitCastingInfo = UnitCastingInfo
 local _CombatLogGetCurrentEventInfo = CombatLogGetCurrentEventInfo
 local _UnitAura = UnitAura
+local _UnitExists = UnitExists
 
 local CNDT = TMW.CNDT
 local Env = CNDT.Env
@@ -262,53 +263,89 @@ Env.HowManyMyDotOnThisMob = function(nTarget)
     return TMW_MC:HowManyMyDotOnThisMob(nTarget)
 end
 
-local old_val_HowManyMobHasMyDot = 0
-local old_timer_HowManyMobHasMyDot = 0
-local old_nTarget_HowManyMobHasMyDot = 0
-local old_nDotTimerRemaining_HowManyMobHasMyDot = 0
-
 local function allDeBuffByMe(unit)
     -- return table of [Debuff name] = Debuff time remaining
     
     local DebuffName,expTime,i
-    local DeallBuff={}
+    local allDeBuff={}
     for i=1,40 do
         DebuffName,_,_,_,_,expTime = _UnitAura(unit, i, "PLAYER|HARMFUL")
         if DebuffName then 
-            allDeBuff[buffName]=expTime-GetTime()
+            allDeBuff[DebuffName]=expTime-GetTime()
         else break end
     end
     
     return allDeBuff
 end
 
-function TMW_MC:HowManyMyDotOnThisMob(nTarget,nDotTimerRemaining)
+local old_val_HowManyMyDotOnThisMob = 0
+local old_timer_HowManyMyDotOnThisMob = 0
+local old_nTarget_HowManyMyDotOnThisMob = ""
+local old_nDotTimerRemaining_HowManyMyDotOnThisMob = 0
+local old_DotSpecificTable_HowManyMyDotOnThisMob = nil
+
+function TMW_MC:HowManyMyDotOnThisMob(nTarget,nDotTimerRemaining,DotSpecificTable)
+--TMW_MC:HowManyMyDotOnThisMob("target",3,{["Corruption"]=true,["Agony"]=true,["Unstable Affliction"]=true,["Siphon Life"]=true})
 	nTarget = nTarget or "target"
 	nDotTimerRemaining = nDotTimerRemaining or 3
 	
+	-- DotSpecificTable = nil or {["Dot1"]=true,["Dot2"]=true,["Dot3"]=true,.....}
+	
+	if not _UnitExists(nTarget) then return 0 end
+	
 	local currentTime = _GetTime()
-	if (old_timer_HowManyMobHasMyDot==currentTime)and(old_nTarget_HowManyMobHasMyDot==nTarget)and(old_nDotTimerRemaining_HowManyMobHasMyDot==nDotTimerRemaining)then
-		return old_val_HowManyMobHasMyDot
+	if (old_timer_HowManyMyDotOnThisMob==currentTime)and(old_nTarget_HowManyMyDotOnThisMob==nTarget)
+		and(old_nDotTimerRemaining_HowManyMyDotOnThisMob==nDotTimerRemaining)
+		and(old_DotSpecificTable_HowManyMyDotOnThisMob==DotSpecificTable)then
+		
+		return old_val_HowManyMyDotOnThisMob
 	end
 	
-	old_timer_HowManyMobHasMyDot = currentTime
-	
-	print(nTarget)
+	old_timer_HowManyMyDotOnThisMob = currentTime
+	old_nTarget_HowManyMyDotOnThisMob = nTarget
+	old_nDotTimerRemaining_HowManyMyDotOnThisMob = nDotTimerRemaining
+	old_DotSpecificTable_HowManyMyDotOnThisMob = DotSpecificTable
 	
 	local allDeBuff = allDeBuffByMe(nTarget)
+	local nDebuff = 0
 	
 	local k,v
 	for k,v in pairs(allDeBuff) do
-		print(k,v)
+		if (v>=nDotTimerRemaining)and((DotSpecificTable==nil)or(DotSpecificTable[k])) then nDebuff=nDebuff+1 end
 	end
 
-	
+	old_val_HowManyMyDotOnThisMob = nDebuff
 
-	return 0
+	return nDebuff
 
 end
 
+ConditionCategory:RegisterCondition(8.8,  "TMWMCHOWMANYMYDOTONTHISMOB", {
+    text = "number of My DOT",
+    tooltip = "number of My DOT",
+	step = 0.1,
+	percent = false,
+    min = 0,
+	max = 10,
+    unit="target",
 
+    icon = "Interface\\Icons\\ability_druid_bash",
+    tcoords = CNDT.COMMON.standardtcoords,
+
+    specificOperators = {["<="] = true, [">="] = true, ["=="]=true, ["~="]=true},
+
+    applyDefaults = function(conditionData, conditionSettings)
+        local op = conditionSettings.Operator
+
+        if not conditionData.specificOperators[op] then
+            conditionSettings.Operator = ">="
+        end
+    end,
+
+	funcstr = function(c, parent)
+        return [[true]]
+    end
+})
 
 
 

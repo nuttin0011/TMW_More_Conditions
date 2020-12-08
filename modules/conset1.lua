@@ -425,8 +425,7 @@ ConditionCategory:RegisterCondition(8.9,  "TMWMCIROENEMYCOUNTIN8YD", {
     end
 })
 
-
-
+--*********************** Compare HP ******************
 
 
 

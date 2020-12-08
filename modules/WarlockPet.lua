@@ -51,7 +51,7 @@ end
 
 local ConditionCategory = CNDT:GetCategory("ATTRIBUTES_TMWMC", 12, "More Conditions", true, false)
 
-ConditionCategory:RegisterCondition(8.6,  "TMWMCWARLOCKPET", {
+ConditionCategory:RegisterCondition(7,  "TMWMCWARLOCKPET", {
     text = "Warlock Pet Active",
     tooltip = "Warlock Pet Active",
     unit="Pet",
@@ -59,16 +59,17 @@ ConditionCategory:RegisterCondition(8.6,  "TMWMCWARLOCKPET", {
     bitFlags={"Felguard", "Succubus", "Felhunter", "Voidwalker", "Imp"},
     icon = "Interface\\Icons\\ability_druid_bash",
     tcoords = CNDT.COMMON.standardtcoords,
-	events = function(ConditionObject, c)
-			return
-				ConditionObject:GenerateNormalEventString("PET_BAR_UPDATE")
-		end,
+	
     funcstr = function(c)
         --printtable(c)
         --print(c.BitFlags)
         --print(c.Checked)
         return [[(WarlockPet(c.BitFlags,c.Checked))]]
     end,
+	--[[events = function(ConditionObject, c)
+			return
+				ConditionObject:GenerateNormalEventString("PET_BAR_UPDATE")
+		end,--]]
 
 })
 

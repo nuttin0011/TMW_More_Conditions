@@ -59,7 +59,10 @@ ConditionCategory:RegisterCondition(8.6,  "TMWMCWARLOCKPET", {
     bitFlags={"Felguard", "Succubus", "Felhunter", "Voidwalker", "Imp"},
     icon = "Interface\\Icons\\ability_druid_bash",
     tcoords = CNDT.COMMON.standardtcoords,
-
+	events = function(ConditionObject, c)
+			return
+				ConditionObject:GenerateNormalEventString("PET_BAR_UPDATE")
+		end,
     funcstr = function(c)
         --printtable(c)
         --print(c.BitFlags)

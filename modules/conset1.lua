@@ -366,13 +366,73 @@ ConditionCategory:RegisterCondition(8.8,  "TMWMCHOWMANYMYDOTONTHISMOB", {
 		return [[(HowManyMyDotOnThisMob(c.Unit,true,3,c.Name) c.Operator c.Level)]]
     end
 })
---********************** SpecificDot ratio to All Mob Has My Dot ********
-Env.SpecificDotRatioToAllMob = function(DotSpecific)
-    return TMW_MC:SpecificDotRatioToAllMob(DotSpecific)
+--********************** Enemy Count in 8 yard ********
+Env.IROEnemyCountIn8yd = function()
+    return TMW_MC:IROEnemyCountIn8yd()
 end
 
-function TMW_MC:SpecificDotRatioToAllMob(DotSpecific)
+local Temp_IROEnemyCountIn8yd ={
+	["old_timer"]=0,
+	["old_val"]=0,
+	}
 
-	return 0
+function TMW_MC:IROEnemyCountIn8yd()
+	--return enemy count in 8 yard Max 5
+	local currentTime = GetTime()
+	
+	if Temp_IROEnemyCountIn8yd.old_timer == currentTime then
+		return Temp_IROEnemyCountIn8yd.old_val
+	end
+	
+	Temp_IROEnemyCountIn8yd.old_timer = currentTime
+	
+    local i,nn,count
+    count=0
+    for i=1,30 do
+        nn='nameplate'..i
+        if UnitExists(nn) and IsItemInRange("item:34368", nn) then
+            count=count+1
+        end
+        if count>=5 then break end
+    end
+    Temp_IROEnemyCountIn8yd.old_val=count
+	
+    return  count
 	
 end
+
+ConditionCategory:RegisterCondition(8.9,  "TMWMCIROENEMYCOUNTIN8YD", {
+    text = "return Enemy Count in 8 yard. Max 5",
+    tooltip = "Enemy Name playe must turn on!",
+	step = 1,
+	percent = false,
+    min = 1,
+	max = 5,
+    unit="player",
+
+    icon = "Interface\\Icons\\ability_druid_bash",
+    tcoords = CNDT.COMMON.standardtcoords,
+
+    specificOperators = {["<="] = true, [">="] = true, ["=="]=true, ["~="]=true},
+
+    applyDefaults = function(conditionData, conditionSettings)
+        local op = conditionSettings.Operator
+
+        if not conditionData.specificOperators[op] then
+            conditionSettings.Operator = ">="
+        end
+    end,
+
+	funcstr = function(c, parent)
+        return [[(IROEnemyCountIn8yd() c.Operator c.Level)]]
+    end
+})
+
+
+
+
+
+
+
+
+

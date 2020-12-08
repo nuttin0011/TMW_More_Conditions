@@ -427,7 +427,35 @@ ConditionCategory:RegisterCondition(8.9,  "TMWMCIROENEMYCOUNTIN8YD", {
 
 --*********************** Compare HP ******************
 
+ConditionCategory:RegisterCondition(9,  "TMWMCIROCOMPAREHP", {
+    text = "Compare Current HP Unit1 and Unit2",
+	unit=true,
+	noslide = true,
+	name = function(editbox) 
+		editbox:SetTexts("Unit 1","e.g. target")
+	end,
+	name2 = function(editbox) 
+		editbox:SetTexts("Unit 2","e.g. targettarget")
+	end,
 
+    icon = "Interface\\Icons\\spell_nature_rejuvenation",
+    tcoords = CNDT.COMMON.standardtcoords,
+
+    specificOperators = {["<="] = true, [">="] = true, ["=="]=true, ["~="]=true},
+	    applyDefaults = function(conditionData, conditionSettings)
+        local op = conditionSettings.Operator
+
+        if not conditionData.specificOperators[op] then
+            conditionSettings.Operator = ">="
+        end
+    end,
+
+	funcstr = function(c, parent)
+		print(UnitHealth(c.Name))
+		print(UnitHealth(c.Name2))		
+        return [[(UnitHealth(c.Name) == UnitHealth(c.Name2))]]
+    end,
+})
 
 
 

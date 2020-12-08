@@ -427,6 +427,8 @@ ConditionCategory:RegisterCondition(8.9,  "TMWMCIROENEMYCOUNTIN8YD", {
 
 --*********************** Compare HP ******************
 
+Env._UnitHealth = UnitHealth
+
 ConditionCategory:RegisterCondition(9,  "TMWMCIROCOMPAREHP", {
     text = "Compare Current HP Unit1 and Unit2",
 	unit=true,
@@ -441,8 +443,9 @@ ConditionCategory:RegisterCondition(9,  "TMWMCIROCOMPAREHP", {
     icon = "Interface\\Icons\\spell_nature_rejuvenation",
     tcoords = CNDT.COMMON.standardtcoords,
 
-    specificOperators = {["<="] = true, [">="] = true, ["=="]=true, ["~="]=true},
-	    applyDefaults = function(conditionData, conditionSettings)
+	specificOperators = {["<="] = true, [">="] = true, ["=="]=true, ["~="]=true},
+	
+	applyDefaults = function(conditionData, conditionSettings)
         local op = conditionSettings.Operator
 
         if not conditionData.specificOperators[op] then
@@ -451,9 +454,8 @@ ConditionCategory:RegisterCondition(9,  "TMWMCIROCOMPAREHP", {
     end,
 
 	funcstr = function(c, parent)
-		print(UnitHealth(c.Name))
-		print(UnitHealth(c.Name2))		
-        return [[(UnitHealth(c.Name) == UnitHealth(c.Name2))]]
+		return [[(_UnitHealth(c.NameFirst) c.Operator _UnitHealth(c.NameFirst2))]]
+		
     end,
 })
 

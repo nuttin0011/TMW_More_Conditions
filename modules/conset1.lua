@@ -406,7 +406,7 @@ ConditionCategory:RegisterCondition(8.9,  "TMWMCIROENEMYCOUNTIN8YD", {
     tooltip = "Enemy Name playe must turn on!",
 	step = 1,
 	percent = false,
-    min = 1,
+    min = 0,
 	max = 5,
     unit="player",
 

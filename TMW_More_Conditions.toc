@@ -7,5 +7,5 @@
 
 TMW_More_Conditions.lua
 
-modules/PredictSS.lua
+modules/conset1.lua
 modules/WarlockPet.lua

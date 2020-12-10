@@ -9,6 +9,9 @@ local _UnitCastingInfo = UnitCastingInfo
 local _CombatLogGetCurrentEventInfo = CombatLogGetCurrentEventInfo
 local _UnitAura = UnitAura
 local _UnitExists = UnitExists
+local _UnitGUID = UnitGUID
+local Old_Val_Check = TMW.CNDT.Env.Old_Val_Check
+local Old_Val_Update = TMW.CNDT.Env.Old_Val_Update
 
 local CNDT = TMW.CNDT
 local Env = CNDT.Env
@@ -136,19 +139,14 @@ Env.percentCastBar = function(SpellN,nUnit)
     return TMW_MC:PercentCastBar(SpellN,nUnit)
 end
 
-local old_val_PercentCastBar = 0
-local old_timer_PercentCastBar = 0
-
 function TMW_MC:PercentCastBar(SpellN,nUnit)
 
 	nUnit = nUnit or "target"
 	SpellN = SpellN or ""
 	if SpellN == ";" then SpellN = "" end
 	
-	local currentTimeMS = _GetTime()
-	if currentTimeMS==old_timer_PercentCastBar then
-		return old_val_PercentCastBar
-	end
+	local OldVal = Old_Val_Check("PercentCastBar",SpellN..nUnit)
+	if OldVal then return OldVal end
 
 	old_timer_PercentCastBar = currentTimeMS
 
@@ -158,15 +156,15 @@ function TMW_MC:PercentCastBar(SpellN,nUnit)
 		if (spellName==SpellN) or (SpellN=="") then
 			local currentTimeMS = currentTimeMS*1000
 			local PercentCast = (currentTimeMS-startTimeMS)/(endTimeMS-startTimeMS)
-			old_val_PercentCastBar = PercentCast
+			Old_Val_Update("PercentCastBar",SpellN..nUnit,PercentCast)
 			--print(PercentCast)
 			return PercentCast
 		else
-			old_val_PercentCastBar = 0
+			Old_Val_Update("PercentCastBar",SpellN..nUnit,0)
 			return 0
 		end
 	else
-		old_val_PercentCastBar = 0
+		Old_Val_Update("PercentCastBar",SpellN..nUnit,0)
 		return 0
 	end
 end
@@ -211,9 +209,10 @@ function TMW_MC:HowManyMobHasMyDot()
 
     local ii,nn,n
 	local currentTime = _GetTime()
-	if old_timer_HowManyMobHasMyDot==currentTime then
-		return old_val_HowManyMobHasMyDot
-	end
+
+	local OldVal = Old_Val_Check("HowManyMobHasMyDot","")
+	if OldVal then return OldVal end
+
 	old_timer_HowManyMobHasMyDot=currentTime
     n = 0
         for ii = 1,30 do
@@ -222,8 +221,7 @@ function TMW_MC:HowManyMobHasMyDot()
             n = n+1
         end
     end
-
-old_val_HowManyMobHasMyDot=n
+	Old_Val_Update("HowManyMobHasMyDot","",n)
   return n
 
 end
@@ -261,9 +259,28 @@ Env.HowManyMyDotOnThisMob = function(nTarget,greaterThan,nDotTimer,DotSpecific)
     return TMW_MC:HowManyMyDotOnThisMob(nTarget,greaterThan,nDotTimer,DotSpecific)
 end
 
+
+--Temp Val of allDeBuffByMe
+local temp_allDeBuffByMe ={[1]=0,[2]={}}
+--[1]=timer , [2]= [GUID] = result
+
 local function allDeBuffByMe(unit)
-    -- return table of [Debuff name] = Debuff time remaining
-    
+
+	if not _UnitExists(unit) then return {} end
+
+    --return table of [Debuff name] = Debuff time remaining
+	local unitGUID = _UnitGUID("unit")
+	local currentTimer = _GetTime()
+
+	if (temp_allDeBuffByMe[1]==currentTimer)and(temp_allDeBuffByMe[2][unitGUID]) then
+		return temp_allDeBuffByMe[2][unitGUID]
+	end
+
+	if temp_allDeBuffByMe[1]<currentTimer then
+		temp_allDeBuffByMe[1]=currentTimer
+		temp_allDeBuffByMe[2]={}
+	end
+
     local DebuffName,expTime,i
     local allDeBuff={}
     for i=1,40 do
@@ -272,36 +289,24 @@ local function allDeBuffByMe(unit)
             allDeBuff[DebuffName]=expTime-GetTime()
         else break end
     end
-    
+	
+	if unitGUID then temp_allDeBuffByMe[2][unitGUID]=allDeBuff end
+
     return allDeBuff
 end
-
-local old_val_HowManyMyDotOnThisMob = 0
-local old_timer_HowManyMyDotOnThisMob = 0
-local old_nTarget_HowManyMyDotOnThisMob = ""
-local old_nDotTimer_HowManyMyDotOnThisMob = 0
-local old_DotSpecific_HowManyMyDotOnThisMob = ""
-local old_greaterThan_HowManyMyDotOnThisMob = false
 
 function TMW_MC:HowManyMyDotOnThisMob(nTarget,greaterThan,nDotTimer,DotSpecific)
 	nTarget = nTarget or "target"
 	nDotTimer = nDotTimer or 3
-	greaterThan = greaterThan or false
+	greaterThan = greaterThan or 0 -- 1 = true , 0 = false
 	DotSpecific = DotSpecific or ""
 	DotSpecific = strlower(DotSpecific)
 	if DotSpecific==";" then DotSpecific="" end
 	--print(DotSpecific)
 	if not _UnitExists(nTarget) then return 0 end
 	
-	local currentTime = _GetTime()
-	if (old_timer_HowManyMyDotOnThisMob==currentTime)
-		and(old_nTarget_HowManyMyDotOnThisMob==nTarget)
-		and(old_greaterThan_HowManyMyDotOnThisMob==greaterThan)
-		and(old_nDotTimer_HowManyMyDotOnThisMob==nDotTimer)
-		and(old_DotSpecific_HowManyMyDotOnThisMob==DotSpecific)then
-		
-		return old_val_HowManyMyDotOnThisMob
-	end
+	local OldVal=Old_Val_Check("HowManyMyDotOnThisMob",nTarget..greaterThan..nDotTimer..DotSpecific)
+	if OldVal then return OldVal end
 	
 	--strfind(string, pattern [, initpos [, plain]])
 	local function isBuffInList(nBuff,nList)
@@ -311,25 +316,19 @@ function TMW_MC:HowManyMyDotOnThisMob(nTarget,greaterThan,nDotTimer,DotSpecific)
 		return strfind(nList,strlower(nBuff))~=nil
 	end
 	
-	old_timer_HowManyMyDotOnThisMob = currentTime
-	old_nTarget_HowManyMyDotOnThisMob = nTarget
-	old_nDotTimer_HowManyMyDotOnThisMob = nDotTimer
-	old_DotSpecific_HowManyMyDotOnThisMob = DotSpecific
-	old_greaterThan_HowManyMyDotOnThisMob = greaterThan
-	
 	local allDeBuff = allDeBuffByMe(nTarget)
 	local nDebuff = 0
 	
 	local k,v
 	for k,v in pairs(allDeBuff) do
-		if greaterThan then
+		if (greaterThan==1) then
 			if (v>=nDotTimer)and((DotSpecific=="") or isBuffInList(k,DotSpecific)) then nDebuff=nDebuff+1 end
 		else
 			if (v<=nDotTimer)and((DotSpecific=="") or isBuffInList(k,DotSpecific)) then nDebuff=nDebuff+1 end
 		end
 	end
 
-	old_val_HowManyMyDotOnThisMob = nDebuff
+	Old_Val_Update("HowManyMyDotOnThisMob",nTarget..greaterThan..nDotTimer..DotSpecific,nDebuff)
 
 	return nDebuff
 
@@ -360,7 +359,7 @@ ConditionCategory:RegisterCondition(8.8,  "TMWMCHOWMANYMYDOTONTHISMOB", {
     end,
 
 	funcstr = function(c, parent)
-		return [[(HowManyMyDotOnThisMob(c.Unit,true,3,c.Name) c.Operator c.Level)]]
+		return [[(HowManyMyDotOnThisMob(c.Unit,1,3,c.Name) c.Operator c.Level)]]
     end
 })
 --********************** Enemy Count in 8 yard ********
@@ -368,20 +367,11 @@ Env.IROEnemyCountIn8yd = function()
     return TMW_MC:IROEnemyCountIn8yd()
 end
 
-local Temp_IROEnemyCountIn8yd ={
-	["old_timer"]=0,
-	["old_val"]=0,
-	}
-
 function TMW_MC:IROEnemyCountIn8yd()
 	--return enemy count in 8 yard Max 5
-	local currentTime = GetTime()
 	
-	if Temp_IROEnemyCountIn8yd.old_timer == currentTime then
-		return Temp_IROEnemyCountIn8yd.old_val
-	end
-	
-	Temp_IROEnemyCountIn8yd.old_timer = currentTime
+	local OldVal=Old_Val_Check("IROEnemyCountIn8yd","")
+	if OldVal then return OldVal end
 	
     local i,nn,count
     count=0
@@ -391,8 +381,9 @@ function TMW_MC:IROEnemyCountIn8yd()
             count=count+1
         end
         if count>=5 then break end
-    end
-    Temp_IROEnemyCountIn8yd.old_val=count
+	end
+	
+	Old_Val_Update("IROEnemyCountIn8yd","",count)
 	
     return  count
 	

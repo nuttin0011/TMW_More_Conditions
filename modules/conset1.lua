@@ -261,15 +261,13 @@ end
 
 
 --Temp Val of allDeBuffByMe
-local temp_allDeBuffByMe ={[1]=0,[2]={}}
+temp_allDeBuffByMe ={[1]=0,[2]={}}
 --[1]=timer , [2]= [GUID] = result
 
-local function allDeBuffByMe(unit)
+function Env.allDeBuffByMe(unit)
 
-	if not _UnitExists(unit) then return {} end
-
-    --return table of [Debuff name] = Debuff time remaining
-	local unitGUID = _UnitGUID("unit")
+    --*********return table of [Debuff name] = Debuff time remaining
+	local unitGUID = _UnitGUID(unit)
 	local currentTimer = _GetTime()
 
 	if (temp_allDeBuffByMe[1]==currentTimer)and(temp_allDeBuffByMe[2][unitGUID]) then
@@ -289,8 +287,8 @@ local function allDeBuffByMe(unit)
             allDeBuff[DebuffName]=expTime-GetTime()
         else break end
     end
-	
-	if unitGUID then temp_allDeBuffByMe[2][unitGUID]=allDeBuff end
+
+	temp_allDeBuffByMe[2][unitGUID]=allDeBuff
 
     return allDeBuff
 end
@@ -316,7 +314,7 @@ function TMW_MC:HowManyMyDotOnThisMob(nTarget,greaterThan,nDotTimer,DotSpecific)
 		return strfind(nList,strlower(nBuff))~=nil
 	end
 	
-	local allDeBuff = allDeBuffByMe(nTarget)
+	local allDeBuff = Env.allDeBuffByMe(nTarget)
 	local nDebuff = 0
 	
 	local k,v

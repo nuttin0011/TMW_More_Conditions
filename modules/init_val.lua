@@ -212,3 +212,180 @@ function Env.SumHPMobinCombat()
     return sumhp
 end
 
+--*****************************************Smart Interrupter*********************
+
+local OldcanInterruptStatus = true
+
+local IROTargetGUIDForInterrupt = ''
+local IROprefix = "IRODPS"
+local IROPlayerName = GetUnitName("player")
+
+IRODPSInterruptTable = {}
+
+IROSendISM = function(isForce)
+    local tGUID=(UnitGUID("target") or "error")
+
+    local currentSpec = _GetSpecialization()
+    local IROSpecID  = _GetSpecializationInfo(currentSpec)
+
+    local IROInterrupterName = IROInterruptTier[IROSpecID][1].. '-'..IROPlayerName.. '-' ..GetRealmName()
+    local IROInterruptSpellName = IROInterruptTier[IROSpecID][2]
+    
+    local canInterrupt
+    if IROInterruptSpellName == '' then
+        canInterrupt=false
+    else
+        canInterrupt= (GetSpellCooldown(IROInterruptSpellName) == 0) and (IsSpellInRange(IROInterruptSpellName, "target")==1)
+    end
+    
+    if (IROSpecID>=265)and(IROSpecID<=267) then
+        --Warlock
+        local iSpell=GetSpellInfo(IROInterruptSpellName)
+        if (iSpell~='Axe Toss')and(iSpell~='Spell Lock') then
+        canInterrupt=false end
+    end
+    
+    if (((tGUID~= IROTargetGUIDForInterrupt) and canInterrupt)or ((not OldcanInterruptStatus)or isForce)and canInterrupt) then
+        OldcanInterruptStatus = true
+        IROTargetGUIDForInterrupt=tGUID
+        if IsInRaid() then        
+            C_ChatInfo.SendAddonMessage("IRODPS", 'CI^'..IROInterrupterName.."^"..tGUID, "RAID")
+        elseif IsInGroup() then
+            C_ChatInfo.SendAddonMessage("IRODPS", 'CI^'..IROInterrupterName.."^"..tGUID, "PARTY")
+        else
+            C_ChatInfo.SendAddonMessage("IRODPS", 'CI^'..IROInterrupterName.."^"..tGUID, "WHISPER", IROPlayerName)
+        end
+    end
+    
+    if (OldcanInterruptStatus or isForce) and (not canInterrupt) then
+        OldcanInterruptStatus = false
+        if IsInRaid() then        
+            C_ChatInfo.SendAddonMessage("IRODPS", 'CN^'..IROInterrupterName.."^".."0", "RAID")
+        elseif IsInGroup() then
+            C_ChatInfo.SendAddonMessage("IRODPS", 'CN^'..IROInterrupterName.."^".."0", "PARTY")
+        else
+            C_ChatInfo.SendAddonMessage("IRODPS", 'CN^'..IROInterrupterName.."^".."0", "WHISPER", IROPlayerName)
+        end
+    end
+end
+
+IROOnEvent = function(self, event, ...)
+    --print(event)
+    
+    if event=="PLAYER_REGEN_DISABLED" then
+        -- incombat event
+        --print('in in')
+        if IROSendISM then
+            -- force send message
+            IROSendISM(true)
+        end
+    end
+    
+    if event~="CHAT_MSG_ADDON" then
+        return 0
+    end
+    
+    --print(GetTime())
+    local m1,m2 = ...
+    --m1 = "IRODPS"
+    --m2 = CI/CN+^+interruptTier+-+CharactorName+^+GUIDmob
+    -- CI = can interrupt
+    -- CN = cannot interrupt
+    --exp 'CI^A-Kimiiro^Creature-0-3933-1-153258-0002AC77A2'
+    --
+    --IRODPSInterruptTable = {
+    -- ['GUIDMob1'] = { 'PlayerName1','PlayerName2'....}
+    -- ['GUIDMob2'] = { 'PlayerName1','PlayerName2'....}
+    -- .... }
+    
+    if m1 ~= IROprefix then 
+        --print(m1)
+        return 0
+    end
+    
+    if not IRODPSInterruptTable then
+        IRODPSInterruptTable = {}
+    end
+    
+    local iaction,iname,iGUID = strsplit("^", m2,3)
+    local iMobID,iIndex,ii,ifound
+    
+    -- cannot interrupt / used interrupt skill
+    
+    if (iaction=="CN")or(iaction=="CI") then
+        --print('if 1')
+        
+        for iMobID in pairs(IRODPSInterruptTable) do
+            for iIndex in pairs(IRODPSInterruptTable[iMobID]) do
+                if IRODPSInterruptTable[iMobID][iIndex]==iname then
+                    table.remove(IRODPSInterruptTable[iMobID],iIndex)
+                    if next(IRODPSInterruptTable[iMobID])==nil then
+                        IRODPSInterruptTable[iMobID]=nil
+                    end
+                    break
+                end 
+            end
+        end
+    end
+    
+    if iaction == "CI" then
+        --print('if 2')
+        
+        if not IRODPSInterruptTable[iGUID] then
+            IRODPSInterruptTable[iGUID]={}
+        end
+        ifound=false
+        iIndex=0
+        for ii in pairs(IRODPSInterruptTable[iGUID]) do
+            iIndex=ii
+            if iname:sub(1,1) < IRODPSInterruptTable[iGUID][ii]:sub(1,1) then
+                ifound=true
+                break
+            end
+        end
+        if not ifound then iIndex=iIndex+1 end
+        table.insert(IRODPSInterruptTable[iGUID],iIndex,iname) 
+    end
+    
+    --print(iaction)
+    --print(iname)
+    --print(iGUID)
+    --print(m1)
+    --print(m2)
+    
+    return 1
+end
+
+IROFrame = CreateFrame("Frame")
+IROFrame:RegisterEvent("CHAT_MSG_ADDON")
+IROFrame:SetScript("OnEvent", IROOnEvent)
+
+-- in combat event
+IROFrame:RegisterEvent("PLAYER_REGEN_DISABLED")
+-- out combat event
+-- IROFrame:RegisterEvent("PLAYER_REGEN_ENABLED")
+C_ChatInfo.RegisterAddonMessagePrefix(IROprefix)
+
+local f = CreateFrame("Frame");
+function f:onUpdate(sinceLastUpdate)
+	self.sinceLastUpdate = (self.sinceLastUpdate or 0) + sinceLastUpdate;
+    if ( self.sinceLastUpdate >= 0.5 ) then -- in seconds
+        --print(sinceLastUpdate)
+        IROSendISM()
+        -- do stuff here
+		self.sinceLastUpdate = 0;
+	end
+end
+
+f:SetScript("OnUpdate",f.onUpdate)
+
+function Env.IsMyTurnToInterrupt()
+    local currentSpec = _GetSpecialization()
+    local IROSpecID  = _GetSpecializationInfo(currentSpec)
+    local IROInterrupterName = IROInterruptTier[IROSpecID][1].. '-'..IROPlayerName.. '-' ..GetRealmName()
+    
+    return (not IRODPSInterruptTable)
+    or (not IRODPSInterruptTable[UnitGUID("target")])
+    or (next(IRODPSInterruptTable[UnitGUID("target")])==nil)
+    or (IRODPSInterruptTable[UnitGUID("target")][1] == IROInterrupterName)
+end

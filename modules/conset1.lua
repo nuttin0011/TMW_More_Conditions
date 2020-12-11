@@ -141,6 +141,7 @@ end
 
 function TMW_MC:PercentCastBar(SpellN,nUnit)
 
+	local currentTimeMS = _GetTime()
 	nUnit = nUnit or "target"
 	SpellN = SpellN or ""
 	if SpellN == ";" then SpellN = "" end

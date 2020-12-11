@@ -39,14 +39,14 @@ Env.PredictLockSS = function()
 end
 
 local LockSpellModSS = {
-	["Hand of Gul'dan266"]=-3,
+	["Hand of Gul'dan266"]=-3, --266 = Demo
 	["Shadow Bolt266"]=1, 
 	["Call Dreadstalkers266"]=-2,
 	["Summon Vilefiend266"]=-1,
 	["Nether Portal266"]=-1,
 	["Summon Demonic Tyrant266"]=5,
 	["Demonbolt266"]=2,
-	["Seed of Corruption265"]=-1,
+	["Seed of Corruption265"]=-1, --265 = Aff
 	["Malefic Rapture265"]=-1,
 }
 

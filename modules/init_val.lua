@@ -16,7 +16,7 @@ local _GetSpecializationInfo  = GetSpecializationInfo
 
 local CNDT = TMW.CNDT
 local Env = CNDT.Env
-
+local GetRealmName=GetRealmName
 
 
 local function printtable(a)
@@ -216,10 +216,10 @@ end
 
 local OldcanInterruptStatus = true
 
-local IROTargetGUIDForInterrupt = ''
-local IROprefix = "IRODPS"
-local IROPlayerName = GetUnitName("player")
-
+IROTargetGUIDForInterrupt = ''
+IROprefix = "IRODPS"
+IROPlayerName = GetUnitName("player")
+IRORealmName=GetRealmName()
 IRODPSInterruptTable = {}
 
 IROSendISM = function(isForce)
@@ -385,7 +385,9 @@ local Old_Timer_Send_AddonMessage_IsMyTurnToInterrupt = 0;
 function Env.IsMyTurnToInterrupt(isForce)
     local currentSpec = _GetSpecialization()
     local IROSpecID  = _GetSpecializationInfo(currentSpec)
-    local IROInterrupterName = IROInterruptTier[IROSpecID][1].. '-'..IROPlayerName.. '-' ..GetRealmName()
+	
+	
+    local IROInterrupterName = IROInterruptTier[IROSpecID][1].. '-'..IROPlayerName.. '-' ..IRORealmName
 	
 	local currenTimer=GetTime()
     		

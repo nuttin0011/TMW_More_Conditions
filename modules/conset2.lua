@@ -32,7 +32,7 @@ function TMW_MC:LowestDurationDebuff(nDebuff,nSetDebuff)
 	
 	if not nDebuff then return false end
 	nSetDebuff = nSetDebuff or ""
-	if nSetDebuff = ";" then nSetDebuff="" end
+	if nSetDebuff == ";" then nSetDebuff="" end
 
 	return false
 end

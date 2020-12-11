@@ -17,7 +17,7 @@ local _GetSpecializationInfo  = GetSpecializationInfo
 local CNDT = TMW.CNDT
 local Env = CNDT.Env
 local GetRealmName=GetRealmName
-
+local UnitGUID=UnitGUID
 
 local function printtable(a)
 	local k,v
@@ -383,6 +383,9 @@ f:SetScript("OnUpdate",f.onUpdate)
 local Old_Timer_Send_AddonMessage_IsMyTurnToInterrupt = 0;
 
 function Env.IsMyTurnToInterrupt(isForce)
+
+    if not _UnitExists("target") then return true end
+    
     local currentSpec = _GetSpecialization()
     local IROSpecID  = _GetSpecializationInfo(currentSpec)
 	
@@ -417,8 +420,8 @@ ConditionCategory:RegisterCondition(6,  "TMWMCISMYTURNTOINTERRUPT", {
 
 	funcstr = function(c, parent)
 		
-		--return [[IsMyTurnToInterrupt(false)]]
-		return [[true]]
+		return [[IsMyTurnToInterrupt(false)]]
+		--return [[true]]
     end,	
 
 })

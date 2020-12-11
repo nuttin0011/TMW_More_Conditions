@@ -25,12 +25,24 @@ function TMW_MC:LowestDebuffDuration(nDebuff,nSetDebuff,nUnit)
 	-- nDebuff is Debuff to check e.g. "Agony"
 	-- nSetDebuff is Set of Defuff to check e.g. "Agony; Corruption; Unstable Affliction"
 	-- return true if nDebuff has lowest duration
-	if not UnitExists(nUnit) then return false end
+	local OldVal = Env.Old_Val_Check("LowestDebuffDuration",nDebuff..nSetDebuff..nUnit)
+	if OldVal then return OldVal end
 	
-	if not nDebuff then return false end
+	if not UnitExists(nUnit) then
+		Env.Old_Val_Update("LowestDebuffDuration",nDebuff..nSetDebuff..nUnit,false)
+		return false 
+	end
+	
+	if not nDebuff then
+		Env.Old_Val_Update("LowestDebuffDuration",nDebuff..nSetDebuff..nUnit,false)
+		return false 
+	end
 	
 	nDebuffName=GetSpellInfo(nDebuff)
-	if not nDebuffName then return false end
+	if not nDebuffName then
+		Env.Old_Val_Update("LowestDebuffDuration",nDebuff..nSetDebuff..nUnit,false)
+		return false 
+	end
 	
 	nSetDebuff = nSetDebuff or ""
 	if nSetDebuff == ";" then nSetDebuff="" end
@@ -61,18 +73,26 @@ function TMW_MC:LowestDebuffDuration(nDebuff,nSetDebuff,nUnit)
 		return false
 	end
 	
-
-	
-	if IsSpellInSpellSet(nDebuff)and((not deBuff[nDebuffName])or(deBuff[nDebuffName]==0)) then return true end
-	if IsSomeSpellHasZeroDuration() then return false end
+	if IsSpellInSpellSet(nDebuff)and((not deBuff[nDebuffName])or(deBuff[nDebuffName]==0)) then
+		Env.Old_Val_Update("LowestDebuffDuration",nDebuff..nSetDebuff..nUnit,true)
+		return true
+	end
+	if IsSomeSpellHasZeroDuration() then
+		Env.Old_Val_Update("LowestDebuffDuration",nDebuff..nSetDebuff..nUnit,false)
+		return false
+	end
 
 	local DebuffTime = deBuff[nDebuffName]
 	
 	local k,v
     for k,v in pairs(deBuff) do
-		if IsSpellInSpellSet(string.lower(k)) and v<DebuffTime then return false end
+		if IsSpellInSpellSet(string.lower(k)) and v<DebuffTime then
+			Env.Old_Val_Update("LowestDebuffDuration",nDebuff..nSetDebuff..nUnit,false)
+			return false
+		end
     end
-
+	
+	Env.Old_Val_Update("LowestDebuffDuration",nDebuff..nSetDebuff..nUnit,true)
 	return true
 end
 

@@ -16,6 +16,9 @@ local Old_Val_Update = TMW.CNDT.Env.Old_Val_Update
 local CNDT = TMW.CNDT
 local Env = CNDT.Env
 
+local GetSpecialization=GetSpecialization
+local GetSpecializationInfo=GetSpecializationInfo
+
 local playerGUID = UnitGUID("player")
 local extended_check_timer = _GetTime()
 local old_timer_check = 0
@@ -36,16 +39,15 @@ Env.PredictLockSS = function()
 end
 
 local LockSpellModSS = {
-	["Hand of Gul'dan"]=-3,
-	["Shadow Bolt"]=1,
-	["Call Dreadstalkers"]=-2,
-	["Summon Vilefiend"]=-1,
-	["Nether Portal"]=-1,
-	["Summon Demonic Tyrant"]=5,
-	["Demonbolt"]=2,
-	["Seed of Corruption"]=-1,
-	["Malefic Rapture"]=-1,
-	["Seed of Corruption"]=-1,
+	["Hand of Gul'dan266"]=-3,
+	["Shadow Bolt266"]=1, 
+	["Call Dreadstalkers266"]=-2,
+	["Summon Vilefiend266"]=-1,
+	["Nether Portal266"]=-1,
+	["Summon Demonic Tyrant266"]=5,
+	["Demonbolt266"]=2,
+	["Seed of Corruption265"]=-1,
+	["Malefic Rapture265"]=-1,
 }
 
 local function PredictSSFrameEvent(self, event, ...)
@@ -74,6 +76,9 @@ function TMW_MC:PredictSS()
 		end
 	end
 
+	local currentSpec = GetSpecialization()
+    local IROSpecID  = GetSpecializationInfo(currentSpec)
+
 	local currentSS = _UnitPower("player",7)
 
 	local spellName,_,_, startTimeMS, endTimeMS = _UnitCastingInfo("player")
@@ -86,7 +91,7 @@ function TMW_MC:PredictSS()
 		trust_segment_cast = ((endTimeMS/1000)-currentTime)<0.3
 	
 		if trust_segment_cast then
-			currentSS = currentSS+(LockSpellModSS[spellName] or 0)
+			currentSS = currentSS+(LockSpellModSS[spellName..IROSpecID] or 0)
 			currentSS = (currentSS<=5)and currentSS or 5
 			currentSS = (currentSS>=0)and currentSS or 0
 			old_spell_finish_cast_check = (endTimeMS/1000)+0.2

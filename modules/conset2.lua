@@ -122,12 +122,79 @@ ConditionCategory:RegisterCondition(9.1,  "TMWMCLOWESTDEBUFFDURATION", {
 })
 
 
+--****************************** All Debuff Duration
 
+function TMW_MC:AllDebuffDuration(nSetDebuff,nUnit)
+	nSetDebuff = string.lower(nSetDebuff) or ""
+	if nSetDebuff==";" then nSetDebuff="" end
+	nUnit = nUnit or "target"
+	
+	if not UnitExists(nUnit) then
+		return 0
+	end
+	
+	local deBuff=Env.allDeBuffByMe(nUnit)
+	local duration = 500
+	
+	local function IsSomeSpellHasZeroDuration()
+		local _nSetDebuff = nSetDebuff
+		local _nDebuffName
+		while(_nSetDebuff)
+		do
+			_nDebuffName,_nSetDebuff = strsplit(";",_nSetDebuff,2)
+			_nDebuffName=GetSpellInfo(_nDebuffName)
+			if _nSetDebuff then _nSetDebuff = string.sub(_nSetDebuff,2,string.len(_nSetDebuff)) end
+			
+			if _nDebuffName and ((not deBuff[_nDebuffName])or(deBuff[_nDebuffName]==0)) then return true end
+		end
+		return false
+	end
+	
+	if IsSomeSpellHasZeroDuration() then
+		return 0
+	end
+	
+	local k,v
+    for k,v in pairs(deBuff) do
+		if ((nSetDebuff=="")or string.find(nSetDebuff,string.lower(k)))and (duration>v) then
+			duration=v
+		end
+	end
+	return duration
+end
 
+function Env.AllDebuffDuration(nSetDebuff,nUnit)
+	return TMW_MC:AllDebuffDuration(nSetDebuff,nUnit)
+end
 
+ConditionCategory:RegisterCondition(9.2,  "TMWMCALLDEBUFFDURATION", {
+    text = "Check all set of DeBuff Duration",
+	unit=nil,
+	step = 0.1,
+	percent = false,
+    min = 0,
+	range = 10,
+	name = function(editbox) 
+		editbox:SetTexts("Debuff Set Name To Check","e.g. agony; corruption; unstable affliction")
+	end,
+	specificOperators = {["<="] = true, [">="] = true, ["=="]=true, ["~="]=true},
 
+    applyDefaults = function(conditionData, conditionSettings)
+        local op = conditionSettings.Operator
 
+        if not conditionData.specificOperators[op] then
+            conditionSettings.Operator = ">="
+        end
+    end,
 
+    icon = "Interface\\Icons\\spell_nature_rejuvenation",
+    tcoords = CNDT.COMMON.standardtcoords,
+
+	funcstr = function(c, parent)
+		return [[AllDebuffDuration(c.NameRaw,c.Unit) c.Operator c.Level]]
+		
+    end,
+})
 
 
 

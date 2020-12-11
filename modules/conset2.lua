@@ -173,6 +173,7 @@ ConditionCategory:RegisterCondition(9.2,  "TMWMCALLDEBUFFDURATION", {
 	step = 0.1,
 	percent = false,
     min = 0,
+	formatter = TMW.C.Formatter.TIME_0ABSENT,
 	range = 10,
 	name = function(editbox) 
 		editbox:SetTexts("Debuff Set Name To Check","e.g. agony; corruption; unstable affliction")

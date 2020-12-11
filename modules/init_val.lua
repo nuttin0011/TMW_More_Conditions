@@ -366,6 +366,7 @@ IROFrame:RegisterEvent("PLAYER_REGEN_DISABLED")
 -- IROFrame:RegisterEvent("PLAYER_REGEN_ENABLED")
 C_ChatInfo.RegisterAddonMessagePrefix(IROprefix)
 
+--[[
 local f = CreateFrame("Frame");
 function f:onUpdate(sinceLastUpdate)
 	self.sinceLastUpdate = (self.sinceLastUpdate or 0) + sinceLastUpdate;
@@ -376,16 +377,46 @@ function f:onUpdate(sinceLastUpdate)
 		self.sinceLastUpdate = 0;
 	end
 end
-
 f:SetScript("OnUpdate",f.onUpdate)
+--]]
 
-function Env.IsMyTurnToInterrupt()
+local Old_Timer_Send_AddonMessage_IsMyTurnToInterrupt = 0;
+
+function Env.IsMyTurnToInterrupt(isForce)
     local currentSpec = _GetSpecialization()
     local IROSpecID  = _GetSpecializationInfo(currentSpec)
     local IROInterrupterName = IROInterruptTier[IROSpecID][1].. '-'..IROPlayerName.. '-' ..GetRealmName()
-    
+	
+	local currenTimer=GetTime()
+    		
+	if (currenTimer - Old_Timer_Send_AddonMessage_IsMyTurnToInterrupt >= 0.4) or isForce then
+		-- send Addon Message every 0.4 seconds
+		Old_Timer_Send_AddonMessage_IsMyTurnToInterrupt = currenTimer
+		--print("send Addon Message")
+		IROSendISM()
+	end
+	
     return (not IRODPSInterruptTable)
     or (not IRODPSInterruptTable[UnitGUID("target")])
     or (next(IRODPSInterruptTable[UnitGUID("target")])==nil)
     or (IRODPSInterruptTable[UnitGUID("target")][1] == IROInterrupterName)
 end
+
+local ConditionCategory = CNDT:GetCategory("ATTRIBUTES_TMWMC", 12, "More Conditions", true, false)
+
+ConditionCategory:RegisterCondition(6,  "TMWMCISMYTURNTOINTERRUPT", {
+    text = "Is my turn to insterrupt?",
+	tooltip = "check queue interrupt from Every one that has this function\nThis function send Addon Message to Party/Raid and Auto Queue for you.",
+	unit="player",
+	noslide = true,
+	nooperator = true,
+    icon = "Interface\\Icons\\spell_nature_rejuvenation",
+    tcoords = CNDT.COMMON.standardtcoords,
+
+	funcstr = function(c, parent)
+		
+		return [[IsMyTurnToInterrupt(false)]]
+    end,	
+
+})
+

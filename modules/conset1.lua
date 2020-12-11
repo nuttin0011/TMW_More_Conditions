@@ -88,8 +88,7 @@ function TMW_MC:PredictSS()
 		-- trust_segment_cast = 0.6>((currentTime*1000)-startTimeMS)/(endTimeMS-startTimeMS)
 
 		-- if spell < 0.3 sec befor finish casting
-		trust_segment_cast = ((endTimeMS/1000)-currentTime)<0.3
-	
+		trust_segment_cast = ((endTimeMS/1000)-currentTime)>0.3
 		if trust_segment_cast then
 			currentSS = currentSS+(LockSpellModSS[spellName..IROSpecID] or 0)
 			currentSS = (currentSS<=5)and currentSS or 5
@@ -102,7 +101,6 @@ function TMW_MC:PredictSS()
 
 	old_timer_check = currentTime
 	old_val = currentSS
-
 	return currentSS
 end
 

@@ -10,6 +10,8 @@ local DeleteMacro=DeleteMacro
 local CreateMacro=CreateMacro
 local ConsoleExec=ConsoleExec
 local GetTime=GetTime
+local GetSpecialization=GetSpecialization
+local GetSpecializationInfo=GetSpecializationInfo
 
 -- Set Key Binding
 
@@ -41,6 +43,8 @@ function Env.IRODPS_init_Key_Bind()
 end
 
 local Old_Timer_IRODPS_Set_Key_Binding = 0
+local Old_Spec = 0
+
 
 function Env.IRODPS_Set_Key_Binding(nCode)
 
@@ -50,6 +54,13 @@ function Env.IRODPS_Set_Key_Binding(nCode)
 		-- Do not Spam
 		return true
 	end
+	
+	local currentSpec = GetSpecialization()
+	local IROSpecID  = GetSpecializationInfo(currentSpec)
+	if Old_Spec==IROSpecID then return false end
+	
+	Old_Spec=IROSpecID
+	
 	Old_Timer_IRODPS_Set_Key_Binding=currentTime
 	
 	--print(nCode)

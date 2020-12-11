@@ -388,7 +388,7 @@ function Env.IsMyTurnToInterrupt(isForce)
 	
 	
     local IROInterrupterName = IROInterruptTier[IROSpecID][1].. '-'..IROPlayerName.. '-' ..IRORealmName
-	
+
 	local currenTimer=GetTime()
     		
 	if (currenTimer - Old_Timer_Send_AddonMessage_IsMyTurnToInterrupt >= 0.4) or isForce then
@@ -417,7 +417,8 @@ ConditionCategory:RegisterCondition(6,  "TMWMCISMYTURNTOINTERRUPT", {
 
 	funcstr = function(c, parent)
 		
-		return [[IsMyTurnToInterrupt(false)]]
+		--return [[IsMyTurnToInterrupt(false)]]
+		return [[true]]
     end,	
 
 })

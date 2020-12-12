@@ -7,7 +7,12 @@ local GetSpellInfo=GetSpellInfo
 local CNDT = TMW.CNDT
 local Env = CNDT.Env
 
+local GetNumGroupMembers= GetNumGroupMembers
+local UnitHealth=UnitHealth
+local UnitHealthMax=UnitHealthMax
+
 local strsplit=strsplit
+
 
 local function printtable(a)
 	local k,v
@@ -198,8 +203,56 @@ ConditionCategory:RegisterCondition(9.2,  "TMWMCALLDEBUFFDURATION", {
 })
 
 
+--****************************** Target HP compare to (Player HP * Party Size)
 
+function TMW_MC:PlayerPartyHP(nMultiple,IsHealthMax)
+	nUnit = nUnit or "target"
+	nMultiple = nMultiple or 1
+	local numGroup = GetNumGroupMembers()
+	if numGroup == 0 then numGroup = 1 end
+	if IsHealthMax then
+		playerHP=UnitHealthMax("player")
+	else
+		playerHP=UnitHealth("player")		
+	end
+	return playerHP*nMultiple
+end
 
+function Env.PlayerPartyHP(nMultiple,IsHealthMax)
+	return TMW_MC:PlayerPartyHP(nMultiple,IsHealthMax)
+end
+
+ConditionCategory:RegisterCondition(9.3,  "TMWMCCOMPAREHPPARTYANDMOB", {
+	text = "Compare PlayerGroupHP & Unit",
+	tooltip = "Compare PlayerHP * Group_Number and MOB_HP * Multiple_Constant",
+	unit="PartyHP",
+	step = 0.1,
+    min = 0,
+	range = 10,
+	texttable = function(v) return v.." Times" end,
+	name = function(editbox)
+		editbox:SetTexts("Unit To compare HP", "e.g. target")
+	end,
+	check = function(check)
+		check:SetTexts("Use PlayerMaxHP", "Use Player Current HP if unchecked")
+	end,
+	specificOperators = {["<="] = true, [">="] = true},
+    applyDefaults = function(conditionData, conditionSettings)
+        local op = conditionSettings.Operator
+
+        if not conditionData.specificOperators[op] then
+            conditionSettings.Operator = "<="
+        end
+    end,
+
+    icon = "Interface\\Icons\\spell_nature_rejuvenation",
+    tcoords = CNDT.COMMON.standardtcoords,
+
+	funcstr = function(c, parent)
+		return [[PlayerPartyHP(c.Level,c.Checked) c.Operator UnitHealthMax(c.NameRaw)]]
+		
+    end,
+})
 
 
 

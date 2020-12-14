@@ -126,7 +126,7 @@ local function IRODPS_LOCK_AFF_9_0_2_20()
 	Nm[3]="/cast [mod:ctrlalt]Unstable Affliction;[mod:ctrl]Shadow Bolt;[mod:alt]Haunt;[nomod]Siphon Life"
 	Nm[4]="/cast [mod:ctrlalt]notuse;[mod:ctrl,@focus]Agony;[mod:alt,@focus]Corruption;[nomod,@focus]Unstable Affliction"
 	Nm[5]="/cast [mod:ctrlalt,@focus]Shadow Bolt;[mod:ctrl,@focus]Haunt;[mod:alt,@focus]Siphon Life;[nomod]Malefic Rapture"
-	Nm[6]="/use 13\n/use [@player]14\n/cast [mod:ctrl,nomod:alt]Dark Soul: Misery\n/cast [mod:ctrlalt,@focus]Seed of Corruption;[mod:ctrl]Summon Darkglare;[mod:alt,@mouseover]Corruption;[nomod]Phantom Singularity"
+	Nm[6]="/use [mod:ctrl,nomod:alt]14\n/cast [mod:ctrl,nomod:alt]Dark Soul: Misery\n/cast [mod:ctrlalt,@focus]Seed of Corruption;[mod:ctrl]Summon Darkglare;[mod:alt,@mouseover]Corruption;[nomod]Phantom Singularity"
 	Nm[7]="/cast [mod:ctrlalt,@focus]Phantom Singularity;[mod:ctrl,@cursor]Vile Taint;[mod:alt]Mortal Coil;[nomod,@mouseover]Siphon Life"
 	Nm[8]="/cast [mod:ctrlalt]Dark Soul: Misery;[mod:ctrl]Scouring Tithe\n/petattack [nomod]\n/cancelaura [mod:alt,nomod:ctrl]Burning Rush"
 	Nm[9]='/clearfocus [mod:ctrlalt]\n/stopmacro [mod:ctrlalt]\n/target [mod:alt]focus\n/clearfocus [mod:alt]\n/stopmacro [mod:alt]\n/focus [nomod]target\n/targetenemy [nomod][mod:ctrl]\n/run TMW_ST:UpdateCounter("tabtarget", 2);TMW_ST:UpdateCounter("justtabtarget", 1)'

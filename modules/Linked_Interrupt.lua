@@ -1,5 +1,8 @@
 local TMW = TMW
 local TMW_MC = TMW_More_Conditions
+local CNDT = TMW.CNDT
+local Env = CNDT.Env
+
 
 local _GetSpecialization = GetSpecialization
 local _GetSpecializationInfo  = GetSpecializationInfo

@@ -259,17 +259,20 @@ ConditionCategory:RegisterCondition(9.3,  "TMWMCCOMPAREHPPARTYANDMOB", {
 -- interrupt Drain soul at worng timer = Low DPS
 -- Function tell what time to interrupt that is tick 2,3,4,5 + 0.1 sec
 
-local pingTime = 0.2 --sec
-local pingTimePlusAbit = pingTime+0.1
+--local pingTime = 0.2 --sec
+--local pingTimePlusAbit = pingTime+0.1
 local iiDiv5 = {[1]=0.2,[2]=0.4,[3]=0.6,[4]=0.8,[5]=1}
 
 
-function TMW_MC:CanInterruptDrainSoul()
+function TMW_MC:CanInterruptDrainSoul(pp)
 	local nSpell, _, _, startTimeMS, endTimeMS = UnitChannelInfo("player")
 	
 	if nSpell ~= "Drain Soul" then
 		return true
 	end
+	pp = pp or 0.2
+	local pingTime = pp
+	local pingTimePlusAbit = pingTime+0.1
 	local tA = startTimeMS/1000
 	local tB = endTimeMS/1000
 	local tAsubPing = tA-pingTime
@@ -286,8 +289,8 @@ function TMW_MC:CanInterruptDrainSoul()
 	return false
 end
 
-function Env.CanInterruptDrainSoul()
-	return TMW_MC:CanInterruptDrainSoul()
+function Env.CanInterruptDrainSoul(PingTime)
+	return TMW_MC:CanInterruptDrainSoul(tonumber(PingTime))
 end
 
 ConditionCategory:RegisterCondition(9.4,  "TMWMCCANINTERRUPTDRAINSOUL", {
@@ -297,14 +300,17 @@ ConditionCategory:RegisterCondition(9.4,  "TMWMCCANINTERRUPTDRAINSOUL", {
 	--noslide = true,
 	--nooperator = true,
 	bool = true,
+	name = function(editbox)
+		editbox:SetTexts("ping time (sec)", "e.g 0.2 , leave blank = 0.2 sec")
+	end,
 	texttable = {[0] = "should interrupt", [1] = "should not interrupt"},
     icon = "Interface\\Icons\\spell_nature_rejuvenation",
 	tcoords = CNDT.COMMON.standardtcoords,
 	funcstr = function(c, parent)
 		if c.Level == 0 then
-			return [[CanInterruptDrainSoul()]]
+			return [[CanInterruptDrainSoul(c.NameRaw)]]
 		else
-			return [[not CanInterruptDrainSoul()]]
+			return [[not CanInterruptDrainSoul(c.NameRaw)]]
 		end
 		
     end,

@@ -12,7 +12,8 @@ local UnitHealth=UnitHealth
 local UnitHealthMax=UnitHealthMax
 
 local strsplit=strsplit
-
+local UnitChannelInfo=UnitChannelInfo
+local GetTime=GetTime
 
 local function printtable(a)
 	local k,v
@@ -253,6 +254,71 @@ ConditionCategory:RegisterCondition(9.3,  "TMWMCCOMPAREHPPARTYANDMOB", {
 		
     end,
 })
+
+--************************** can i Drain Soul Tick 2 3 4 5 ?
+-- interrupt Drain soul at worng timer = Low DPS
+-- Function tell what time to interrupt that is tick 2,3,4,5 + 0.1 sec
+
+local pingTime = 0.2 --sec
+local pingTimePlusAbit = pingTime+0.1
+local iiDiv5 = {[1]=0.2,[2]=0.4,[3]=0.6,[4]=0.8,[5]=1}
+
+
+function TMW_MC:CanInterruptDrainSoul()
+	local nSpell, _, _, startTimeMS, endTimeMS = UnitChannelInfo("player")
+	
+	if nSpell ~= "Drain Soul" then
+		return true
+	end
+	local tA = startTimeMS/1000
+	local tB = endTimeMS/1000
+	local tAsubPing = tA-pingTime
+	
+	local currentTime=GetTime()
+	local DrainSoulTickTimer = {}
+	local ii
+	for ii=2,5 do
+		DrainSoulTickTimer[ii]=tAsubPing+((tB-tA)*iiDiv5[ii])
+		if (currentTime>DrainSoulTickTimer[ii])and(currentTime<DrainSoulTickTimer[ii]+pingTimePlusAbit) then
+			return true
+		end
+	end
+	return false
+end
+
+function Env.CanInterruptDrainSoul()
+	return TMW_MC:CanInterruptDrainSoul()
+end
+
+ConditionCategory:RegisterCondition(9.4,  "TMWMCCANINTERRUPTDRAINSOUL", {
+	text = "check Tick Drain Soul",
+	tooltip = "return true if GetTime in tick 2,3,4,5 + 0.2 sec",
+	unit="Player",
+	--noslide = true,
+	--nooperator = true,
+	bool = true,
+	texttable = {[0] = "should interrupt", [1] = "should not interrupt"},
+    icon = "Interface\\Icons\\spell_nature_rejuvenation",
+	tcoords = CNDT.COMMON.standardtcoords,
+	funcstr = function(c, parent)
+		if c.Level == 0 then
+			return [[CanInterruptDrainSoul()]]
+		else
+			return [[not CanInterruptDrainSoul()]]
+		end
+		
+    end,
+})
+
+
+
+
+
+
+
+
+
+
 
 
 

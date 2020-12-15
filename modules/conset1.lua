@@ -18,6 +18,7 @@ local Env = CNDT.Env
 
 local GetSpecialization=GetSpecialization
 local GetSpecializationInfo=GetSpecializationInfo
+local UnitIsUnit=UnitIsUnit
 
 local playerGUID = UnitGUID("player")
 local extended_check_timer = _GetTime()
@@ -34,20 +35,55 @@ local function printtable(a)
 	
 	end
 
+--Temp Val of allDeBuffByMe
+temp_allDeBuffByMe ={[1]=0,[2]={}}
+--[1]=timer , [2]= [GUID] = result
+
+function Env.allDeBuffByMe(unit)
+
+    --*********return table of [Debuff name] = Debuff time remaining
+	local unitGUID = _UnitGUID(unit)
+	local currentTimer = _GetTime()
+
+	if (temp_allDeBuffByMe[1]==currentTimer)and(temp_allDeBuffByMe[2][unitGUID]) then
+		return temp_allDeBuffByMe[2][unitGUID]
+	end
+
+	if temp_allDeBuffByMe[1]<currentTimer then
+		temp_allDeBuffByMe[1]=currentTimer
+		temp_allDeBuffByMe[2]={}
+	end
+
+    local DebuffName,expTime,i
+    local allDeBuff={}
+    for i=1,40 do
+        DebuffName,_,_,_,_,expTime = _UnitAura(unit, i, "PLAYER|HARMFUL")
+        if DebuffName then 
+            allDeBuff[DebuffName]=expTime-GetTime()
+        else break end
+    end
+
+	temp_allDeBuffByMe[2][unitGUID]=allDeBuff
+
+    return allDeBuff
+end
+
 Env.PredictLockSS = function()
     return TMW_MC:PredictSS()
 end
 
 local LockSpellModSS = {
-	["Hand of Gul'dan266"]=-3, --266 = Demo
-	["Shadow Bolt266"]=1, 
-	["Call Dreadstalkers266"]=-2,
-	["Summon Vilefiend266"]=-1,
-	["Nether Portal266"]=-1,
-	["Summon Demonic Tyrant266"]=5,
-	["Demonbolt266"]=2,
-	["Seed of Corruption265"]=-1, --265 = Aff
-	["Malefic Rapture265"]=-1,
+	["Hand of Gul'dan266"]=-30, --266 = Demo
+	["Shadow Bolt266"]=10, 
+	["Call Dreadstalkers266"]=-20,
+	["Summon Vilefiend266"]=-10,
+	["Nether Portal266"]=-10,
+	["Summon Demonic Tyrant266"]=50,
+	["Demonbolt266"]=20,
+	["Seed of Corruption265"]=-10, --265 = Aff
+	["Malefic Rapture265"]=-10,
+	["Chaos Bolt267"]=-20, -- 267 = des
+	["Incinerate267"]=2
 }
 
 local function PredictSSFrameEvent(self, event, ...)
@@ -79,21 +115,44 @@ function TMW_MC:PredictSS()
 	local currentSpec = GetSpecialization()
     local IROSpecID  = GetSpecializationInfo(currentSpec)
 
-	local currentSS = _UnitPower("player",7)
+	local currentSS = _UnitPower("player",7,true)
 
 	local spellName,_,_, startTimeMS, endTimeMS = _UnitCastingInfo("player")
 
 	if spellName then
+		local endTime = endTimeMS/1000
 		-- if > 6/10 of spell cast bar ?
 		-- trust_segment_cast = 0.6>((currentTime*1000)-startTimeMS)/(endTimeMS-startTimeMS)
 
 		-- if spell < 0.3 sec befor finish casting
-		trust_segment_cast = ((endTimeMS/1000)-currentTime)>0.3
+		trust_segment_cast = (endTime-currentTime)>0.3
 		if trust_segment_cast then
-			currentSS = currentSS+(LockSpellModSS[spellName..IROSpecID] or 0)
-			currentSS = (currentSS<=5)and currentSS or 5
+			if spellName == "Incinerate" then
+				-- check Havoc for double SS generate
+				local nn
+				local nnDebuff
+				local hasHavoc = false
+				for ii = 1,30 do
+					nn="nameplate"..ii
+					if _UnitExists(nn) then
+						nnDebuff = Env.allDeBuffByMe(nn)
+						if nnDebuff["Havoc"] then
+							hasHavoc = (not UnitIsUnit("target",nn)) and (nnDebuff["Havoc"]>(0.1+endTime-currentTime))
+							break
+						end
+					end
+				end
+				if hasHavoc then 
+					currentSS = currentSS + 4
+				else
+					currentSS = currentSS + 2
+				end
+			else
+				currentSS = currentSS+(LockSpellModSS[spellName..IROSpecID] or 0)
+			end
+			currentSS = (currentSS<=50)and currentSS or 50
 			currentSS = (currentSS>=0)and currentSS or 0
-			old_spell_finish_cast_check = (endTimeMS/1000)+0.2
+			old_spell_finish_cast_check = endTime+0.2
 		else
 			return old_val
 		end
@@ -112,12 +171,12 @@ local ConditionCategory = CNDT:GetCategory("ATTRIBUTES_TMWMC", 12, "More Conditi
 
 ConditionCategory:RegisterCondition(8.5,  "TMWMCPREDICTSS", {
     text = "Predict Warlock Soul Shard",
-    tooltip = "Predict Warlock SS after casting spell.",
+    tooltip = "Predict Warlock SS after casting spell.\n 0.1 = 1 ss fragment in Des",
     step = 1,
     min = 0,
-    max = 5,
+    max = 50,
     unit="player",
-
+	texttable = function(k) return (k/10) .." ss" end, -- calculate SS fragment, Display SSFragment / 10
     icon = "Interface\\Icons\\ability_druid_bash",
     tcoords = CNDT.COMMON.standardtcoords,
 
@@ -264,38 +323,7 @@ Env.HowManyMyDotOnThisMob = function(nTarget,greaterThan,nDotTimer,DotSpecific)
 end
 
 
---Temp Val of allDeBuffByMe
-temp_allDeBuffByMe ={[1]=0,[2]={}}
---[1]=timer , [2]= [GUID] = result
 
-function Env.allDeBuffByMe(unit)
-
-    --*********return table of [Debuff name] = Debuff time remaining
-	local unitGUID = _UnitGUID(unit)
-	local currentTimer = _GetTime()
-
-	if (temp_allDeBuffByMe[1]==currentTimer)and(temp_allDeBuffByMe[2][unitGUID]) then
-		return temp_allDeBuffByMe[2][unitGUID]
-	end
-
-	if temp_allDeBuffByMe[1]<currentTimer then
-		temp_allDeBuffByMe[1]=currentTimer
-		temp_allDeBuffByMe[2]={}
-	end
-
-    local DebuffName,expTime,i
-    local allDeBuff={}
-    for i=1,40 do
-        DebuffName,_,_,_,_,expTime = _UnitAura(unit, i, "PLAYER|HARMFUL")
-        if DebuffName then 
-            allDeBuff[DebuffName]=expTime-GetTime()
-        else break end
-    end
-
-	temp_allDeBuffByMe[2][unitGUID]=allDeBuff
-
-    return allDeBuff
-end
 
 function TMW_MC:HowManyMyDotOnThisMob(nTarget,greaterThan,nDotTimer,DotSpecific)
 	nTarget = nTarget or "target"

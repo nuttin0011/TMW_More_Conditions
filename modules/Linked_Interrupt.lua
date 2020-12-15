@@ -18,7 +18,7 @@ if not IROInterruptTier then
     IROInterruptTier = {}
     IROInterruptTier[71] = {'B','Pummel'} -- Arm
     IROInterruptTier[72] = {'B','Pummel'} -- fury
-    IROInterruptTier[72] = {'A','Pummel'} -- Protection
+    IROInterruptTier[73] = {'A','Pummel'} -- Protection
     IROInterruptTier[265] = {'D','Command Demon'} -- Aff [Spell Lock]
     IROInterruptTier[266] = {'D','Command Demon'} -- Demo
     IROInterruptTier[267] = {'D','Command Demon'} -- Dest

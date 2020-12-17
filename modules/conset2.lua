@@ -14,6 +14,7 @@ local UnitHealthMax=UnitHealthMax
 local strsplit=strsplit
 local UnitChannelInfo=UnitChannelInfo
 local GetTime=GetTime
+local UnitAffectingCombat=UnitAffectingCombat
 
 local function printtable(a)
 	local k,v
@@ -206,9 +207,8 @@ ConditionCategory:RegisterCondition(9.2,  "TMWMCALLDEBUFFDURATION", {
 
 --****************************** Target HP compare to (Player HP * Party Size)
 
-function TMW_MC:PlayerPartyHP(nMultiple,IsHealthMax)
+function TMW_MC:PlayerPartyHP(IsHealthMax)
 	nUnit = nUnit or "target"
-	nMultiple = nMultiple or 1
 	local numGroup = GetNumGroupMembers()
 	if numGroup == 0 then numGroup = 1 end
 	if IsHealthMax then
@@ -216,11 +216,11 @@ function TMW_MC:PlayerPartyHP(nMultiple,IsHealthMax)
 	else
 		playerHP=UnitHealth("player")		
 	end
-	return playerHP*nMultiple
+	return playerHP
 end
 
-function Env.PlayerPartyHP(nMultiple,IsHealthMax)
-	return TMW_MC:PlayerPartyHP(nMultiple,IsHealthMax)
+function Env.PlayerPartyHP(IsHealthMax)
+	return TMW_MC:PlayerPartyHP(IsHealthMax)
 end
 
 ConditionCategory:RegisterCondition(9.3,  "TMWMCCOMPAREHPPARTYANDMOB", {
@@ -250,7 +250,7 @@ ConditionCategory:RegisterCondition(9.3,  "TMWMCCOMPAREHPPARTYANDMOB", {
     tcoords = CNDT.COMMON.standardtcoords,
 
 	funcstr = function(c, parent)
-		return [[PlayerPartyHP(c.Level,c.Checked) c.Operator UnitHealthMax(c.NameRaw)]]
+		return [[PlayerPartyHP(c.Checked) c.Operator (UnitHealthMax(c.NameRaw)*c.Level)]]
 		
     end,
 })
@@ -293,7 +293,7 @@ function Env.CanInterruptDrainSoul(PingTime)
 	return TMW_MC:CanInterruptDrainSoul(tonumber(PingTime))
 end
 
-ConditionCategory:RegisterCondition(9.4,  "TMWMCCANINTERRUPTDRAINSOUL", {
+ConditionCategory:RegisterCondition(9.5,  "TMWMCCANINTERRUPTDRAINSOUL", {
 	text = "check Tick Drain Soul",
 	tooltip = "return true if GetTime in tick 2,3,4,5 + 0.2 sec",
 	unit="Player",
@@ -317,8 +317,50 @@ ConditionCategory:RegisterCondition(9.4,  "TMWMCCANINTERRUPTDRAINSOUL", {
 })
 
 
+--****************************** Sum HP Mob Incombat VS Player HP * Party size
 
 
+function TMW_MC:SumMobHPIncombat()
+    local sumhp =0
+    local nn
+    for ii =1,30 do
+        nn='nameplate'..ii
+        if UnitExists(nn) and UnitAffectingCombat(nn) then
+            sumhp=sumhp+ UnitHealth(nn)
+        end
+    end
+    return sumhp
+end
+
+function Env.SumMobHPIncombat()
+	return TMW_MC:SumMobHPIncombat()
+end
+
+ConditionCategory:RegisterCondition(9.4,  "TMWMCCOMPAREHPPARTYANDMOBINCOMBAT", {
+	text = "Compare PlayerGroupHP & All Mob Incombat",
+	tooltip = "Compare PlayerHP * Group_Number and All_MOB_InCombat_HP * Multiple_Constant\nEnemy Name Plate Must Turn On.",
+	unit="PartyHP",
+	step = 0.1,
+    min = 0,
+	range = 10,
+	texttable = function(v) return v.." Times HPMobIncombat" end,
+	specificOperators = {["<="] = true, [">="] = true},
+    applyDefaults = function(conditionData, conditionSettings)
+        local op = conditionSettings.Operator
+
+        if not conditionData.specificOperators[op] then
+            conditionSettings.Operator = "<="
+        end
+    end,
+
+    icon = "Interface\\Icons\\spell_nature_rejuvenation",
+    tcoords = CNDT.COMMON.standardtcoords,
+
+	funcstr = function(c, parent)
+		return [[PlayerPartyHP() c.Operator (SumMobHPIncombat()*c.Level)]]
+		
+    end,
+})
 
 
 

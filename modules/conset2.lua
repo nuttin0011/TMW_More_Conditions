@@ -54,7 +54,7 @@ function TMW_MC:LowestDebuffDuration(nDebuff,nSetDebuff,nUnit)
 	nSetDebuff = nSetDebuff or ""
 	if nSetDebuff == ";" then nSetDebuff="" end
 	
-	nDebuff = string.lower(nDebuffName)
+	--nDebuff = string.lower(nDebuffName)
 	nSetDebuff = string.lower(nSetDebuff)
 	nUnit = nUnit or "target"
 	
@@ -90,10 +90,9 @@ function TMW_MC:LowestDebuffDuration(nDebuff,nSetDebuff,nUnit)
 	end
 
 	local DebuffTime = deBuff[nDebuffName]
-	
 	local k,v
     for k,v in pairs(deBuff) do
-		if IsSpellInSpellSet(string.lower(k)) and v<DebuffTime then
+		if IsSpellInSpellSet(string.lower(k)) and (v<DebuffTime) then
 			Env.Old_Val_Update("LowestDebuffDuration",nDebuff..nSetDebuff..nUnit,false)
 			return false
 		end

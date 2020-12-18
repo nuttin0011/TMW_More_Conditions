@@ -42,8 +42,11 @@ temp_allDeBuffByMe ={[1]=0,[2]={}}
 function Env.allDeBuffByMe(unit)
 
     --*********return table of [Debuff name] = Debuff time remaining
+	local allDeBuff={}
 	local unitGUID = _UnitGUID(unit)
+	if not unitGUID then return allDeBuff end
 	local currentTimer = _GetTime()
+
 
 	if (temp_allDeBuffByMe[1]==currentTimer)and(temp_allDeBuffByMe[2][unitGUID]) then
 		return temp_allDeBuffByMe[2][unitGUID]
@@ -55,7 +58,7 @@ function Env.allDeBuffByMe(unit)
 	end
 
     local DebuffName,expTime,i
-    local allDeBuff={}
+
     for i=1,40 do
         DebuffName,_,_,_,_,expTime = _UnitAura(unit, i, "PLAYER|HARMFUL")
         if DebuffName then 

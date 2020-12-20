@@ -71,6 +71,42 @@ function Env.allDeBuffByMe(unit)
     return allDeBuff
 end
 
+--Temp Val of allBuffByMe
+temp_allBuffByMe ={[1]=0,[2]={}}
+--[1]=timer , [2]= [GUID] = result
+
+function Env.allBuffByMe(unit)
+
+    --*********return table of [Buff name] = Buff time remaining
+	local allBuff={}
+	local unitGUID = _UnitGUID(unit)
+	if not unitGUID then return allBuff end
+	local currentTimer = _GetTime()
+
+
+	if (temp_allBuffByMe[1]==currentTimer)and(temp_allBuffByMe[2][unitGUID]) then
+		return temp_allBuffByMe[2][unitGUID]
+	end
+
+	if temp_allBuffByMe[1]<currentTimer then
+		temp_allBuffByMe[1]=currentTimer
+		temp_allBuffByMe[2]={}
+	end
+
+    local DebuffName,expTime,i
+
+    for i=1,40 do
+        DebuffName,_,_,_,_,expTime = _UnitAura(unit, i, "PLAYER|HELPFUL")
+        if DebuffName then 
+            allBuff[DebuffName]=expTime-GetTime()
+        else break end
+    end
+
+	temp_allBuffByMe[2][unitGUID]=allBuff
+
+    return allBuff
+end
+
 Env.PredictLockSS = function()
     return TMW_MC:PredictSS()
 end

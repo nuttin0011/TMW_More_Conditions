@@ -70,14 +70,23 @@ IROSendISM = function(isForce)
     local currentSpec = _GetSpecialization()
     local IROSpecID  = _GetSpecializationInfo(currentSpec)
 
-    local IROInterrupterName = IROInterruptTier[IROSpecID][1].. '-'..IROPlayerName.. '-' ..IRORealmName
-    local IROInterruptSpellName = IROInterruptTier[IROSpecID][2]
-    
+    local IROInterrupterName = ''
+    local IROInterruptSpellName = ''
+
+    if IROInterruptTier[IROSpecID] then
+        IROInterrupterName = IROInterruptTier[IROSpecID][1].. '-'..IROPlayerName.. '-' ..IRORealmName
+        IROInterruptSpellName = IROInterruptTier[IROSpecID][2]
+    else
+        IROInterrupterName = 'F'.. '-'..IROPlayerName.. '-' ..IRORealmName
+        IROInterruptSpellName = ''
+    end
+
     local canInterrupt
     if IROInterruptSpellName == '' then
         canInterrupt=false
     else
         canInterrupt= (GetSpellCooldown(IROInterruptSpellName) == 0) and (IsSpellInRange(IROInterruptSpellName, "target")==1)
+        --canInterrupt=false
     end
     
     if (IROSpecID>=265)and(IROSpecID<=267) then

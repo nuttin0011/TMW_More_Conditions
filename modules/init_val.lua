@@ -171,4 +171,379 @@ function Env.SumHPMobinCombat()
     return sumhp
 end
 
+--********************** OLD FUNCTION **************************
+
+
+function TMW.CNDT.Env.IROEnemyCount()
+    -- return Enemy Count in 8 yd Max 5
+    if GetTime() == oldtimeIROEnemyCount then
+        return oldIROEnemyCount
+    end
+    oldtimeIROEnemyCount = GetTime()
+    local i,nn,count
+    count=0
+    for i=1,30 do
+        nn='nameplate'..i
+        if UnitExists(nn) and IsItemInRange("item:34368", nn) then
+            count=count+1
+        end
+        if count>=5 then break end
+    end
+    oldIROEnemyCount=count
+    return  count
+end
+
+function TMW.CNDT.Env.GroupHPPercent()
+    if GroupHPPercentTimer == GetTime() then
+        return GroupHPPercentOldVar
+    end
+    local i,nn,sumHP,sumHPMax
+    if IsInRaid() then
+        sumHP=0
+        sumHPMax=0
+        for i=1,40 do
+            nn="raid"..i
+            if UnitExists(nn)and(not UnitIsDead(nn))and UnitInRange(nn) then
+                sumHP=sumHP+UnitHealth(nn)
+                sumHPMax=sumHPMax+UnitHealthMax(nn)
+    end end else
+        sumHP=UnitHealth("player")
+        sumHPMax=UnitHealthMax("player")
+        for i=1,4 do
+            nn="party"..i
+            if UnitExists(nn)and(not UnitIsDead(nn))and UnitInRange(nn) then
+                sumHP=sumHP+UnitHealth(nn)
+                sumHPMax=sumHPMax+UnitHealthMax(nn)
+    end end end
+    GroupHPPercentTimer = GetTime()
+    GroupHPPercentOldVar = (sumHP/sumHPMax)*100
+    return GroupHPPercentOldVar
+end
+
+function TMW.CNDT.Env.GroupHPPercent()
+    if GroupHPPercentTimer == GetTime() then
+        return GroupHPPercentOldVar
+    end
+    local i,nn,sumHP,sumHPMax
+    if IsInRaid() then
+        sumHP=0
+        sumHPMax=0
+        for i=1,40 do
+            nn="raid"..i
+            if UnitExists(nn)and(not UnitIsDead(nn))and UnitInRange(nn) then
+                sumHP=sumHP+UnitHealth(nn)
+                sumHPMax=sumHPMax+UnitHealthMax(nn)
+    end end else
+        sumHP=UnitHealth("player")
+        sumHPMax=UnitHealthMax("player")
+        for i=1,4 do
+            nn="party"..i
+            if UnitExists(nn)and(not UnitIsDead(nn))and UnitInRange(nn) then
+                sumHP=sumHP+UnitHealth(nn)
+                sumHPMax=sumHPMax+UnitHealthMax(nn)
+    end end end
+    GroupHPPercentTimer = GetTime()
+    GroupHPPercentOldVar = (sumHP/sumHPMax)*100
+    return GroupHPPercentOldVar
+end
+
+function TMW.CNDT.Env.SumHPMobin8yd()
+    local sumhp =0
+    local ii,nn
+    for ii =1,30 do
+        nn='nameplate'..ii
+        if UnitExists(nn) and IsItemInRange("item:34368", nn) then
+            sumhp=sumhp+ UnitHealth(nn)
+        end
+    end
+    return sumhp
+end
+
+function TMW.CNDT.Env.PercentCastbar(PercentCast, MustInterruptAble, MaxTMS, MinTMS)
+    
+    PercentCast = PercentCast or 0.6
+    if MustInterruptAble == nil then MustInterruptAble = true end
+    MaxTMS = MaxTMS or 2000
+    MinTMS = MinTMS or 800
+    
+    local castingName, _, _, startTimeMS, endTimeMS, _, _, notInterruptible= UnitCastingInfo("target")
+    
+    local wantInterrupt = false
+    
+    if (castingName ~= nil) and(not(notInterruptible and MustInterruptAble)) then
+        local totalcastTime = endTimeMS-startTimeMS
+        local currentcastTime = (GetTime()*1000)-startTimeMS       
+        
+        if (totalcastTime-currentcastTime)>MaxTMS then
+            -- if cast time > MaxTMS ms dont interrupt
+            wantInterrupt = false
+        elseif (totalcastTime-currentcastTime)<MinTMS then 
+            -- if cast time < MinTMS ms dont interrupt
+            wantInterrupt = true
+        else
+            local percentcastTime = currentcastTime/totalcastTime
+            wantInterrupt = percentcastTime >= PercentCast
+        end
+        return  wantInterrupt
+    end
+    
+    
+    local channelName, _, _, CstartTimeMS, CendTimeMS,_, CnotInterruptible= UnitChannelInfo("target") 
+    
+    if (channelName ~= nil) and (not (CnotInterruptible and MustInterruptAble)) then
+        PercentCast = 1-PercentCast
+        local totalcastTime = CendTimeMS-CstartTimeMS
+        local currentcastTime = (GetTime()*1000)-CstartTimeMS 
+        
+        if (currentcastTime>=MinTMS) and (currentcastTime<=totalcastTime-MinTMS) then
+            -- dont interrupt when cast < MinTMS and nerly finish
+            local percentcastTime = currentcastTime/totalcastTime
+            wantInterrupt = percentcastTime >= PercentCast
+        end
+        
+        
+    end 
+    
+    return  wantInterrupt
+end
+
+--[[  this function already exists at "conset1.lua"
+function TMW.CNDT.Env.allBuffByMe(unit)
+    -- return table of [buff name] = buff time remaining
+    
+    local buffName,expTime,i
+    local allBuff={}
+    for i=1,40 do
+        buffName,_,_,_,_,expTime = UnitAura(unit, i, "PLAYER|HELPFUL")
+        if buffName then 
+            allBuff[buffName]=expTime-GetTime()
+        else break  end
+    end
+    
+    return allBuff
+end
+--]]
+
+
+
+-- THIS Function for Shaman Heal 8.3!!!!!
+function TMW.CNDT.Env.CheckBuffMustHaveByMe(unit)
+    -- return %HP modify if condition met.
+    
+    local buffMustHave = {}
+    local i
+    local HPMod = 0
+    
+    -- assign buff must have
+    -- buffMustHave[n]={"buffName",minCDRemain,HPmod,["Roles assigned"]}
+    
+    buffMustHave[1] = {"Ancestral Vigor",3,10,"TANK"}
+    
+    -- get all buff by me
+    local allBuff = TMW.CNDT.Env.allBuffByMe(unit)
+    
+    for i in pairs(buffMustHave) do
+        
+        if (not allBuff[buffMustHave[i][1]]) or (allBuff[buffMustHave[i][1]]<buffMustHave[i][2]) then
+            -- notHave Buff/Have Buff but CD < MinCDRemain
+            if (buffMustHave[i][4]~=nil) then 
+                -- Have UnitGroupRolesAssigned condition
+                if (UnitGroupRolesAssigned(unit)==buffMustHave[i][4]) then 
+                    if (HPMod<buffMustHave[i][3]) then
+                        HPMod=buffMustHave[i][3]
+                    end
+                end               
+            else
+                -- not Have UnitGroupRolesAssigned condition
+                if (HPMod<buffMustHave[i][3]) then
+                    HPMod=buffMustHave[i][3]
+                end
+            end
+        end
+    end
+    
+    
+    return HPMod
+end
+
+function TMW.CNDT.Env.predictHPremain(unit,DMagic,DDisease,DPoison,DCurse)
+    -- return percent HP remain
+    -- =currentHP + Shield + IncommingHeal/2
+    -- -HealAbsorb + ifHP>80%constant
+    -- -WantCleanConstant (Magic,Disease,Poison,Curse)
+    local M,D,P,C = TMW.CNDT.Env.CheckDebuffAuraType(unit)
+    
+    DMagic = (DMagic or 0)*(M and 1 or 0)
+    -- check Unit Has MagicDEBUFF? and if has use as penalty %HP
+    DDisease = (DDisease or 0)*(D and 1 or 0)
+    DPoison = (DPoison or 0)*(P and 1 or 0)
+    DCurse = (DCurse or 0)*(C and 1 or 0)
+    
+    local uMHP= UnitHealthMax(unit)/100
+    
+    -- if unit not exists return 50000
+    if uMHP==0 then return 50000 end
+    
+    local iCH = (UnitGetIncomingHeals(unit)or 0) /(uMHP*2)
+    local abs = UnitGetTotalAbsorbs(unit)/uMHP
+    local Habs= UnitGetTotalHealAbsorbs(unit)/uMHP
+    local uHP = UnitHealth(unit)/uMHP
+    local HPMod=0 --TMW.CNDT.Env.CheckBuffMustHaveByMe(unit)
+    
+    -- debuff penaltry chose only Max one
+    local DBP = math.max(DMagic,DDisease,DPoison,DCurse)
+    
+    uHP=uHP+abs
+    
+    if uHP>60 then uHP=uHP+20 end -- HP > 60% less chance to chose
+    if uHP>80 then uHP=uHP+20 end -- if HP > 80% more less chance
+    
+    -- Tank -1%hp for 1st pick
+    if UnitGroupRolesAssigned(unit) =="TANK" then
+        return (uHP+iCH-Habs-DBP-HPMod)-1
+    else
+        return (uHP+iCH-Habs-DBP-HPMod)
+    end
+    
+end
+
+function TMW.CNDT.Env.NumberPPLNeedBuff(buffNeed,PLowHP)
+    
+    -- Return number of Player HP < PLowHP
+    
+    function percentHP(unit)
+        return UnitHealth(unit)/UnitHealthMax(unit)*100
+    end
+    
+    function hasbuff(unit,ibuff)
+        local i
+        local buffName
+        local ihasbuff=false
+        
+        for i=1,40 do
+            buffName=UnitAura(unit, i, "PLAYER|HELPFUL")
+            if buffName then 
+                if buffName==ibuff then 
+                    ihasbuff=true                    
+                    break
+                end
+            else 
+                break  
+            end
+        end
+        return ihasbuff
+    end
+    
+    
+    local i,NN
+    local ppl=0
+    local pplparty=0
+    local pplraid=0
+    if (percentHP("player")<PLowHP)and(not hasbuff("player",buffNeed)) then 
+        ppl=ppl+1 
+    end
+    
+    
+    for i =1,4 do
+        NN ="party"..i
+        if (UnitExists(NN)and(not UnitIsDead(NN))and UnitInRange(NN))then
+            if (percentHP(NN)<PLowHP)and(not hasbuff(NN,buffNeed))then
+                pplparty=pplparty+1
+            end    
+            
+        end   
+    end
+    
+    for i =1,40 do
+        NN ="raid"..i
+        if (UnitExists(NN)and(not UnitIsDead(NN))and UnitInRange(NN)) then
+            if (percentHP(NN)<PLowHP)and(not hasbuff(NN,buffNeed))then 
+                pplraid=pplraid+1
+            end             
+        end       
+    end   
+    --print(ppl)
+    
+    if (pplraid==0) then 
+        -- in party
+        return (ppl+pplparty)
+    else 
+        -- in raid
+        return pplraid
+    end
+    
+end
+
+function TMW.CNDT.Env.NumberPPLLowHP(PLowHP)
+    
+    PLowHP = PLowHP or 80 -- if PLowHP = 0 or nil then PLowHP = 80
+    -- Return number of Player HP < PLowHP
+    -- PLowHP is number 0..100
+    
+    function percentHP(unit)
+        return UnitHealth(unit)/UnitHealthMax(unit)*100
+    end
+    
+    --1=solo,2=party,3=raid
+    local groupType = ((IsInRaid() and 3) or (IsInGroup() and 2) or 1)
+    
+    local i,NN
+    local ppl=0
+    
+    
+    
+    if groupType<=2 then
+        if percentHP("player")<PLowHP then ppl=ppl+1 end
+        
+        if groupType==2 then
+            for i =1,4 do
+                NN ="party"..i
+                if (UnitExists(NN)and(not UnitIsDead(NN))and UnitInRange(NN)) then
+                    if percentHP(NN)<PLowHP then ppl=ppl+1 end
+                end   
+            end
+        end
+        
+    else --groupType==3
+        for i =1,40 do
+            NN ="raid"..i
+            if (UnitExists(NN)and(not UnitIsDead(NN))and UnitInRange(NN)) then
+                if percentHP(NN)<PLowHP then ppl=ppl+1 end             
+            end
+            if ppl>=5 then break end
+        end
+    end
+    
+    return ppl
+    
+end
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 

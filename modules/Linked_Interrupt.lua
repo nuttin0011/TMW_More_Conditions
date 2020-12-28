@@ -6,6 +6,7 @@ local Env = CNDT.Env
 
 local _GetSpecialization = GetSpecialization
 local _GetSpecializationInfo  = GetSpecializationInfo
+local _UnitExists = UnitExists
 local GetRealmName=GetRealmName
 local GetUnitName=GetUnitName
 local GetSpellCooldown=GetSpellCooldown
@@ -271,8 +272,8 @@ ConditionCategory:RegisterCondition(6,  "TMWMCISMYTURNTOINTERRUPT", {
 
 	funcstr = function(c, parent)
 		
-		--return [[IsMyTurnToInterrupt(false)]]
-		return [[true]] -- trun this function off for now, need to Debug
+		return [[IsMyTurnToInterrupt(false)]]
+		--return [[true]] -- trun this function off for now, need to Debug
     end,	
 
 })

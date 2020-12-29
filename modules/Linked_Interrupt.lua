@@ -66,6 +66,7 @@ IRORealmName=GetRealmName()
 IRODPSInterruptTable = {}
 
 IROSendISM = function(isForce)
+    
     local tGUID=(UnitGUID("target") or "error")
 
     local currentSpec = _GetSpecialization()

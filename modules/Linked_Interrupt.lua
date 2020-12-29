@@ -242,7 +242,11 @@ function Env.IsMyTurnToInterrupt(isForce)
     local currentSpec = _GetSpecialization()
     local IROSpecID  = _GetSpecializationInfo(currentSpec)
 	
-	
+    if (not IROInterruptTier) or (not IROInterruptTier[IROSpecID]) or (not IROInterruptTier[IROSpecID][1])
+        or (not IROPlayerName) or (not IRORealmName) then
+            return true
+        end
+    
     local IROInterrupterName = IROInterruptTier[IROSpecID][1].. '-'..IROPlayerName.. '-' ..IRORealmName
 
 	local currenTimer=GetTime()

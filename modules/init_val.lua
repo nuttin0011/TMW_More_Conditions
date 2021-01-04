@@ -259,20 +259,24 @@ function TMW.CNDT.Env.SumHPMobin8yd()
     return sumhp
 end
 
-function TMW.CNDT.Env.PercentCastbar(PercentCast, MustInterruptAble, MaxTMS, MinTMS)
+function TMW.CNDT.Env.PercentCastbar(PercentCast, MustInterruptAble,unit, MinTMS,MaxTMS)
     
     PercentCast = PercentCast or 0.6
     if MustInterruptAble == nil then MustInterruptAble = true end
     MaxTMS = MaxTMS or 2000
     MinTMS = MinTMS or 800
+	unit = unit or "target"
     
-    local castingName, _, _, startTimeMS, endTimeMS, _, _, notInterruptible= UnitCastingInfo("target")
+    local castingName, _, _, startTimeMS, endTimeMS, _, _, notInterruptible= UnitCastingInfo(unit)
     
     local wantInterrupt = false
-    
+	local totalcastTime
+    local currentcastTime
+	local percentcastTime
+	
     if (castingName ~= nil) and(not(notInterruptible and MustInterruptAble)) then
-        local totalcastTime = endTimeMS-startTimeMS
-        local currentcastTime = (GetTime()*1000)-startTimeMS       
+        totalcastTime = endTimeMS-startTimeMS
+        currentcastTime = (GetTime()*1000)-startTimeMS       
         
         if (totalcastTime-currentcastTime)>MaxTMS then
             -- if cast time > MaxTMS ms dont interrupt
@@ -281,24 +285,24 @@ function TMW.CNDT.Env.PercentCastbar(PercentCast, MustInterruptAble, MaxTMS, Min
             -- if cast time < MinTMS ms dont interrupt
             wantInterrupt = true
         else
-            local percentcastTime = currentcastTime/totalcastTime
+            percentcastTime = currentcastTime/totalcastTime
             wantInterrupt = percentcastTime >= PercentCast
         end
         return  wantInterrupt
     end
     
-    
-    local channelName, _, _, CstartTimeMS, CendTimeMS,_, CnotInterruptible= UnitChannelInfo("target") 
+    local channelName, _, _, CstartTimeMS, CendTimeMS,_, CnotInterruptible= UnitChannelInfo(unit) 
     
     if (channelName ~= nil) and (not (CnotInterruptible and MustInterruptAble)) then
         PercentCast = 1-PercentCast
-        local totalcastTime = CendTimeMS-CstartTimeMS
-        local currentcastTime = (GetTime()*1000)-CstartTimeMS 
+        totalcastTime = CendTimeMS-CstartTimeMS
+        currentcastTime = (GetTime()*1000)-CstartTimeMS 
         
-        if (currentcastTime>=MinTMS) and (currentcastTime<=totalcastTime-MinTMS) then
+        if (currentcastTime>=MinTMS) and (currentcastTime<=(totalcastTime-MinTMS)) then
             -- dont interrupt when cast < MinTMS and nerly finish
-            local percentcastTime = currentcastTime/totalcastTime
-            wantInterrupt = percentcastTime >= PercentCast
+            --percentcastTime = currentcastTime/totalcastTime
+            --wantInterrupt = percentcastTime >= PercentCast
+			wantInterrupt = true
         end
         
         

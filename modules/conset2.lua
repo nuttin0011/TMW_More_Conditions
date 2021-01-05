@@ -361,7 +361,10 @@ ConditionCategory:RegisterCondition(9.4,  "TMWMCCOMPAREHPPARTYANDMOBINCOMBAT", {
     end,
 })
 
-
+--******************************* IsMobHasImportanSpellToInterrupt
+-- Return True if no need to keep InterrupterSpell for Interrupt ImportanSpell
+-- Return True if "unit" has ImportanSpell and Casting
+-- Return False if "unit"+"NamePlateEnemyIncombat" has ImportanSpell and NotCasting
 
 
 

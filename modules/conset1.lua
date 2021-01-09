@@ -12,6 +12,7 @@ local _UnitExists = UnitExists
 local _UnitGUID = UnitGUID
 local Old_Val_Check = TMW.CNDT.Env.Old_Val_Check
 local Old_Val_Update = TMW.CNDT.Env.Old_Val_Update
+local GetSpellCooldown=GetSpellCooldown
 
 local CNDT = TMW.CNDT
 local Env = CNDT.Env
@@ -519,6 +520,55 @@ ConditionCategory:RegisterCondition(9,  "TMWMCIROCOMPAREHP", {
     end,
 })
 
+--GCD Remain
+function TMW_MC:GCDRemain()
+	--return GCD Ramain
+	
+	local OldVal=Old_Val_Check("GCDRemain","")
+	if OldVal then return OldVal end
+	
+	local st,du=GetSpellCooldown(TMW.GCDSpell)
+	local ti = 0
+	if st>0 then
+		ti=(st+du)-_GetTime()
+	end
+	
+	Old_Val_Update("GCDRemain","",ti)
+	
+    return  ti
+	
+end
+
+Env.GCDRemain = function()
+    return TMW_MC:GCDRemain()
+end
+
+
+ConditionCategory:RegisterCondition(9,  "TMWMCGCDCOMPARE", {
+    text = "GCD",
+	unit="player",
+	step=0.1,
+	min=0,
+	max=2,
+	icon = "Interface\\Icons\\spell_nature_rejuvenation",	
+	formatter = TMW.C.Formatter.TIME_0USABLE,
+    tcoords = CNDT.COMMON.standardtcoords,	
+
+	specificOperators = {["<="] = true, [">="] = true, ["=="]=true, ["~="]=true,["<"] = true, [">"] = true},
+	
+	applyDefaults = function(conditionData, conditionSettings)
+        local op = conditionSettings.Operator
+
+        if not conditionData.specificOperators[op] then
+            conditionSettings.Operator = ">="
+        end
+    end,
+
+	funcstr = function(c, parent)
+		return [[(GCDRemain() c.Operator c.Level)]]
+		
+    end,
+})
 
 
 

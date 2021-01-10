@@ -457,7 +457,7 @@ function TMW_MC:IROEnemyCountIn8yd(Rlevel)
     local count=0
     for i=1,30 do
         nn='nameplate'..i
-        if UnitExists(nn) and UnitAffectingCombat(nn) and IsItemInRange(ItemNameToCheck, nn) then
+        if UnitExists(nn) and (UnitAffectingCombat(nn) or (Rlevel==0)) and IsItemInRange(ItemNameToCheck, nn) then
             count=count+1
         end
         if count>=8 then break end

@@ -18,21 +18,26 @@ end
 local ConditionCategory = CNDT:GetCategory("ATTRIBUTES_TMWMC_Test", 14, "Test Condition", true, false)
 
 ConditionCategory:RegisterCondition(6,  "TMWMCTEST1111", {
-    text = "T111",
-	tooltip = "T222",
-	unit=nil,
+    text = "Enemy Count In Range Max 8",
+	tooltip = "Enemy Count In Range Max 8",
+	unit="EnemyCount",
 	min =1,
-	max =10,
-	name="aa",
-	name2="bb",
-	texttable = function(v) return v.."Times" end,
+	max =8,
+	step =1,
+	name=function(editbox) 
+		editbox:SetTexts("no Check = 8 yard, Check 1 = 15 yard")
+	end,
+	name2=function(editbox) 
+		editbox:SetTexts("Check 2 = 20 yard, Check 1+2 = 30 yard")
+	end,
+	texttable = function(v) return v end,
 	check = function(check)
-		check:SetTexts("11", "22")
+		check:SetTexts("Check 1")
 	end,
 	check2= function(check)
-		check:SetTexts("33", "44")
+		check:SetTexts("Check 2")
 	end,
-    icon = "Interface\\Icons\\spell_nature_rejuvenation",
+    icon = "interface\\icons\\spell_arcane_mindmastery",
     tcoords = CNDT.COMMON.standardtcoords,
 	specificOperators = {["<="] = true, [">="] = true, ["=="]=true, ["~="]=true},
 

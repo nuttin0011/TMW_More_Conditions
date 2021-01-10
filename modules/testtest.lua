@@ -20,18 +20,18 @@ local ConditionCategory = CNDT:GetCategory("ATTRIBUTES_TMWMC_Test", 14, "Test Co
 ConditionCategory:RegisterCondition(6,  "TMWMCTEST1111", {
     text = "T111",
 	tooltip = "T222",
-	unit=true,
+	unit=nil,
 	min =1,
 	max =10,
-	--name="aa",
-	--name2="bb",
-	--texttable = function(v) return v.."Times" end,
-	--check = function(check)
-	--	check:SetTexts("11", "22")
-	--end,
-	--check2= function(check)
-	--	check:SetTexts("33", "44")
-	--end,
+	name="aa",
+	name2="bb",
+	texttable = function(v) return v.."Times" end,
+	check = function(check)
+		check:SetTexts("11", "22")
+	end,
+	check2= function(check)
+		check:SetTexts("33", "44")
+	end,
     icon = "Interface\\Icons\\spell_nature_rejuvenation",
     tcoords = CNDT.COMMON.standardtcoords,
 	specificOperators = {["<="] = true, [">="] = true, ["=="]=true, ["~="]=true},
@@ -45,8 +45,9 @@ ConditionCategory:RegisterCondition(6,  "TMWMCTEST1111", {
     end,
 	funcstr = function(c, parent)
 		
-		--return [[TMWMCTest(c.Name,c.NameFirst,c.NameRaw,c.NameString)]]
+
 		return [[UnitHealth("target") > 0]]
     end,	
 
 })
+

@@ -432,43 +432,64 @@ ConditionCategory:RegisterCondition(8.8,  "TMWMCHOWMANYMYDOTONTHISMOB", {
 		return [[(HowManyMyDotOnThisMob(c.Unit,1,3,c.Name) c.Operator c.Level)]]
     end
 })
---********************** Enemy Count in 8 yard ********
-Env.IROEnemyCountIn8yd = function()
-    return TMW_MC:IROEnemyCountIn8yd()
+--********************** Enemy Count in 8 yard Max 8********
+Env.IROEnemyCountIn8yd = function(Rlevel)
+    return TMW_MC:IROEnemyCountIn8yd(Rlevel)
 end
 
-function TMW_MC:IROEnemyCountIn8yd()
-	--return enemy count in 8 yard Max 5
-	
-	local OldVal=Old_Val_Check("IROEnemyCountIn8yd","")
+local ItemRangeCheck = {
+34368, -- Attuned Crystal Cores 8 yard
+33069, -- Sturdy Rope 15 yard
+10645, -- Gnomish Death Ray 20 yard
+835 -- Large Rope Net 30 yard
+}
+--local ItemRangeCheck = {34368,33069,10645,835}
+
+function TMW_MC:IROEnemyCountIn8yd(Rlevel)
+	--return enemy count in Range Default 8 yard Max 8
+	Rlevel = Rlevel or 0
+	--print(Rlevel)
+	local OldVal=Old_Val_Check("IROEnemyCountIn8yd",Rlevel)
 	if OldVal then return OldVal end
-	
+
+	local ItemNameToCheck = "item:"..ItemRangeCheck[Rlevel+1]
     local i,nn,count
-    count=0
+    local count=0
     for i=1,30 do
         nn='nameplate'..i
-        if UnitExists(nn) and IsItemInRange("item:34368", nn) then
+        if UnitExists(nn) and UnitAffectingCombat(nn) and IsItemInRange(ItemNameToCheck, nn) then
             count=count+1
         end
-        if count>=5 then break end
+        if count>=8 then break end
 	end
 	
-	Old_Val_Update("IROEnemyCountIn8yd","",count)
+	Old_Val_Update("IROEnemyCountIn8yd",Rlevel,count)
 	
     return  count
 	
 end
 
 ConditionCategory:RegisterCondition(8.9,  "TMWMCIROENEMYCOUNTIN8YD", {
-    text = "return Enemy Count in 8 yard. Max 5",
-    tooltip = "Enemy Name playe must turn on!",
+    text = "Enemy Count in Range(Default 8 yards). Max 8 Units",
+    tooltip = "Enemy Name plate must turn on!, All Enemy Must In Combat.\nNoTe! Training Dummy almost not incombat.",
 	step = 1,
-	percent = false,
     min = 0,
-	max = 5,
-    unit="player",
-
-    icon = "Interface\\Icons\\ability_druid_bash",
+	max = 8,
+    unit="Enemy",
+	name=function(editbox) 
+		editbox:SetTexts("no Check = 8 yard, Check 1 = 15 yard")
+	end,
+	name2=function(editbox) 
+		editbox:SetTexts("Check 2 = 20 yard, Check 1+2 = 30 yard")
+	end,
+	texttable = function(v) return v end,
+	check = function(check)
+		check:SetTexts("Check 1")
+	end,
+	check2= function(check)
+		check:SetTexts("Check 2")
+	end,
+    icon = "interface\\icons\\spell_arcane_mindmastery",
     tcoords = CNDT.COMMON.standardtcoords,
 
     specificOperators = {["<="] = true, [">="] = true, ["=="]=true, ["~="]=true},
@@ -482,7 +503,19 @@ ConditionCategory:RegisterCondition(8.9,  "TMWMCIROENEMYCOUNTIN8YD", {
     end,
 
 	funcstr = function(c, parent)
-        return [[(IROEnemyCountIn8yd() c.Operator c.Level)]]
+		if c.Checked then
+			if c.Checked2 then
+				return [[(IROEnemyCountIn8yd(3) c.Operator c.Level)]]
+			else
+				return [[(IROEnemyCountIn8yd(1) c.Operator c.Level)]]
+			end
+		else
+			if c.Checked2 then
+				return [[(IROEnemyCountIn8yd(2) c.Operator c.Level)]]
+			else
+				return [[(IROEnemyCountIn8yd(0) c.Operator c.Level)]]
+			end
+		end
     end
 })
 

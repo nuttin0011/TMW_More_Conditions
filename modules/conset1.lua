@@ -20,6 +20,7 @@ local Env = CNDT.Env
 local GetSpecialization=GetSpecialization
 local GetSpecializationInfo=GetSpecializationInfo
 local UnitIsUnit=UnitIsUnit
+local UnitChannelInfo=UnitChannelInfo
 
 local playerGUID = UnitGUID("player")
 local extended_check_timer = _GetTime()
@@ -254,6 +255,9 @@ function TMW_MC:PercentCastBar(SpellN,nUnit)
 	old_timer_PercentCastBar = currentTimeMS
 
 	local spellName,_,_, startTimeMS, endTimeMS = _UnitCastingInfo(nUnit)
+	if not(spellName) then
+		spellName, _, _, startTimeMS, endTimeMS = UnitChannelInfo(nUnit)
+	end
 
 	if spellName then
 		if (spellName==SpellN) or (SpellN=="") then

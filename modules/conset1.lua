@@ -252,8 +252,6 @@ function TMW_MC:PercentCastBar(SpellN,nUnit)
 	local OldVal = Old_Val_Check("PercentCastBar",SpellN..nUnit)
 	if OldVal then return OldVal end
 
-	old_timer_PercentCastBar = currentTimeMS
-
 	local spellName,_,_, startTimeMS, endTimeMS = _UnitCastingInfo(nUnit)
 	if not(spellName) then
 		spellName, _, _, startTimeMS, endTimeMS = UnitChannelInfo(nUnit)
@@ -261,7 +259,7 @@ function TMW_MC:PercentCastBar(SpellN,nUnit)
 
 	if spellName then
 		if (spellName==SpellN) or (SpellN=="") then
-			local currentTimeMS = currentTimeMS*1000
+			currentTimeMS = currentTimeMS*1000
 			local PercentCast = (currentTimeMS-startTimeMS)/(endTimeMS-startTimeMS)
 			Old_Val_Update("PercentCastBar",SpellN..nUnit,PercentCast)
 			--print(PercentCast)
@@ -302,6 +300,71 @@ ConditionCategory:RegisterCondition(8.6,  "TMWMCPERCENTCAST", {
         return [[(percentCastBar(nil,c.Unit) c.Operator c.Level)]]
     end
 })
+--******************** Castime Remain ?
+
+Env.CasttimeRemain = function(SpellN,nUnit)
+    return TMW_MC:CasttimeRemain(SpellN,nUnit)
+end
+
+function TMW_MC:CasttimeRemain(SpellN,nUnit)
+
+	local currentTime = _GetTime()
+	nUnit = nUnit or "target"
+	SpellN = SpellN or ""
+	if SpellN == ";" then SpellN = "" end
+	
+	local OldVal = Old_Val_Check("CasttimeRemain",SpellN..nUnit)
+	if OldVal then return OldVal end
+
+	local spellName,_,_, startTimeMS, endTimeMS = _UnitCastingInfo(nUnit)
+	if not(spellName) then
+		spellName, _, _, startTimeMS, endTimeMS = UnitChannelInfo(nUnit)
+	end
+
+	if spellName then
+		if (spellName==SpellN) or (SpellN=="") then
+			local timeremain = (endTimeMS/1000)-currentTime
+			Old_Val_Update("CasttimeRemain",SpellN..nUnit,timeremain)
+			--print(timeremain)
+			return timeremain
+		else
+			Old_Val_Update("CasttimeRemain",SpellN..nUnit,0)
+			return 0
+		end
+	else
+		Old_Val_Update("CasttimeRemain",SpellN..nUnit,0)
+		return 0
+	end
+end
+
+ConditionCategory:RegisterCondition(8.65,  "TMWMCCASTTIMEREMAIN", {
+    text = "Castime Remain",
+    tooltip = "Castime Remain\nNote Not Cast = return 0",
+	step = 0.1,
+    min = 0,
+	max = 10,
+    unit=nil,
+
+    icon = "Interface\\Icons\\ability_ardenweald_druid",
+    tcoords = CNDT.COMMON.standardtcoords,
+
+    specificOperators = {["<="] = true, [">="] = true, ["=="]=true, ["~="]=true, ["<"] = true, [">"] = true},
+
+    applyDefaults = function(conditionData, conditionSettings)
+        local op = conditionSettings.Operator
+
+        if not conditionData.specificOperators[op] then
+            conditionSettings.Operator = ">="
+        end
+    end,
+
+	funcstr = function(c, parent)
+        return [[(CasttimeRemain(nil,c.Unit) c.Operator c.Level)]]
+    end
+})
+
+
+
 
 --******************HowManyMobHasMyDot()****************
 

@@ -21,7 +21,7 @@ ConditionCategory:RegisterCondition(6,  "TMWMCTEST1111", {
     text = "Enemy Count In Range Max 8",
 	tooltip = "Enemy Count In Range Max 8",
 	unit="EnemyCount",
-	min =1,
+	min =-8,
 	max =8,
 	step =1,
 	name=function(editbox) 

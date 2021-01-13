@@ -620,7 +620,7 @@ ConditionCategory:RegisterCondition(9,  "TMWMCIROCOMPAREHP", {
     end,
 })
 
---GCD Remain
+--***************************************************GCD Remain
 function TMW_MC:GCDRemain()
 	--return GCD Ramain
 	
@@ -670,5 +670,80 @@ ConditionCategory:RegisterCondition(9,  "TMWMCGCDCOMPARE", {
     end,
 })
 
+-- ************************* GCD Compare to Spell
+--[[
+IROClassGCDOneSec = { 
+    [259]=true,[260]=true,[261]=true, -- rogue
+    [269]=true, -- monk WW
+    [103]=true, -- druid feral
+}
 
+local function round(number, decimals)
+	return (("%%.%df"):format(decimals)):format(number)
+end
 
+function TMW_MC:GCDCDTime()
+	--return GCD CD
+	local OldVal=Old_Val_Check("GCDCDTime","")
+	if OldVal then return OldVal end
+	
+	local GCDCD=TMW.GCD
+
+	if GCDCD == 0 then
+		local currentSpec = GetSpecialization()
+		local IROSpecID  = GetSpecializationInfo(currentSpec)
+		if IROClassGCDOneSec[IROSpecID] then
+			GCDCD = 1
+		else
+			GCDCD = round(1.5*(100/(100+UnitSpellHaste("player"))),2)
+		end
+	end
+		
+	Old_Val_Update("GCDCDTime","",GCDCD)
+	
+	return GCDCD
+end
+
+Env.GCDCDTime = function()
+	return TMW_MC:GCDCDTime()
+end
+
+ConditionCategory:RegisterCondition(9,  "TMWMCGCDCOMPARESPELL", {
+	text = "Spell's CD Compare To GCD's CD Time",
+	tooltip = "Note. GCD's CD = 1.5*(100/(100+%haste)) sec.\n Druid Feral,Monk WW,Rogue have GCD's CD = 1 sec",
+	unit="PlayerSpellCD",
+	step=0.1,
+	min=-10,
+	max=10,
+	icon = "Interface\\Icons\\ability_demonhunter_eyebeam",	
+	texttable = function(v) 
+		if v>0 then
+			return "GCD+"..v.."="..(Env.GCDCDTime()+v).."sec"
+		else
+			if v<0 then
+				return "GCD"..v.."="..(Env.GCDCDTime()+v).."sec"
+			else
+				return "GCD="..(Env.GCDCDTime()).."sec"
+			end
+		end
+	end,
+    tcoords = CNDT.COMMON.standardtcoords,	
+	name = function(editbox) 
+		editbox:SetTexts("Spell, Only 1 Spell","e.g. Summon Demonic Tyrant")
+	end,
+	specificOperators = {["<="] = true, [">="] = true, ["=="]=true, ["~="]=true,["<"] = true, [">"] = true},
+	
+	applyDefaults = function(conditionData, conditionSettings)
+        local op = conditionSettings.Operator
+
+        if not conditionData.specificOperators[op] then
+            conditionSettings.Operator = ">="
+        end
+    end,
+--]]
+	--funcstr = function(c, parent)
+		--return [[true]]
+		--return [[(GCDRemain() c.Operator c.Level)]]
+		
+   -- end,
+--})

@@ -671,7 +671,7 @@ ConditionCategory:RegisterCondition(9,  "TMWMCGCDCOMPARE", {
 })
 
 -- ************************* GCD Compare to Spell
---[[
+
 IROClassGCDOneSec = { 
     [259]=true,[260]=true,[261]=true, -- rogue
     [269]=true, -- monk WW
@@ -713,24 +713,19 @@ ConditionCategory:RegisterCondition(9,  "TMWMCGCDCOMPARESPELL", {
 	tooltip = "Note. GCD's CD = 1.5*(100/(100+%haste)) sec.\n Druid Feral,Monk WW,Rogue have GCD's CD = 1 sec",
 	unit="PlayerSpellCD",
 	step=0.1,
-	min=-10,
-	max=10,
+	min=1,
+	max=4,
 	icon = "Interface\\Icons\\ability_demonhunter_eyebeam",	
-	texttable = function(v) 
+	texttable = function(v)
 		if v>0 then
-			return "GCD+"..v.."="..(Env.GCDCDTime()+v).."sec"
-		else
-			if v<0 then
-				return "GCD"..v.."="..(Env.GCDCDTime()+v).."sec"
-			else
-				return "GCD="..(Env.GCDCDTime()).."sec"
-			end
+			return "GCD*"..v.."="..(Env.GCDCDTime()*v).."sec"
 		end
 	end,
     tcoords = CNDT.COMMON.standardtcoords,	
 	name = function(editbox) 
-		editbox:SetTexts("Spell, Only 1 Spell","e.g. Summon Demonic Tyrant")
+		editbox:SetTexts("Spell, Only 1 Spell","e.g. Eye Beam")
 	end,
+	useSUG = "spell",
 	specificOperators = {["<="] = true, [">="] = true, ["=="]=true, ["~="]=true,["<"] = true, [">"] = true},
 	
 	applyDefaults = function(conditionData, conditionSettings)
@@ -740,10 +735,11 @@ ConditionCategory:RegisterCondition(9,  "TMWMCGCDCOMPARESPELL", {
             conditionSettings.Operator = ">="
         end
     end,
---]]
-	--funcstr = function(c, parent)
-		--return [[true]]
+
+	funcstr = function(c, parent)
+		return [[CooldownDuration(c.NameFirst, false) c.Operator (GCDCDTime()*c.Level)]]
 		--return [[(GCDRemain() c.Operator c.Level)]]
+		--return [[true]]
 		
-   -- end,
---})
+    end,
+})

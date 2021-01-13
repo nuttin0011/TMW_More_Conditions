@@ -21,6 +21,7 @@ local GetSpecialization=GetSpecialization
 local GetSpecializationInfo=GetSpecializationInfo
 local UnitIsUnit=UnitIsUnit
 local UnitChannelInfo=UnitChannelInfo
+local UnitSpellHaste=UnitSpellHaste
 
 local playerGUID = UnitGUID("player")
 local extended_check_timer = _GetTime()
@@ -714,7 +715,7 @@ ConditionCategory:RegisterCondition(9,  "TMWMCGCDCOMPARESPELL", {
 	unit="PlayerSpellCD",
 	step=0.1,
 	min=1,
-	max=4,
+	max=8,
 	icon = "Interface\\Icons\\ability_demonhunter_eyebeam",	
 	texttable = function(v)
 		if v>0 then

@@ -744,3 +744,30 @@ ConditionCategory:RegisterCondition(9,  "TMWMCGCDCOMPARESPELL", {
 		
     end,
 })
+--****************** Compare Range
+HarmItemsRangeCheck = {
+    [5] =
+        8149, -- Voodoo Charm
+    [8] =
+        34368, -- Attuned Crystal Cores
+    [10] =
+        32321, -- Sparrowhawk Net
+    [15] =
+        33069, -- Sturdy Rope
+    [20] =
+        10645, -- Gnomish Death Ray
+    [25] =
+        24268, -- Netherweave Net
+    [30] =
+        835, -- Large Rope Net
+    [35] =
+        24269, -- Heavy Netherweave Net
+    [38] =
+        140786, -- Ley Spider Eggs
+    [40] =
+        28767, -- The Decapitator
+    [45] =
+        23836, -- Goblin Rocket Launcher
+}
+
+	

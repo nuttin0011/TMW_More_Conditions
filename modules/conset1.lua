@@ -745,6 +745,8 @@ ConditionCategory:RegisterCondition(9,  "TMWMCGCDCOMPARESPELL", {
     end,
 })
 --****************** Compare Range
+HarmItemsRangeCheckOrder = {5,8,10,15,20,25,30,35,40,45}
+HarmItemsRangeCheckReverseOrder = {45,40,35,30,25,20,15,10,8,5}
 HarmItemsRangeCheck = {
     [5] =
         8149, -- Voodoo Charm
@@ -762,12 +764,23 @@ HarmItemsRangeCheck = {
         835, -- Large Rope Net
     [35] =
         24269, -- Heavy Netherweave Net
-    [38] =
-        140786, -- Ley Spider Eggs
     [40] =
         28767, -- The Decapitator
     [45] =
         23836, -- Goblin Rocket Launcher
 }
+
+function TMW_MC:CompareRangeMob(nUnit,nSetOfUnit,nOrder)
+	--ONLY ENEMY
+	--unit e.g. "target" , "party1target"
+	--SetOfUnit e.g. "party1target ; party2target ; party3target"
+
+
+
+	nUnit = nUnit or "target"
+	nSetOfUnit = nSetOfUnit or ""
+	nOrder = nOrder or true
+	return true
+end
 
 	

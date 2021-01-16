@@ -22,7 +22,7 @@ local GetSpecializationInfo=GetSpecializationInfo
 local UnitIsUnit=UnitIsUnit
 local UnitChannelInfo=UnitChannelInfo
 local UnitSpellHaste=UnitSpellHaste
-
+local UnitCanAttack=UnitCanAttack
 local playerGUID = UnitGUID("player")
 local extended_check_timer = _GetTime()
 local old_timer_check = 0
@@ -744,10 +744,16 @@ ConditionCategory:RegisterCondition(9,  "TMWMCGCDCOMPARESPELL", {
 		
     end,
 })
---****************** Compare Range
-HarmItemsRangeCheckOrder = {5,8,10,15,20,25,30,35,40,45}
-HarmItemsRangeCheckReverseOrder = {45,40,35,30,25,20,15,10,8,5}
-HarmItemsRangeCheck = {
+
+
+--****************** IsUnit Furthest / Nearest
+
+local HarmItemsRangeCheckOrder = {
+	{5,8,10,15,20,25,30,35,40,45},
+	{45,40,35,30,25,20,15,10,8,5}
+}
+
+local HarmItemsRangeCheck = {
     [5] =
         8149, -- Voodoo Charm
     [8] =
@@ -770,17 +776,111 @@ HarmItemsRangeCheck = {
         23836, -- Goblin Rocket Launcher
 }
 
-function TMW_MC:CompareRangeMob(nUnit,nSetOfUnit,nOrder)
-	--ONLY ENEMY
-	--unit e.g. "target" , "party1target"
-	--SetOfUnit e.g. "party1target ; party2target ; party3target"
-
-
-
-	nUnit = nUnit or "target"
-	nSetOfUnit = nSetOfUnit or ""
-	nOrder = nOrder or true
-	return true
+local function SplitTextToTable(t)
+	-- convert string "a; b; c" --> table {"a","b","c"}
+	local tableText={}
+	local s1 =string.find(t, "; ")
+	while s1 do
+		t1=string.sub(t,1,s1-1)
+		t=string.sub(t,s1+2,string.len(t))
+		s1=string.find(t, "; ")
+		table.insert(tableText, t1)		
+	end
+	table.insert(tableText, t)
+	return tableText
 end
 
-	
+local function IsItemIDInRange(itemID,nn)
+	return IsItemInRange("item:"..itemID,nn)
+end
+
+function TMW_MC:IsUnitNestest(nUnit,nSetOfUnit)
+	--ONLY ENEMY
+	--unit e.g. "target" , "party1target"
+	--SetOfUnit e.g. "party1target; party2target; party3target"
+	nUnit = nUnit or "target"
+	nSetOfUnit = nSetOfUnit or ""
+	if (not UnitExists(nUnit)) or (not UnitCanAttack("player", nUnit)) then return false end
+	local SetOfUnit = SplitTextToTable(nSetOfUnit)
+	local ItemIDRangeCheck,rangepick
+	local found = false
+	for ii=1,10 do
+		rangepick=HarmItemsRangeCheckOrder[1][ii]
+		ItemIDRangeCheck=HarmItemsRangeCheck[HarmItemsRangeCheckOrder[1][ii]]
+		for k,nn in pairs(SetOfUnit) do
+			if UnitExists(nn) and IsItemIDInRange(ItemIDRangeCheck,nn) then
+				found = true
+				break
+			end
+		end
+		if found then break end
+	end
+	if found then
+		return IsItemIDInRange(ItemIDRangeCheck,nUnit)
+	else
+		return true
+	end
+end
+
+function TMW_MC:IsUnitFurthest(nUnit,nSetOfUnit)
+	--ONLY ENEMY
+	--unit e.g. "target" , "party1target"
+	--SetOfUnit e.g. "party1target; party2target; party3target"
+	nUnit = nUnit or "target"
+	nSetOfUnit = nSetOfUnit or ""	
+	if (not UnitExists(nUnit)) or (not UnitCanAttack("player", nUnit)) then return false end
+	local SetOfUnit = SplitTextToTable(nSetOfUnit)
+	local ItemIDRangeCheck,rangepick
+	local found = false
+	for ii=1,10 do
+		ItemIDRangeCheck=HarmItemsRangeCheck[HarmItemsRangeCheckOrder[2][ii]]
+		for k,nn in pairs(SetOfUnit) do
+			if UnitExists(nn) and (not IsItemIDInRange(ItemIDRangeCheck,nn)) then
+				found = true
+				break
+			end
+		end
+		if found then break end
+	end
+		if found then
+		return not IsItemIDInRange(ItemIDRangeCheck,nUnit)
+	else
+		return true
+	end
+end
+
+Env.IsUnitNestest = function(nUnit,nSetOfUnit)
+	return TMW_MC:IsUnitNestest(nUnit,nSetOfUnit)
+end
+
+Env.IsUnitFurthest = function(nUnit,nSetOfUnit)
+	return TMW_MC:IsUnitFurthest(nUnit,nSetOfUnit)
+end
+
+ConditionCategory:RegisterCondition(9,  "TMWMCUNITNEARORFAR", {
+    text = "Nearest / Furthest Enemy",
+	tooltip = "Nearest / Furthest Enemy\nNote. Only ENEMY.",
+	unit=nil,
+	min =0,
+	max =1,
+	levelChecks = true,
+	step =1,
+	nooperator = true,
+	name=function(editbox) 
+		editbox:SetTexts("EnemyUnit Check",'e.g. "target; party1target; party2target"\ncannot use like "party 1-4"')
+	end,
+	texttable = {
+		[0] = "is Nearest",
+		[1] = "is Furthest",
+	},
+    icon = "interface\\icons\\achievement_raid_revendrethraid_siredenathrius",
+    tcoords = CNDT.COMMON.standardtcoords,
+	funcstr = function(c, parent)
+		if c.Level==0 then
+			return [[IsUnitNestest(c.Unit,c.NameRaw)]]
+		else
+			return [[IsUnitFurthest(c.Unit,c.NameRaw)]]		
+		end
+    end,	
+
+})

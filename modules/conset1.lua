@@ -798,9 +798,17 @@ function TMW_MC:IsUnitNestest(nUnit,nSetOfUnit)
 	--ONLY ENEMY
 	--unit e.g. "target" , "party1target"
 	--SetOfUnit e.g. "party1target; party2target; party3target"
+	
+	local OldVal=Old_Val_Check("IsUnitNestest",nUnit..nSetOfUnit)
+	if OldVal then return OldVal end
+	
 	nUnit = nUnit or "target"
 	nSetOfUnit = nSetOfUnit or ""
-	if (not UnitExists(nUnit)) or (not UnitCanAttack("player", nUnit)) then return false end
+	if (not UnitExists(nUnit)) or (not UnitCanAttack("player", nUnit)) then
+		Old_Val_Update("IsUnitNestest",nUnit..nSetOfUnit,false)
+		return false 
+	end
+	
 	local SetOfUnit = SplitTextToTable(nSetOfUnit)
 	local ItemIDRangeCheck,rangepick
 	local found = false
@@ -816,8 +824,11 @@ function TMW_MC:IsUnitNestest(nUnit,nSetOfUnit)
 		if found then break end
 	end
 	if found then
-		return IsItemIDInRange(ItemIDRangeCheck,nUnit)
+		found = IsItemIDInRange(ItemIDRangeCheck,nUnit)
+		Old_Val_Update("IsUnitNestest",nUnit..nSetOfUnit,found)
+		return found
 	else
+		Old_Val_Update("IsUnitNestest",nUnit..nSetOfUnit,true)	
 		return true
 	end
 end
@@ -828,7 +839,13 @@ function TMW_MC:IsUnitFurthest(nUnit,nSetOfUnit)
 	--SetOfUnit e.g. "party1target; party2target; party3target"
 	nUnit = nUnit or "target"
 	nSetOfUnit = nSetOfUnit or ""	
-	if (not UnitExists(nUnit)) or (not UnitCanAttack("player", nUnit)) then return false end
+	local OldVal=Old_Val_Check("IsUnitFurthest",nUnit..nSetOfUnit)
+	if OldVal then return OldVal end
+	
+	if (not UnitExists(nUnit)) or (not UnitCanAttack("player", nUnit)) then
+		Old_Val_Update("IsUnitFurthest",nUnit..nSetOfUnit,false)
+		return false
+	end
 	local SetOfUnit = SplitTextToTable(nSetOfUnit)
 	local ItemIDRangeCheck,rangepick
 	local found = false
@@ -842,9 +859,12 @@ function TMW_MC:IsUnitFurthest(nUnit,nSetOfUnit)
 		end
 		if found then break end
 	end
-		if found then
-		return not IsItemIDInRange(ItemIDRangeCheck,nUnit)
+	if found then
+		found =not IsItemIDInRange(ItemIDRangeCheck,nUnit)
+		Old_Val_Update("IsUnitFurthest",nUnit..nSetOfUnit,found)
+		return found
 	else
+		Old_Val_Update("IsUnitFurthest",nUnit..nSetOfUnit,true)
 		return true
 	end
 end

@@ -14,44 +14,33 @@ function Env.TMWMCTest(a,b,c,d)
 	return true
 end
 
+Env.printc = function(c)
+	--print(c)
+	return true
+end
 
 local ConditionCategory = CNDT:GetCategory("ATTRIBUTES_TMWMC_Test", 14, "Test Condition", true, false)
 
 ConditionCategory:RegisterCondition(6,  "TMWMCTEST1111", {
-    text = "Enemy Count In Range Max 8",
-	tooltip = "Enemy Count In Range Max 8",
-	unit="EnemyCount",
-	min =-8,
-	max =8,
+    text = "Nearest / Furthest Enemy",
+	tooltip = "Nearest / Furthest Enemy\nNote. Only ENEMY.",
+	unit=nil,
+	min =0,
+	max =1,
+	levelChecks = true,
 	step =1,
+	nooperator = true,
 	name=function(editbox) 
-		editbox:SetTexts("no Check = 8 yard, Check 1 = 15 yard")
+		editbox:SetTexts("EnemyUnit Check",'e.g. "target; party1target; party2target"\ncannot use like "party 1-4"')
 	end,
-	name2=function(editbox) 
-		editbox:SetTexts("Check 2 = 20 yard, Check 1+2 = 30 yard")
-	end,
-	texttable = function(v) return v end,
-	check = function(check)
-		check:SetTexts("Check 1")
-	end,
-	check2= function(check)
-		check:SetTexts("Check 2")
-	end,
-    icon = "interface\\icons\\spell_arcane_mindmastery",
+	texttable = {
+		[0] = "is Nearest",
+		[1] = "is Furthest",
+	},
+    icon = "interface\\icons\\achievement_raid_revendrethraid_siredenathrius",
     tcoords = CNDT.COMMON.standardtcoords,
-	specificOperators = {["<="] = true, [">="] = true, ["=="]=true, ["~="]=true},
-
-    applyDefaults = function(conditionData, conditionSettings)
-        local op = conditionSettings.Operator
-
-        if not conditionData.specificOperators[op] then
-            conditionSettings.Operator = ">="
-        end
-    end,
 	funcstr = function(c, parent)
-		
-
-		return [[UnitHealth("target") > 0]]
+		return [[printc(c.Name)]]
     end,	
 
 })

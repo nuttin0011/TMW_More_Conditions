@@ -506,10 +506,11 @@ Env.IROEnemyCountIn8yd = function(Rlevel)
 end
 
 local ItemRangeCheck = {
-34368, -- Attuned Crystal Cores 8 yard
-33069, -- Sturdy Rope 15 yard
-10645, -- Gnomish Death Ray 20 yard
-835 -- Large Rope Net 30 yard
+[1]=34368, -- Attuned Crystal Cores 8 yard
+[2]=33069, -- Sturdy Rope 15 yard
+[3]=10645, -- Gnomish Death Ray 20 yard
+[4]=835, -- Large Rope Net 30 yard
+[5]=28767, -- The Decapitator 40 yard
 }
 --local ItemRangeCheck = {34368,33069,10645,835}
 
@@ -545,10 +546,10 @@ ConditionCategory:RegisterCondition(8.9,  "TMWMCIROENEMYCOUNTIN8YD", {
 	max = 8,
     unit="Enemy",
 	name=function(editbox) 
-		editbox:SetTexts("no Check = 8 yard, Check 1 = 15 yard")
+		editbox:SetTexts("no Check=8 yard,Check 1=15 yard,Check 2=20 yard, Check 1+2=30 yard")
 	end,
 	name2=function(editbox) 
-		editbox:SetTexts("Check 2 = 20 yard, Check 1+2 = 30 yard")
+		editbox:SetTexts("or Type 8,15,20,30,40 here for range(yards)")
 	end,
 	texttable = function(v) return v end,
 	check = function(check)
@@ -571,19 +572,29 @@ ConditionCategory:RegisterCondition(8.9,  "TMWMCIROENEMYCOUNTIN8YD", {
     end,
 
 	funcstr = function(c, parent)
-		if c.Checked then
-			if c.Checked2 then
-				return [[(IROEnemyCountIn8yd(3) c.Operator c.Level)]]
-			else
-				return [[(IROEnemyCountIn8yd(1) c.Operator c.Level)]]
+		if c.Name2~=nil then
+			if c.Name2=="40" then return [[(IROEnemyCountIn8yd(4) c.Operator c.Level)]]
+			elseif c.Name2=="30" then return [[(IROEnemyCountIn8yd(3) c.Operator c.Level)]]
+			elseif c.Name2=="20" then return [[(IROEnemyCountIn8yd(2) c.Operator c.Level)]]
+			elseif c.Name2=="15" then return [[(IROEnemyCountIn8yd(1) c.Operator c.Level)]]
+			elseif c.Name2=="8" then return [[(IROEnemyCountIn8yd(0) c.Operator c.Level)]]
 			end
 		else
-			if c.Checked2 then
-				return [[(IROEnemyCountIn8yd(2) c.Operator c.Level)]]
+			if c.Checked then
+				if c.Checked2 then
+					return [[(IROEnemyCountIn8yd(3) c.Operator c.Level)]]
+				else
+					return [[(IROEnemyCountIn8yd(1) c.Operator c.Level)]]
+				end
 			else
-				return [[(IROEnemyCountIn8yd(0) c.Operator c.Level)]]
+				if c.Checked2 then
+					return [[(IROEnemyCountIn8yd(2) c.Operator c.Level)]]
+				else
+					return [[(IROEnemyCountIn8yd(0) c.Operator c.Level)]]
+				end
 			end
 		end
+
     end
 })
 

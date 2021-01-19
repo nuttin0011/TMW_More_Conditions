@@ -17,6 +17,7 @@ local GetSpellCooldown=GetSpellCooldown
 local CNDT = TMW.CNDT
 local Env = CNDT.Env
 
+local IsItemInRange=IsItemInRange
 local GetSpecialization=GetSpecialization
 local GetSpecializationInfo=GetSpecializationInfo
 local UnitIsUnit=UnitIsUnit
@@ -512,7 +513,6 @@ local ItemRangeCheck = {
 [4]=835, -- Large Rope Net 30 yard
 [5]=28767, -- The Decapitator 40 yard
 }
---local ItemRangeCheck = {34368,33069,10645,835}
 
 function TMW_MC:IROEnemyCountIn8yd(Rlevel)
 	--return enemy count in Range Default 8 yard Max 8
@@ -531,7 +531,6 @@ function TMW_MC:IROEnemyCountIn8yd(Rlevel)
         end
         if count>=8 then break end
 	end
-	
 	Old_Val_Update("IROEnemyCountIn8yd",Rlevel,count)
 	
     return  count
@@ -572,29 +571,26 @@ ConditionCategory:RegisterCondition(8.9,  "TMWMCIROENEMYCOUNTIN8YD", {
     end,
 
 	funcstr = function(c, parent)
-		if c.Name2~=nil then
-			if c.Name2=="40" then return [[(IROEnemyCountIn8yd(4) c.Operator c.Level)]]
-			elseif c.Name2=="30" then return [[(IROEnemyCountIn8yd(3) c.Operator c.Level)]]
-			elseif c.Name2=="20" then return [[(IROEnemyCountIn8yd(2) c.Operator c.Level)]]
-			elseif c.Name2=="15" then return [[(IROEnemyCountIn8yd(1) c.Operator c.Level)]]
-			elseif c.Name2=="8" then return [[(IROEnemyCountIn8yd(0) c.Operator c.Level)]]
-			end
-		else
-			if c.Checked then
-				if c.Checked2 then
-					return [[(IROEnemyCountIn8yd(3) c.Operator c.Level)]]
-				else
-					return [[(IROEnemyCountIn8yd(1) c.Operator c.Level)]]
-				end
-			else
-				if c.Checked2 then
-					return [[(IROEnemyCountIn8yd(2) c.Operator c.Level)]]
-				else
-					return [[(IROEnemyCountIn8yd(0) c.Operator c.Level)]]
-				end
-			end
+		if c.Name2=="40" then return [[(IROEnemyCountIn8yd(4) c.Operator c.Level)]]
+		elseif c.Name2=="30" then return [[(IROEnemyCountIn8yd(3) c.Operator c.Level)]]
+		elseif c.Name2=="20" then return [[(IROEnemyCountIn8yd(2) c.Operator c.Level)]]
+		elseif c.Name2=="15" then return [[(IROEnemyCountIn8yd(1) c.Operator c.Level)]]
+		elseif c.Name2=="8" then return [[(IROEnemyCountIn8yd(0) c.Operator c.Level)]]
 		end
 
+		if c.Checked then
+			if c.Checked2 then
+				return [[(IROEnemyCountIn8yd(3) c.Operator c.Level)]]
+			else
+				return [[(IROEnemyCountIn8yd(1) c.Operator c.Level)]]
+			end
+		else
+			if c.Checked2 then
+				return [[(IROEnemyCountIn8yd(2) c.Operator c.Level)]]
+			else
+				return [[(IROEnemyCountIn8yd(0) c.Operator c.Level)]]
+			end
+		end
     end
 })
 

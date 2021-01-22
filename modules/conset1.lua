@@ -522,15 +522,25 @@ function TMW_MC:IROEnemyCountIn8yd(Rlevel)
 	if OldVal then return OldVal end
 
 	local ItemNameToCheck = "item:"..ItemRangeCheck[Rlevel+1]
-    local i,nn,count
-    local count=0
+	local ItemNameToCheck8 = "item:"..ItemRangeCheck[1]
+    local i,nn,count,count8
+	local count=0
+	local count8=0
     for i=1,30 do
         nn='nameplate'..i
-        if UnitExists(nn) and (UnitAffectingCombat(nn) or (Rlevel==0)) and IsItemInRange(ItemNameToCheck, nn) then
-            count=count+1
+		if UnitExists(nn) then
+			if UnitAffectingCombat(nn) and IsItemInRange(ItemNameToCheck, nn) then
+				count=count+1
+			end
+			if IsItemInRange(ItemNameToCheck8, nn) then
+				count8=count8+1
+			end
         end
-        if count>=8 then break end
+        if (count>=8) or (count8>=8) then break end
 	end
+
+	if count8>count then count=count8 end
+
 	Old_Val_Update("IROEnemyCountIn8yd",Rlevel,count)
 	
     return  count

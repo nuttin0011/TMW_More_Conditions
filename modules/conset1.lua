@@ -18,6 +18,7 @@ local CNDT = TMW.CNDT
 local Env = CNDT.Env
 
 local IsItemInRange=IsItemInRange
+local UnitAffectingCombat=UnitAffectingCombat
 local GetSpecialization=GetSpecialization
 local GetSpecializationInfo=GetSpecializationInfo
 local UnitIsUnit=UnitIsUnit
@@ -528,7 +529,7 @@ function TMW_MC:IROEnemyCountIn8yd(Rlevel)
 	local count=0
     for i=1,30 do
         nn='nameplate'..i
-		if UnitExists(nn) then
+		if UnitExists(nn)and (not UnitIsUnit(nn,"player")) then
 			if IsItemInRange(ItemNameToCheck8, nn)or(UnitAffectingCombat(nn)and IsItemInRange(ItemNameToCheck, nn)) then
 				count=count+1
 			end

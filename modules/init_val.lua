@@ -69,7 +69,7 @@ if not CleanTypeZZ then
     CleanTypeZZ = {}
     CleanTypeZZ[71] = {0,0,0,0,''} -- Arm
     CleanTypeZZ[72] = {0,0,0,0,''} -- fury
-    CleanTypeZZ[72] = {0,0,0,0,''} -- Protection
+    CleanTypeZZ[73] = {0,0,0,0,''} -- Protection
     CleanTypeZZ[265] = {20,0,0,0,'Singe Magic'} -- Aff
     CleanTypeZZ[266] = {20,0,0,0,'Singe Magic'} -- Demo
     CleanTypeZZ[267] = {20,0,0,0,'Singe Magic'} -- Dest

@@ -9,6 +9,7 @@ local _UnitCastingInfo = UnitCastingInfo
 local _CombatLogGetCurrentEventInfo = CombatLogGetCurrentEventInfo
 local _UnitAura = UnitAura
 local _UnitExists = UnitExists
+local UnitExists = UnitExists
 local _UnitGUID = UnitGUID
 local Old_Val_Check = TMW.CNDT.Env.Old_Val_Check
 local Old_Val_Update = TMW.CNDT.Env.Old_Val_Update
@@ -178,7 +179,7 @@ function TMW_MC:PredictSS()
 				local hasHavoc = false
 				for ii = 1,30 do
 					nn="nameplate"..ii
-					if _UnitExists(nn) then
+					if _UnitExists(nn) and UnitCanAttack("player", nn) then
 						nnDebuff = Env.allDeBuffByMe(nn)
 						if nnDebuff["Havoc"] then
 							hasHavoc = (not UnitIsUnit("target",nn)) and (nnDebuff["Havoc"]>(0.1+endTime-currentTime))
@@ -390,7 +391,7 @@ function TMW_MC:HowManyMobHasMyDot()
     n = 0
         for ii = 1,30 do
         nn = 'nameplate'..ii
-        if UnitExists(nn) and UnitDebuff(nn, 1,"PLAYER") then
+        if UnitExists(nn) and UnitCanAttack("player", nn) and UnitDebuff(nn, 1,"PLAYER") then
             n = n+1
         end
     end
@@ -443,7 +444,7 @@ function TMW_MC:HowManyMyDotOnThisMob(nTarget,greaterThan,nDotTimer,DotSpecific)
 	DotSpecific = strlower(DotSpecific)
 	if DotSpecific==";" then DotSpecific="" end
 	--print(DotSpecific)
-	if not _UnitExists(nTarget) then return 0 end
+	if (not _UnitExists(nTarget)) or (not UnitCanAttack("player", nTarget)) then return 0 end
 	
 	local OldVal=Old_Val_Check("HowManyMyDotOnThisMob",nTarget..greaterThan..nDotTimer..DotSpecific)
 	if OldVal then return OldVal end
@@ -529,7 +530,7 @@ function TMW_MC:IROEnemyCountIn8yd(Rlevel)
 	local count=0
     for i=1,30 do
         nn='nameplate'..i
-		if UnitExists(nn)and (not UnitIsUnit(nn,"player")) then
+		if UnitExists(nn) and UnitCanAttack("player", nn) then
 			if IsItemInRange(ItemNameToCheck8, nn)or(UnitAffectingCombat(nn)and IsItemInRange(ItemNameToCheck, nn)) then
 				count=count+1
 			end
@@ -829,7 +830,7 @@ function TMW_MC:IsUnitNestest(nUnit,nSetOfUnit)
 		rangepick=HarmItemsRangeCheckOrder[1][ii]
 		ItemIDRangeCheck=HarmItemsRangeCheck[HarmItemsRangeCheckOrder[1][ii]]
 		for k,nn in pairs(SetOfUnit) do
-			if UnitExists(nn) and IsItemIDInRange(ItemIDRangeCheck,nn) then
+			if UnitExists(nn) and UnitCanAttack("player", nn) and IsItemIDInRange(ItemIDRangeCheck,nn) then
 				found = true
 				break
 			end
@@ -865,7 +866,7 @@ function TMW_MC:IsUnitFurthest(nUnit,nSetOfUnit)
 	for ii=1,10 do
 		ItemIDRangeCheck=HarmItemsRangeCheck[HarmItemsRangeCheckOrder[2][ii]]
 		for k,nn in pairs(SetOfUnit) do
-			if UnitExists(nn) and (not IsItemIDInRange(ItemIDRangeCheck,nn)) then
+			if UnitExists(nn) and UnitCanAttack("player", nn) and (not IsItemIDInRange(ItemIDRangeCheck,nn)) then
 				found = true
 				break
 			end

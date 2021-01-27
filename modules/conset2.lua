@@ -6,7 +6,7 @@ local UnitExists = UnitExists
 local GetSpellInfo=GetSpellInfo
 local CNDT = TMW.CNDT
 local Env = CNDT.Env
-
+local UnitCanAttack = UnitCanAttack
 local GetNumGroupMembers= GetNumGroupMembers
 local UnitHealth=UnitHealth
 local UnitHealthMax=UnitHealthMax
@@ -35,7 +35,7 @@ function TMW_MC:LowestDebuffDuration(nDebuff,nSetDebuff,nUnit)
 	local OldVal = Env.Old_Val_Check("LowestDebuffDuration",nDebuff..nSetDebuff..nUnit)
 	if OldVal then return OldVal end
 	
-	if not UnitExists(nUnit) then
+	if (not UnitExists(nUnit)) or (not UnitCanAttack("player", nUnit)) then
 		Env.Old_Val_Update("LowestDebuffDuration",nDebuff..nSetDebuff..nUnit,false)
 		return false 
 	end
@@ -135,7 +135,7 @@ function TMW_MC:AllDebuffDuration(nSetDebuff,nUnit)
 	if nSetDebuff==";" then nSetDebuff="" end
 	nUnit = nUnit or "target"
 	
-	if not UnitExists(nUnit) then
+	if (not UnitExists(nUnit)) or (not UnitCanAttack("player", nUnit)) then
 		return 0
 	end
 	
@@ -324,7 +324,7 @@ function TMW_MC:SumMobHPIncombat()
     local nn
     for ii =1,30 do
         nn='nameplate'..ii
-        if UnitExists(nn) and UnitAffectingCombat(nn) then
+        if UnitExists(nn) and UnitCanAttack("player", nn) and UnitAffectingCombat(nn) then
             sumhp=sumhp+ UnitHealth(nn)
         end
     end

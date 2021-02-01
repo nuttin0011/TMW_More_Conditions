@@ -376,20 +376,18 @@ Env.HowManyMobHasMyDot = function()
     return TMW_MC:HowManyMobHasMyDot()
 end
 
-local old_val_HowManyMobHasMyDot = 0
-local old_timer_HowManyMobHasMyDot = 0
+--local old_val_HowManyMobHasMyDot = 0
+--local old_timer_HowManyMobHasMyDot = 0
 
 function TMW_MC:HowManyMobHasMyDot()
 
     local ii,nn,n
-	local currentTime = _GetTime()
 
 	local OldVal = Old_Val_Check("HowManyMobHasMyDot","")
 	if OldVal then return OldVal end
 
-	old_timer_HowManyMobHasMyDot=currentTime
     n = 0
-        for ii = 1,30 do
+    for ii = 1,30 do
         nn = 'nameplate'..ii
         if UnitExists(nn) and UnitCanAttack("player", nn) and UnitDebuff(nn, 1,"PLAYER") then
             n = n+1

@@ -32,6 +32,7 @@ local old_timer_check = 0
 local old_spell_finish_cast_check = 0
 local old_val = 0
 local trust_segment_cast = true
+local GCDSpell=TMW.GCDSpell
 
 local function printtable(a)
 	local k,v
@@ -99,12 +100,12 @@ function Env.allBuffByMe(unit)
 		temp_allBuffByMe[2]={}
 	end
 
-    local DebuffName,expTime,i
+    local buffName,expTime,i
 
     for i=1,40 do
-        DebuffName,_,_,_,_,expTime = _UnitAura(unit, i, "PLAYER|HELPFUL")
-        if DebuffName then 
-            allBuff[DebuffName]=expTime-GetTime()
+        buffName,_,_,_,_,expTime = _UnitAura(unit, i, "PLAYER|HELPFUL")
+        if buffName then 
+            allBuff[buffName]=expTime-GetTime()
         else break end
     end
 
@@ -640,7 +641,7 @@ function TMW_MC:GCDRemain()
 	local OldVal=Old_Val_Check("GCDRemain","")
 	if OldVal then return OldVal end
 	
-	local st,du=GetSpellCooldown(TMW.GCDSpell)
+	local st,du=GetSpellCooldown(GCDSpell)
 	local ti = 0
 	if st>0 then
 		ti=(st+du)-_GetTime()
@@ -648,7 +649,7 @@ function TMW_MC:GCDRemain()
 	
 	Old_Val_Update("GCDRemain","",ti)
 	
-    return  ti
+    return ti
 	
 end
 
@@ -656,6 +657,15 @@ Env.GCDRemain = function()
     return TMW_MC:GCDRemain()
 end
 
+--[[
+Env.GCDRemainCompare = function(timeRemain,iOperator,isTimeRemainNoMoreThanOneThird)
+	timeRemain=timeRemain or 0.2
+	if lessThan == nil then lessThan=true end
+
+
+	return true
+end
+]]
 
 ConditionCategory:RegisterCondition(9,  "TMWMCGCDCOMPARE", {
     text = "GCD",
@@ -666,7 +676,12 @@ ConditionCategory:RegisterCondition(9,  "TMWMCGCDCOMPARE", {
 	icon = "Interface\\Icons\\spell_nature_rejuvenation",	
 	formatter = TMW.C.Formatter.TIME_0USABLE,
     tcoords = CNDT.COMMON.standardtcoords,	
-
+	name = function(editbox) 
+		editbox:SetTexts("Check box to Change time no more than 1/3 of GCD","no more than 1/3 of GCD")
+	end,
+	check = function(check)
+		check:SetTexts("<= 1/3 * GCD")
+	end,
 	specificOperators = {["<="] = true, [">="] = true, ["=="]=true, ["~="]=true,["<"] = true, [">"] = true},
 	
 	applyDefaults = function(conditionData, conditionSettings)
@@ -678,7 +693,14 @@ ConditionCategory:RegisterCondition(9,  "TMWMCGCDCOMPARE", {
     end,
 
 	funcstr = function(c, parent)
-		return [[(GCDRemain() c.Operator c.Level)]]
+		if c.Checked then
+			return [[(GCDRemain() c.Operator math.min(c.Level,
+			(GetSpellCooldown(TMW.GCDSpell)>0) and (select(2,GetSpellCooldown(TMW.GCDSpell))/3) or math.huge
+					))]]
+		else
+			return [[(GCDRemain() c.Operator c.Level)]]
+		end
+
 		
     end,
 })

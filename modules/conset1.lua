@@ -287,8 +287,9 @@ ConditionCategory:RegisterCondition(8.6,  "TMWMCPERCENTCAST", {
     min = 0,
 	max = 100,
     unit=nil,
+	texttable = function(v) return v.." %" end,
 
-    icon = "Interface\\Icons\\ability_druid_bash",
+    icon = "Interface\\Icons\\ability_kick",
     tcoords = CNDT.COMMON.standardtcoords,
 
     specificOperators = {["<="] = true, [">="] = true, ["=="]=true, ["~="]=true},

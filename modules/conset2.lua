@@ -15,6 +15,7 @@ local strsplit=strsplit
 local UnitChannelInfo=UnitChannelInfo
 local GetTime=GetTime
 local UnitAffectingCombat=UnitAffectingCombat
+local IsItemInRange=IsItemInRange
 
 local function printtable(a)
 	local k,v
@@ -324,7 +325,8 @@ function TMW_MC:SumMobHPIncombat()
     local nn
     for ii =1,30 do
         nn='nameplate'..ii
-        if UnitExists(nn) and UnitCanAttack("player", nn) and UnitAffectingCombat(nn) then
+        if UnitExists(nn) and UnitCanAttack("player", nn) and (UnitAffectingCombat(nn)
+		or IsItemInRange("item:34368", nn)) then
             sumhp=sumhp+ UnitHealth(nn)
         end
     end

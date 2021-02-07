@@ -13,6 +13,7 @@ local allBuffByMe=Env.allBuffByMe
 local allDeBuffByMe=Env.allDeBuffByMe
 local GetTime=GetTime
 local UnitExists=UnitExists
+local UnitCastingInfo=UnitCastingInfo
 
 local ConditionCategory = CNDT:GetCategory("ATTRIBUTES_TMWMC", 12, "More Conditions", true, false)
 -- for mage
@@ -74,8 +75,10 @@ function f:COMBAT_LOG_EVENT_UNFILTERED(...)
 			end
 		end
 
-		if FlurryBuffWinterChillCount>0 then
-			if (spellName =="Ice Lance") and (destGUID==FlurryTargetGUID) then
+		if (FlurryBuffWinterChillCount>0)and(destGUID==FlurryTargetGUID) then
+			if (spellName == "Ice Lance") or
+			(spellName == "Glacial Spike")
+			then
 				FlurryBuffWinterChillCount=FlurryBuffWinterChillCount-1
 			end
 			--print (FlurryBuffWinterChillCount)
@@ -125,7 +128,9 @@ function TMW_MC:PredictWinterChill(nUnit)
 	if UnitGUID(nUnit)~=FlurryTargetGUID then return false end
 	checkFlurryTimer()
 	if FlurryBuffWinterChillCount==0 then return false end
-
+	if (FlurryBuffWinterChillCount==1) and (UnitCastingInfo("player")=="Glacial Spike") then
+		return false
+	end
 	return true
 end
 

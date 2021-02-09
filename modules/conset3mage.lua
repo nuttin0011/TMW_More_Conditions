@@ -91,7 +91,7 @@ local function predictFireSpellhittime(timeCastFinish,targetRange)
 	--fire ball travel time 5-10 yard = 0.2+-0.1 sec	
 	--fire ball travel time 2-5 yard = 0.15+-0.1 sec
 	--fire ball travel time <2 yard = 0 sec
-	if targetRange>20 then timeMod =0.65
+	if targetRange>20 then timeMod =0.60
 	elseif targetRange>=15 then timeMod =0.35
 	elseif targetRange>=10 then timeMod =0.2
 	elseif targetRange>=5 then timeMod =0.1
@@ -199,10 +199,10 @@ function f:COMBAT_LOG_EVENT_UNFILTERED(...)
 			
 		end
 	end
-			for ii=0 , 3 do
-			if isProjectileFireSpell[FireCastFinishTime[ii][FCastSpellName]] then ccc=ccc+1 end end
-			print(ccc)			
-	--print(FireCastFinishTime[0][FCastSpellName]..FireCastFinishTime[1][FCastSpellName]..FireCastFinishTime[2][FCastSpellName]..FireCastFinishTime[3][FCastSpellName])
+	
+	--for ii=0 , 3 do
+	--if isProjectileFireSpell[FireCastFinishTime[ii][FCastSpellName]] then ccc=ccc+1 end end
+	--print(ccc)			
 	
 --order Now->0->1->2->3->5delete
 --keep only Fireball,Phoenix Flames,Pyroblast (spell that has travel time + trigger "Heating up"	

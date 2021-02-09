@@ -37,6 +37,16 @@ local FlurryTargetTime = 0
 local FlurryBuffWinterChillCount = 0
 local EbonboltHitTime = 0
 local IROSpecID = nil
+local function fspecOnEvent(self, event, ...)
+	--print(event, ...)
+	local spec={[62]="arcane",[63]="fire",[64]="frost"}	
+	--print("old Spec :"..spec[IROSpecID])
+	IROSpecID = GetSpecializationInfo(GetSpecialization())
+	--print("new Spec :"..spec[IROSpecID])
+end
+local fspec = CreateFrame("Frame")
+fspec:RegisterEvent("PLAYER_SPECIALIZATION_CHANGED")
+fspec:SetScript("OnEvent", fspecOnEvent)
 
 local FireBallTravelTime = 0
 
@@ -110,7 +120,7 @@ function f:COMBAT_LOG_EVENT_UNFILTERED(...)
 
 
 	--********** FORST MAGE Begin *********
-	if IROSpecID==64 then checkFlurryTimer()end	
+	if (IROSpecID==64) then checkFlurryTimer()end	
 	if (IROSpecID==64)and(subevent=="SPELL_CAST_SUCCESS") then
 		loadVal(...)
 		--reset Flurry Time if cast > 6 sec ago
@@ -152,7 +162,6 @@ function f:COMBAT_LOG_EVENT_UNFILTERED(...)
 	if (IROSpecID==63)and(subevent=="SPELL_CAST_SUCCESS") then
 		loadVal(...)
 		if (isProjectileFireSpell[spellName]==true) then
-			print(FireCastFinishTime[0][FCastSpellName]..FireCastFinishTime[1][FCastSpellName]..FireCastFinishTime[2][FCastSpellName]..FireCastFinishTime[3][FCastSpellName])
 
 			for ii=3,1,-1 do print(ii);FireCastFinishTime[ii]=FireCastFinishTime[ii-1] end
 			FireCastFinishTime[0][FTarGUID]=destGUID
@@ -219,8 +228,7 @@ function f:COMBAT_LOG_EVENT_UNFILTERED(...)
 end
 
 local initFunctionSeted = false
-
-function TMW_MC:InitMageCombatEvent()
+local function InitMageCombatEvent()
 	if (not initFunctionSeted) then
 		initFunctionSeted=true
 		--local currentSpec = GetSpecialization()
@@ -236,7 +244,7 @@ end
 
 function TMW_MC:PredictWinterChill(nUnit)
 
-	if (not initFunctionSeted) then TMW_MC:InitMageCombatEvent() end
+	if (not initFunctionSeted) then InitMageCombatEvent() end
 	nUnit=nUnit or "target"
 	if not UnitExists(nUnit) then return false end
 	if UnitGUID(nUnit)~=FlurryTargetGUID then return false end

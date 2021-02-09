@@ -91,11 +91,12 @@ local function predictFireSpellhittime(timeCastFinish,targetRange)
 	--fire ball travel time 5-10 yard = 0.2+-0.1 sec	
 	--fire ball travel time 2-5 yard = 0.15+-0.1 sec
 	--fire ball travel time <2 yard = 0 sec
-	if targetRange>20 then timeMod =0.6
+	if targetRange>20 then timeMod =0.65
 	elseif targetRange>=15 then timeMod =0.35
 	elseif targetRange>=10 then timeMod =0.2
 	elseif targetRange>=5 then timeMod =0.1
 	else timeMod=0 end
+	--print(timeCastFinish.."+"..timeMod)
 	return timeCastFinish+timeMod
 end
 
@@ -163,29 +164,44 @@ function f:COMBAT_LOG_EVENT_UNFILTERED(...)
 		loadVal(...)
 		if (isProjectileFireSpell[spellName]==true) then
 
-			for ii=3,1,-1 do print(ii);FireCastFinishTime[ii]=FireCastFinishTime[ii-1] end
+			for ii=3,1,-1 do 
+				for ii2=0,4 do
+					FireCastFinishTime[ii][ii2]=FireCastFinishTime[ii-1][ii2]
+				end
+			end
 			FireCastFinishTime[0][FTarGUID]=destGUID
 			FireCastFinishTime[0][FTarRange]=rc:GetRange('target')
 			FireCastFinishTime[0][FCastFinish]=currentTime
 			FireCastFinishTime[0][FCastSpellName]=spellName
 			FireCastFinishTime[0][FEstimateHitTime]=predictFireSpellhittime(currentTime,FireCastFinishTime[0][FTarRange])
-	print(FireCastFinishTime[0][FCastSpellName]..FireCastFinishTime[1][FCastSpellName]..FireCastFinishTime[2][FCastSpellName]..FireCastFinishTime[3][FCastSpellName])
+			--print("[0]"..FireCastFinishTime[0][FEstimateHitTime])
+			--for ii=0,3 do
+			--	if FireCastFinishTime[ii][FEstimateHitTime]>0 then
+			--		print(ii..":"..FireCastFinishTime[ii][FCastSpellName])
+			--	end
+			--end
 
 		end
 	end
---[[	if (IROSpecID==63)and(subevent=="SPELL_DAMAGE") then	
+	local ccc=0
+	if (IROSpecID==63)and(subevent=="SPELL_DAMAGE") then	
 		loadVal(...)
 		if (isProjectileFireSpell[spellName]==true) then
 			for ii=3,0,-1 do
-				if (FireCastFinishTime[ii][FCastSpellName]==spellName)
-				and math.abs(FireCastFinishTime[ii][FEstimateHitTime]-currentTime)<0.4 then
-					FireCastFinishTime[ii][FEstimateHitTime]=0
+				if (FireCastFinishTime[ii][FCastSpellName]==spellName) then
+					FireCastFinishTime[ii][FCastSpellName]=""
+					--print(currentTime-FireCastFinishTime[ii][FEstimateHitTime])
+					FireCastFinishTime[ii][FEstimateHitTime]=0					
 					break
 				end
 			end
+
+			
 		end
 	end
-	--]]
+			for ii=0 , 3 do
+			if isProjectileFireSpell[FireCastFinishTime[ii][FCastSpellName]] then ccc=ccc+1 end end
+			print(ccc)			
 	--print(FireCastFinishTime[0][FCastSpellName]..FireCastFinishTime[1][FCastSpellName]..FireCastFinishTime[2][FCastSpellName]..FireCastFinishTime[3][FCastSpellName])
 	
 --order Now->0->1->2->3->5delete
@@ -285,3 +301,16 @@ ConditionCategory:RegisterCondition(9.5,  "TMWMCPREDICTIL", {
 		
     end,
 })
+
+
+
+Env.CanCheckHeatingUpNow = function()
+	return true
+end
+
+
+
+
+
+
+

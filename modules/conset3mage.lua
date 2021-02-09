@@ -204,7 +204,7 @@ function f:COMBAT_LOG_EVENT_UNFILTERED(...)
 	--if isProjectileFireSpell[FireCastFinishTime[ii][FCastSpellName]] then ccc=ccc+1 end end
 	--print(ccc)			
 	
---order Now->0->1->2->3->5delete
+--order Now->0->1->2->3->delete
 --keep only Fireball,Phoenix Flames,Pyroblast (spell that has travel time + trigger "Heating up"	
 --[[	if (IROSpecID==63)and(subevent=="SPELL_CAST_START") then
 		loadVal(...)

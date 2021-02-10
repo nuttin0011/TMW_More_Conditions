@@ -26,6 +26,8 @@ local allDeBuffByMe=Env.allDeBuffByMe
 local GetTime=GetTime
 local UnitExists=UnitExists
 local UnitCastingInfo=UnitCastingInfo
+local Old_Val_Check=Env.Old_Val_Check
+local Old_Val_Update=Env.Old_Val_Update
 
 local ConditionCategory = CNDT:GetCategory("ATTRIBUTES_TMWMC", 12, "More Conditions", true, false)
 -- for mage
@@ -344,11 +346,14 @@ ConditionCategory:RegisterCondition(9.5,  "TMWMCPREDICTIL", {
     end,
 })
 
-function TMW_MC:PredictCanCheckHeatingUp()
+function TMW_MC:PredictCanCheckHotstreak()
+	local oldval = Old_Val_Check("PredictCanCheckHotstreak","")
+	if oldval then return oldval end
 
 	local currentTime=GetTime()
 	local name,_,_,startTimeMS,endTimeMS,_,castID=UnitCastingInfo("player")
 	local targetRange=rc:GetRange('target')
+
 	if name then
 		if (FireCastingSpell[0][CSSpellID]~=castID)and(FireCastingSpell[1][CSSpellID]~=castID) then
 			if (isNotProjectileFireSpell[name] or (isProjectileFireSpell[name] and (targetRange<=5))) then
@@ -384,24 +389,57 @@ function TMW_MC:PredictCanCheckHeatingUp()
 	for ii=0,1 do
 		if FireCastingSpell[ii][CSSpellID] 
 		and (currentTime>= FireCastingSpell[ii][CSSpellHitTime])
-		and (currentTime< FireCastingSpell[ii][CSSpellHitDelay]) then return false end
+		and (currentTime< FireCastingSpell[ii][CSSpellHitDelay]) then
+			Old_Val_Update("PredictCanCheckHotstreak","",false)
+			return false
+		end
 	end
 
 	local foundProjectile=false
 	for ii=0,3 do
 		if FireCastFinishTime[ii][FCastSpellName] then
-			if (currentTime>FireCastFinishTime[ii][FEstimateHitTime]) then return false end
+			if (currentTime>FireCastFinishTime[ii][FEstimateHitTime]) then
+				Old_Val_Update("PredictCanCheckHotstreak","",false)
+				return false
+			end
 			foundProjectile=true
 		end
 	end
-	if (currentTime<TimeDelayAfterSpellHit)and(not foundProjectile) then return false end
+	if (currentTime<TimeDelayAfterSpellHit)and(not foundProjectile) then
+		Old_Val_Update("PredictCanCheckHotstreak","",false)
+		return false 
+	end
 
+	Old_Val_Update("PredictCanCheckHotstreak","",true)
 	return true
 end
 
+Env.PredictCanCheckHotstreak = function()
+	return TMW_MC:PredictCanCheckHotstreak()
+end
 
+ConditionCategory:RegisterCondition(9.5,  "TMWMCPREDICTHOTSTREAK", {
+	text = "Predict Time to check Hot Streak",
+	tooltip = "this is save time to check Hot Streak (no Fire Projectile hit soon)",
+	unit="Player",
+	step = 1,
+	min = 0,
+	max =1,
+	bool = true,
+	texttable = {
+		[0] = "Can Check NOW!",
+		[1] = "Cannot Check NOW!",
+	},
 
+    icon = "Interface\\Icons\\ability_mage_hotstreak",
+    tcoords = CNDT.COMMON.standardtcoords,
 
-
-
-
+	funcstr = function(c, parent)
+		if c.Level==0 then
+			return [[PredictCanCheckHotstreak()]]
+		else
+			return [[not PredictCanCheckHotstreak()]]
+		end
+		
+    end,
+})

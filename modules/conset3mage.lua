@@ -65,13 +65,39 @@ local isProjectileFireSpell = {
 	["Phoenix Flames"]=true,
 	["Pyroblast"]=true
 }
-
-local FireCastFinishTime = {
-	[0] = {[FTarGUID]="",[FTarRange]=0,[FCastFinish]=0,[FCastSpellName]="",[FEstimateHitTime]=0},
-	[1] = {[FTarGUID]="",[FTarRange]=0,[FCastFinish]=0,[FCastSpellName]="",[FEstimateHitTime]=0},
-	[2] = {[FTarGUID]="",[FTarRange]=0,[FCastFinish]=0,[FCastSpellName]="",[FEstimateHitTime]=0},
-	[3] = {[FTarGUID]="",[FTarRange]=0,[FCastFinish]=0,[FCastSpellName]="",[FEstimateHitTime]=0}
+local isNotProjectileFireSpell = {
+	["Scorch"]=true,
+	["Fire Blast"]=true,
+	["Dragon's Breath"]=true
 }
+local FireCastFinishTime = {
+	[0] = {[FTarGUID]="",[FTarRange]=0,[FCastFinish]=0,[FCastSpellName]=nil,[FEstimateHitTime]=0},
+	[1] = {[FTarGUID]="",[FTarRange]=0,[FCastFinish]=0,[FCastSpellName]=nil,[FEstimateHitTime]=0},
+	[2] = {[FTarGUID]="",[FTarRange]=0,[FCastFinish]=0,[FCastSpellName]=nil,[FEstimateHitTime]=0},
+	[3] = {[FTarGUID]="",[FTarRange]=0,[FCastFinish]=0,[FCastSpellName]=nil,[FEstimateHitTime]=0}
+}
+local TimeDelayAfterSpellHit = 0
+
+local CSSpellHitTime=0
+local CSSpellHitDelay=1
+local CSSpellID=2
+local CSSpellRange=3
+local CSSpellName=4
+local FireCastingSpell={}
+-- [0]->[1]->delete
+for ii=0,1 do
+	FireCastingSpell[ii]={}
+	for ii2=0,4 do
+		FireCastingSpell[ii][ii2]=nil
+	end
+end
+--Check Save Zone for Heating up?
+--1 currentTime < all FEstimateHitTime (from projectile)
+--2 if Spell that generater Heating up Hit --> set TimeDelayAfterSpellHit=currentTime+abitdealy(~0.1-0.2)
+--	and  (currentTime > TimeDelayAfterSpellHit) and all projectile hited!
+--3 UnitCastingInfo("player") --> currentTime < EstimateHitTime-0.2 (from Casting spell)
+--	and if this spell goto projectile recalculate it
+
 
 local function checkFlurryTimer()
 	local currentTime = GetTime()
@@ -82,7 +108,7 @@ local function checkFlurryTimer()
 end
 
 local function predictFireSpellhittime(timeCastFinish,targetRange)
-	timeCastFinish = timeCastFinish or GetTime()
+	timeCastFinish = timeCastFinish or 0
 	targetRange = targetRange or 0
 	local timeMod = 0
 	--fire ball travel time >20 yard = 0.7+-0.1 sec
@@ -160,46 +186,62 @@ function f:COMBAT_LOG_EVENT_UNFILTERED(...)
 	
 	--********** FIRE MAGE Begin **********
 	--*** Assume Cast to "Target"....... cannot detect other e.g. "focus"
-	if (IROSpecID==63)and(subevent=="SPELL_CAST_SUCCESS") then
-		loadVal(...)
-		if (isProjectileFireSpell[spellName]==true) then
+	if IROSpecID==63 then
 
-			for ii=3,1,-1 do 
-				for ii2=0,4 do
-					FireCastFinishTime[ii][ii2]=FireCastFinishTime[ii-1][ii2]
+		if (subevent=="SPELL_CAST_SUCCESS") then
+			loadVal(...)
+			if (isProjectileFireSpell[spellName]==true) then
+
+				for ii=3,1,-1 do 
+					for ii2=0,4 do
+						FireCastFinishTime[ii][ii2]=FireCastFinishTime[ii-1][ii2]
+					end
+				end
+				FireCastFinishTime[0][FTarGUID]=destGUID
+				FireCastFinishTime[0][FTarRange]=rc:GetRange('target')
+				FireCastFinishTime[0][FCastFinish]=currentTime
+				FireCastFinishTime[0][FCastSpellName]=spellName
+				FireCastFinishTime[0][FEstimateHitTime]=predictFireSpellhittime(currentTime,FireCastFinishTime[0][FTarRange])
+				--print("[0]"..FireCastFinishTime[0][FEstimateHitTime])
+				--for ii=0,3 do
+				--	if FireCastFinishTime[ii][FEstimateHitTime]>0 then
+				--		print(ii..":"..FireCastFinishTime[ii][FCastSpellName])
+				--	end
+				--end
+
+			end
+		end
+		local ccc=0
+		if (subevent=="SPELL_DAMAGE") then
+			loadVal(...)
+			if isProjectileFireSpell[spellName] then
+				for ii=3,0,-1 do
+					if (FireCastFinishTime[ii][FCastSpellName]==spellName) then
+						FireCastFinishTime[ii][FCastSpellName]=nil
+						--print(currentTime-FireCastFinishTime[ii][FEstimateHitTime])
+						FireCastFinishTime[ii][FEstimateHitTime]=0
+						TimeDelayAfterSpellHit = currentTime+0.2
+						break
+					end
+				end		
+			elseif isNotProjectileFireSpell[spellName] then
+				TimeDelayAfterSpellHit = currentTime+0.2
+			end
+			for ii=1,0,-1 do
+				if FireCastingSpell[ii][CSSpellName]==spellName then
+					FireCastingSpell[ii][CSSpellID]=nil
 				end
 			end
-			FireCastFinishTime[0][FTarGUID]=destGUID
-			FireCastFinishTime[0][FTarRange]=rc:GetRange('target')
-			FireCastFinishTime[0][FCastFinish]=currentTime
-			FireCastFinishTime[0][FCastSpellName]=spellName
-			FireCastFinishTime[0][FEstimateHitTime]=predictFireSpellhittime(currentTime,FireCastFinishTime[0][FTarRange])
-			--print("[0]"..FireCastFinishTime[0][FEstimateHitTime])
-			--for ii=0,3 do
-			--	if FireCastFinishTime[ii][FEstimateHitTime]>0 then
-			--		print(ii..":"..FireCastFinishTime[ii][FCastSpellName])
-			--	end
-			--end
-
 		end
-	end
-	local ccc=0
-	if (IROSpecID==63)and(subevent=="SPELL_DAMAGE") then	
-		loadVal(...)
-		if (isProjectileFireSpell[spellName]==true) then
-			for ii=3,0,-1 do
-				if (FireCastFinishTime[ii][FCastSpellName]==spellName) then
-					FireCastFinishTime[ii][FCastSpellName]=""
-					--print(currentTime-FireCastFinishTime[ii][FEstimateHitTime])
-					FireCastFinishTime[ii][FEstimateHitTime]=0					
-					break
+		if (subevent=="SPELL_CAST_FAILED") then
+			loadVal(...)
+			for ii=1,0,-1 do
+				if FireCastingSpell[ii][CSSpellName]==spellName then
+					FireCastingSpell[ii][CSSpellID]=nil
 				end
-			end
-
-			
+			end			
 		end
-	end
-	
+	end	
 	--for ii=0 , 3 do
 	--if isProjectileFireSpell[FireCastFinishTime[ii][FCastSpellName]] then ccc=ccc+1 end end
 	--print(ccc)			
@@ -302,9 +344,58 @@ ConditionCategory:RegisterCondition(9.5,  "TMWMCPREDICTIL", {
     end,
 })
 
+function TMW_MC:PredictCanCheckHeatingUp()
 
+	local currentTime=GetTime()
+	local name,_,_,startTimeMS,endTimeMS,_,castID=UnitCastingInfo("player")
+	local targetRange=rc:GetRange('target')
+	if name then
+		if (FireCastingSpell[0][CSSpellID]~=castID)and(FireCastingSpell[1][CSSpellID]~=castID) then
+			if (isNotProjectileFireSpell[name] or (isProjectileFireSpell[name] and (targetRange<=5))) then
+				for ii=0,4 do
+					FireCastingSpell[1][ii]=FireCastingSpell[0][ii]
+				end
+				if isNotProjectileFireSpell[name] then 
+					FireCastingSpell[0][CSSpellHitTime]=(endTimeMS/1000)-0.2
+					FireCastingSpell[0][CSSpellHitDelay]=FireCastingSpell[0][CSSpellHitTime]+0.3
+					FireCastingSpell[0][CSSpellID]=castID
+					FireCastingSpell[0][CSSpellRange]=0
+					FireCastingSpell[0][CSSpellName]=name
+				else
+					FireCastingSpell[0][CSSpellHitTime]=(endTimeMS/1000)-0.2
+					FireCastingSpell[0][CSSpellHitDelay]=FireCastingSpell[0][CSSpellHitTime]+0.3
+					FireCastingSpell[0][CSSpellID]=castID
+					FireCastingSpell[0][CSSpellRange]=targetRange
+					FireCastingSpell[0][CSSpellName]=name
+				end
+			end
+		else
+			if (FireCastingSpell[0][CSSpellID]==castID) then
+				if(isProjectileFireSpell[name])and(targetRange>5) then
+					FireCastingSpell[0][CSSpellID]=nil
+				end
+			elseif (FireCastingSpell[1][CSSpellID]==castID) then
+				if(isProjectileFireSpell[name])and(targetRange>5) then
+					FireCastingSpell[1][CSSpellID]=nil
+				end
+			end
+		end
+	end
+	for ii=0,1 do
+		if FireCastingSpell[ii][CSSpellID] 
+		and (currentTime>= FireCastingSpell[ii][CSSpellHitTime])
+		and (currentTime< FireCastingSpell[ii][CSSpellHitDelay]) then return false end
+	end
 
-Env.CanCheckHeatingUpNow = function()
+	local foundProjectile=false
+	for ii=0,3 do
+		if FireCastFinishTime[ii][FCastSpellName] then
+			if (currentTime>FireCastFinishTime[ii][FEstimateHitTime]) then return false end
+			foundProjectile=true
+		end
+	end
+	if (currentTime<TimeDelayAfterSpellHit)and(not foundProjectile) then return false end
+
 	return true
 end
 

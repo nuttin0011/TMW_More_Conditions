@@ -347,6 +347,7 @@ ConditionCategory:RegisterCondition(9.5,  "TMWMCPREDICTIL", {
 })
 
 function TMW_MC:PredictCanCheckHotstreak()
+	if (not initFunctionSeted) then InitMageCombatEvent() end
 	local oldval = Old_Val_Check("PredictCanCheckHotstreak","")
 	if oldval then return oldval end
 

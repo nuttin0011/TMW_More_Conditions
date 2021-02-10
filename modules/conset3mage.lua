@@ -80,6 +80,8 @@ local FireCastFinishTime = {
 }
 local TimeDelayAfterSpellHit = 0
 
+local TimerDelay = 0.4
+
 local CSSpellHitTime=0
 local CSSpellHitDelay=1
 local CSSpellID=2
@@ -119,10 +121,10 @@ local function predictFireSpellhittime(timeCastFinish,targetRange)
 	--fire ball travel time 5-10 yard = 0.2+-0.1 sec	
 	--fire ball travel time 2-5 yard = 0.15+-0.1 sec
 	--fire ball travel time <2 yard = 0 sec
-	if targetRange>20 then timeMod =0.60
-	elseif targetRange>=15 then timeMod =0.35
-	elseif targetRange>=10 then timeMod =0.2
-	elseif targetRange>=5 then timeMod =0.1
+	if targetRange>20 then timeMod =0.5
+	elseif targetRange>=15 then timeMod =0.3
+	elseif targetRange>=10 then timeMod =0
+	elseif targetRange>=5 then timeMod =0
 	else timeMod=0 end
 	--print(timeCastFinish.."+"..timeMod)
 	return timeCastFinish+timeMod
@@ -222,12 +224,12 @@ function f:COMBAT_LOG_EVENT_UNFILTERED(...)
 						FireCastFinishTime[ii][FCastSpellName]=nil
 						--print(currentTime-FireCastFinishTime[ii][FEstimateHitTime])
 						FireCastFinishTime[ii][FEstimateHitTime]=0
-						TimeDelayAfterSpellHit = currentTime+0.2
+						TimeDelayAfterSpellHit = currentTime+TimerDelay
 						break
 					end
 				end		
 			elseif isNotProjectileFireSpell[spellName] then
-				TimeDelayAfterSpellHit = currentTime+0.2
+				TimeDelayAfterSpellHit = currentTime+TimerDelay
 			end
 			for ii=1,0,-1 do
 				if FireCastingSpell[ii][CSSpellName]==spellName then

@@ -514,6 +514,7 @@ local ItemRangeCheck = {
 [3]=10645, -- Gnomish Death Ray 20 yard
 [4]=835, -- Large Rope Net 30 yard
 [5]=28767, -- The Decapitator 40 yard
+[6]=32321, -- Sparrowhawk Net 10 yard
 }
 
 local ItemNameToCheck8 = "item:"..ItemRangeCheck[1]
@@ -555,7 +556,7 @@ ConditionCategory:RegisterCondition(8.9,  "TMWMCIROENEMYCOUNTIN8YD", {
 		editbox:SetTexts("no Check=8 yard,Check 1=15 yard,Check 2=20 yard, Check 1+2=30 yard")
 	end,
 	name2=function(editbox) 
-		editbox:SetTexts("or Type 8,15,20,30,40 here for range(yards)")
+		editbox:SetTexts("or Type 8,10,15,20,30,40 here for range(yards)")
 	end,
 	texttable = function(v) return v end,
 	check = function(check)
@@ -583,6 +584,7 @@ ConditionCategory:RegisterCondition(8.9,  "TMWMCIROENEMYCOUNTIN8YD", {
 		elseif c.Name2=="20" then return [[(IROEnemyCountIn8yd(2) c.Operator c.Level)]]
 		elseif c.Name2=="15" then return [[(IROEnemyCountIn8yd(1) c.Operator c.Level)]]
 		elseif c.Name2=="8" then return [[(IROEnemyCountIn8yd(0) c.Operator c.Level)]]
+		elseif c.Name2=="10" then return [[(IROEnemyCountIn8yd(5) c.Operator c.Level)]]
 		end
 
 		if c.Checked then

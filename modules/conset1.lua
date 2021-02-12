@@ -33,6 +33,18 @@ local old_spell_finish_cast_check = 0
 local old_val = 0
 local trust_segment_cast = true
 local GCDSpell=TMW.GCDSpell
+local IROSpecID = nil
+local function fspecOnEvent(self, event, ...)
+	--print(event, ...)
+	local spec={[62]="arcane",[63]="fire",[64]="frost"}	
+	--print("old Spec :"..spec[IROSpecID])
+	IROSpecID = GetSpecializationInfo(GetSpecialization())
+	--print("new Spec :"..spec[IROSpecID])
+end
+local fspec = CreateFrame("Frame")
+fspec:RegisterEvent("PLAYER_SPECIALIZATION_CHANGED")
+fspec:SetScript("OnEvent", fspecOnEvent)
+
 
 local function printtable(a)
 	local k,v
@@ -158,8 +170,7 @@ function TMW_MC:PredictSS()
 		end
 	end
 
-	local currentSpec = GetSpecialization()
-    local IROSpecID  = GetSpecializationInfo(currentSpec)
+	if not IROSpecID then IROSpecID = GetSpecializationInfo(GetSpecialization()) end
 
 	local currentSS = _UnitPower("player",7,true)
 
@@ -728,8 +739,7 @@ function TMW_MC:GCDCDTime()
 	local GCDCD=TMW.GCD
 
 	if GCDCD == 0 then
-		local currentSpec = GetSpecialization()
-		local IROSpecID  = GetSpecializationInfo(currentSpec)
+		if not IROSpecID then IROSpecID = GetSpecializationInfo(GetSpecialization()) end
 		if IROClassGCDOneSec[IROSpecID] then
 			GCDCD = 1
 		else
@@ -939,5 +949,155 @@ ConditionCategory:RegisterCondition(9,  "TMWMCUNITNEARORFAR", {
 			return [[IsUnitFurthest(c.Unit,c.NameRaw)]]		
 		end
     end,	
+})
 
+--******************************** Predict GCD
+
+local f = CreateFrame("Frame")
+local PlayerCastingSpell = nil
+
+function f:COMBAT_LOG_EVENT_UNFILTERED(...)
+	if not playerGUID then playerGUID=UnitGUID("player") end
+	if not IROSpecID then IROSpecID = GetSpecializationInfo(GetSpecialization()) end 
+	local timestamp, subevent, _, sourceGUID, sourceName, sourceFlags, sourceRaidFlags, destGUID, destName, destFlags, destRaidFlags = ...
+	local spellId, spellName, spellSchool
+	local amount, overkill, school, resisted, blocked, absorbed, critical, glancing, crushing, isOffHand
+	local currentTime
+	local loadVal = function(...)
+		spellId, spellName, spellSchool, amount, overkill, school, resisted, blocked, absorbed, critical, glancing, crushing, isOffHand = select(12, ...)	
+	end
+	-- DO ONLY PLAYER EVENT
+	if sourceGUID~=playerGUID then return false end
+	currentTime = GetTime()
+
+--[[	if subevent=="SPELL_CAST_START" then
+		loadVal(...)
+		PlayerCastingSpell = spellName
+		print(spellName.." casting.....")
+	end
+--]]	
+	if subevent=="SPELL_CAST_SUCCESS" then
+		loadVal(...)
+		if PlayerCastingSpell == spellName then
+			PlayerCastingSpell=nil
+			print(spellName.." cast SUCCESS")
+		end		
+	end	
+--[[	
+	if subevent=="SPELL_CAST_FAILED" then
+		loadVal(...)
+		if PlayerCastingSpell == spellName then
+			PlayerCastingSpell=nil
+			print(spellName.." cast FAILED!!!!")
+		end	
+	end	
+--]]
+	
+--[[
+	if subevent == "SWING_DAMAGE" then
+		amount, overkill, school, resisted, blocked, absorbed, critical, glancing, crushing, isOffHand = select(12, ...)
+	elseif subevent == "SPELL_DAMAGE" then
+		spellId, spellName, spellSchool, amount, overkill, school, resisted, blocked, absorbed, critical, glancing, crushing, isOffHand = select(12, ...)
+	end
+--]]
+
+--[[
+	if critical and sourceGUID == playerGUID then
+		-- get the link of the spell or the MELEE globalstring
+		local action = spellId and GetSpellLink(spellId) or MELEE
+		print(action, destName, amount)
+	end
+	-]]
+
+end
+
+local initFunctionSeted = false
+local function InitPredictGCDCombatEvent()
+	if (not initFunctionSeted) then
+		initFunctionSeted=true
+		--local currentSpec = GetSpecialization()
+		if not IROSpecID then IROSpecID = GetSpecializationInfo(GetSpecialization()) end
+		f:RegisterEvent("COMBAT_LOG_EVENT_UNFILTERED")
+		f:SetScript("OnEvent", function(self, event)
+			self:COMBAT_LOG_EVENT_UNFILTERED(CombatLogGetCurrentEventInfo())
+		end)
+	end
+end
+
+function TMW_MC:InitPredictGCDCombatEvent()
+	InitPredictGCDCombatEvent()
+end
+
+
+-- Predict GCD, Cast Time and Return "True" if free from GCD and Cast
+function TMW_MC:IROTimeToUseSkill(GCDMultiply,AdjustPing,endCheckPingPredict)
+	-- return true if 
+	--	not cast + no GCD
+	--	GetTime()>(GCD*GCDMultiply)
+	--	GetTime()>(Castime-AdjustPing) , but (AdjustPing) not less than (GCD*GCDMultiply)
+	GCDMultiply=GCDMultiply or 0.5
+	AdjustPing=AdjustPing or 1
+	endCheckPingPredict=endCheckPingPredict or 0.2
+	
+	local st,du=GetSpellCooldown(GCDSpell)
+	local name, _, _, startTimeMS, endTimeMS = UnitCastingInfo("player")
+	if not name then
+		name, _, _, startTimeMS, endTimeMS = UnitChannelInfo("player")
+	end	
+	
+	if (du==0) and (not name) then
+		return true
+	end
+	
+	local beginCheck
+	local endCheck
+	local endTime=(endTimeMS or 0)/1000
+	if (du>0) then
+		if name then
+			beginCheck=endTime-(du*GCDMultiply)
+			endCheck=endTime-endCheckPingPredict
+		else
+			beginCheck=st+du-(du*GCDMultiply)
+			endCheck=st+du-endCheckPingPredict
+		end
+	else
+		beginCheck=endTime-AdjustPing
+		endCheck=endTime-endCheckPingPredict
+	end
+	local currentTime=GetTime()
+	return ((currentTime>=beginCheck)and(currentTime<=endCheck))
+end
+
+Env.IROTimeToUseSkill = function(GCDMultiply,AdjustPing)
+	return TMW_MC:IROTimeToUseSkill(GCDMultiply,AdjustPing)
+end
+
+ConditionCategory:RegisterCondition(10,  "TMWMCIROTIMETOUSESKILL", {
+    text = "Check Time period to use skill",
+	tooltip = "by compare GCD/Casting/Channeling/adjust ping and free time",
+	unit="player",
+	min =0,
+	max =1,
+	levelChecks = true,
+	step =1,
+	nooperator = true,
+	name=function(editbox) 
+		editbox:SetTexts("multiply GCD",'e.g. 0.5\nthat mean return true if GetTime()>0.5*GCD')
+	end,
+	name2=function(editbox) 
+		editbox:SetTexts("ping adjust",'e.g. 1\nthat mean return true if casting 1 sec befor finish')
+	end,
+	texttable = {
+		[0] = "should use skill",
+		[1] = "shouldnot use skill",
+	},
+    icon = "interface\\icons\\inv_sword_22",
+    tcoords = CNDT.COMMON.standardtcoords,
+	funcstr = function(c, parent)
+		if c.Level==0 then
+			return [[IROTimeToUseSkill(tonumber(c.NameRaw),tonumber(c.Name2Raw))]]
+		else
+			return [[not IROTimeToUseSkill(tonumber(c.NameRaw),tonumber(c.Name2Raw))]]		
+		end
+    end,	
 })

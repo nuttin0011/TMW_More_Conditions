@@ -1052,10 +1052,10 @@ function TMW_MC:IROTimeToUseSkill(GCDMultiply,AdjustPing,endCheckPingPredict)
 		if IdleCastTime==0 then
 			IdleCastTime=currentTime
 		else
-			if not printedIdleTime then
-				printedIdleTime=true
-				print("IDLE TIME>"..endCheckPingPredict*1000)
-			end
+			--if not printedIdleTime then
+			--	printedIdleTime=true
+			--	print("IDLE TIME>"..endCheckPingPredict*1000)
+			--end
 			if currentTime>(IdleCastTime+endCheckPingPredict) then return true end
 		end
 	else

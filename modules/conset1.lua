@@ -1078,8 +1078,10 @@ function TMW_MC:IROTimeToUseSkill(GCDMultiply,AdjustPing,endCheckPingPredict)
 		beginCheck=endTime-AdjustPing
 		endCheck=endTime
 	end
-	endCheck=endTime-endCheckPingPredict
-	
+	--print("b"..beginCheck)
+
+	endCheck=endCheck-endCheckPingPredict
+	--print("e"..endCheck)
 	return ((currentTime>=beginCheck)and(currentTime<=endCheck))
 end
 

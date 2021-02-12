@@ -304,22 +304,36 @@ local function InitMageCombatEvent()
 	end
 end
 
-function TMW_MC:PredictWinterChill(nUnit)
+function TMW_MC:PredictWinterChill(nUnit,nBuffStackWinterChill,IsAtLeast)
 
 	if (not initFunctionSeted) then InitMageCombatEvent() end
+	
 	nUnit=nUnit or "target"
+	nBuffStackWinterChill=nBuffStackWinterChill or 1
+	if IsAtLeast==nil then IsAtLeast=true end
+	
 	if not UnitExists(nUnit) then return false end
 	if UnitGUID(nUnit)~=FlurryTargetGUID then return false end
 	checkFlurryTimer()
-	if FlurryBuffWinterChillCount==0 then return false end
-	if (FlurryBuffWinterChillCount==1) and (UnitCastingInfo("player")=="Glacial Spike") then
-		return false
+
+	local tempFlurryBuffWinterChillCount=FlurryBuffWinterChillCount
+	if UnitCastingInfo("player")=="Glacial Spike" then
+		tempFlurryBuffWinterChillCount=tempFlurryBuffWinterChillCount-1
 	end
-	return true
+	if tempFlurryBuffWinterChillCount==0 then return false end
+	
+	if IsAtLeast then
+		if tempFlurryBuffWinterChillCount>=nBuffStackWinterChill then return true end
+	else
+		if tempFlurryBuffWinterChillCount==nBuffStackWinterChill then return true end
+	end
+	
+	return false
 end
 
-Env.PredictWinterChillForIL = function(nUnit)
-	return TMW_MC:PredictWinterChill(nUnit)
+
+Env.PredictWinterChillForIL = function(nUnit,nBuffStackWinterChill,IsAtLeast)
+	return TMW_MC:PredictWinterChill(nUnit,nBuffStackWinterChill,IsAtLeast)
 end
 
 ConditionCategory:RegisterCondition(9.5,  "TMWMCPREDICTIL", {
@@ -328,11 +342,13 @@ ConditionCategory:RegisterCondition(9.5,  "TMWMCPREDICTIL", {
 	unit=nil,
 	step = 1,
 	min = 0,
-	max =1,
-	bool = true,
+	max = 3,
+	levelChecks = true,
 	texttable = {
-		[0] = "Winter's chill Proc",
-		[1] = "Winter's chill not Proc",
+		[0] = "Proc >=1 stack",
+		[1] = "not Proc",
+		[2] = "Proc 1 stack",
+		[3] = "Proc 2 stack",
 	},
 
     icon = "Interface\\Icons\\spell_ice_rune",
@@ -340,11 +356,14 @@ ConditionCategory:RegisterCondition(9.5,  "TMWMCPREDICTIL", {
 
 	funcstr = function(c, parent)
 		if c.Level==0 then
-			return [[PredictWinterChillForIL(c.Unit)]]
+			return [[PredictWinterChillForIL(c.Unit,1,true)]]
+		elseif c.Level==1 then
+			return [[not PredictWinterChillForIL(c.Unit,1,true)]]
+		elseif c.Level==2 then
+			return [[PredictWinterChillForIL(c.Unit,1,false)]]
 		else
-			return [[not PredictWinterChillForIL(c.Unit)]]
+			return [[PredictWinterChillForIL(c.Unit,2,false)]]
 		end
-		
     end,
 })
 

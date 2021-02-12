@@ -1028,6 +1028,9 @@ function TMW_MC:InitPredictGCDCombatEvent()
 	InitPredictGCDCombatEvent()
 end
 
+local IdleCastTime=0
+local printedIdleTime=false
+--local OldIdleCastTimeCheck=0
 
 -- Predict GCD, Cast Time and Return "True" if free from GCD and Cast
 function TMW_MC:IROTimeToUseSkill(GCDMultiply,AdjustPing,endCheckPingPredict)
@@ -1044,9 +1047,20 @@ function TMW_MC:IROTimeToUseSkill(GCDMultiply,AdjustPing,endCheckPingPredict)
 	if not name then
 		name, _, _, startTimeMS, endTimeMS = UnitChannelInfo("player")
 	end	
-	
-	if (du==0) and (not name) then
-		return true
+	local currentTime=GetTime()	
+	if (du==0) and (not name) then 
+		if IdleCastTime==0 then
+			IdleCastTime=currentTime
+		else
+			if not printedIdleTime then
+				printedIdleTime=true
+				print("IDLE TIME>"..endCheckPingPredict*1000)
+			end
+			if currentTime>(IdleCastTime+endCheckPingPredict) then return true end
+		end
+	else
+		printedIdleTime = false
+		IdleCastTime=0
 	end
 	
 	local beginCheck
@@ -1055,16 +1069,17 @@ function TMW_MC:IROTimeToUseSkill(GCDMultiply,AdjustPing,endCheckPingPredict)
 	if (du>0) then
 		if name then
 			beginCheck=endTime-(du*GCDMultiply)
-			endCheck=endTime-endCheckPingPredict
+			endCheck=endTime
 		else
 			beginCheck=st+du-(du*GCDMultiply)
-			endCheck=st+du-endCheckPingPredict
+			endCheck=st+du
 		end
 	else
 		beginCheck=endTime-AdjustPing
-		endCheck=endTime-endCheckPingPredict
+		endCheck=endTime
 	end
-	local currentTime=GetTime()
+	endCheck=endTime-endCheckPingPredict
+	
 	return ((currentTime>=beginCheck)and(currentTime<=endCheck))
 end
 

@@ -344,6 +344,7 @@ ConditionCategory:RegisterCondition(9.5,  "TMWMCPREDICTIL", {
 	min = 0,
 	max = 3,
 	levelChecks = true,
+	nooperator = true,
 	texttable = {
 		[0] = "Proc >=1 stack",
 		[1] = "not Proc",

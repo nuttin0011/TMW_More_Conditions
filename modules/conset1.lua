@@ -1033,7 +1033,7 @@ local printedIdleTime=false
 --local OldIdleCastTimeCheck=0
 
 -- Predict GCD, Cast Time and Return "True" if free from GCD and Cast
-function TMW_MC:IROTimeToUseSkill(GCDMultiply,AdjustPing,endCheckPingPredict)
+function TMW_MC:IROTimeToUseSkill(GCDMultiply,AdjustPing,usePingAtGCD,usePingAtSpell,endCheckPingPredict)
 	-- return true if 
 	--	not cast + no GCD
 	--	GetTime()>(GCD*GCDMultiply)
@@ -1041,6 +1041,9 @@ function TMW_MC:IROTimeToUseSkill(GCDMultiply,AdjustPing,endCheckPingPredict)
 	GCDMultiply=GCDMultiply or 0.5
 	AdjustPing=AdjustPing or 1
 	endCheckPingPredict=endCheckPingPredict or 0.2
+	local BeginCheckFromPingPredict = 0.3
+	
+
 	
 	local st,du=GetSpellCooldown(GCDSpell)
 	local name, _, _, startTimeMS, endTimeMS = UnitCastingInfo("player")
@@ -1059,24 +1062,48 @@ function TMW_MC:IROTimeToUseSkill(GCDMultiply,AdjustPing,endCheckPingPredict)
 			if currentTime>(IdleCastTime+endCheckPingPredict) then return true end
 		end
 	else
-		printedIdleTime = false
+		--printedIdleTime = false
 		IdleCastTime=0
+	end
+	
+	local WorldPing	
+	if usePingAtGCD or usePingAtSpell then
+		WorldPing=select(4,GetNetStats())/1000
 	end
 	
 	local beginCheck
 	local endCheck
 	local endTime=(endTimeMS or 0)/1000
+	local PingPredict
 	if (du>0) then
+		if usePingAtGCD then
+			PingPredict=math.min(du*0.5,WorldPing+BeginCheckFromPingPredict)
+		else
+			PingPredict=du*GCDMultiply
+		end
+		--print("PingPredict GCD:"..PingPredict)		
 		if name then
-			beginCheck=endTime-(du*GCDMultiply)
+			beginCheck=endTime-PingPredict
 			endCheck=endTime
 		else
-			beginCheck=st+du-(du*GCDMultiply)
+			beginCheck=st+du-PingPredict
 			endCheck=st+du
 		end
 	else
-		beginCheck=endTime-AdjustPing
+		if usePingAtSpell then
+			if not name then 
+				PingPredict=WorldPing+BeginCheckFromPingPredict
+			else
+				PingPredict=math.min((endTimeMS-startTimeMS)/2000,WorldPing+BeginCheckFromPingPredict)
+			end
+		else
+			PingPredict=AdjustPing
+		end
+		--print("PingPredict Spell:"..PingPredict)
+		beginCheck=endTime-PingPredict
 		endCheck=endTime
+		--print("beginCheck :"..beginCheck)
+		--print("endCheck :"..endCheck)
 	end
 	--print("b"..beginCheck)
 
@@ -1085,8 +1112,8 @@ function TMW_MC:IROTimeToUseSkill(GCDMultiply,AdjustPing,endCheckPingPredict)
 	return ((currentTime>=beginCheck)and(currentTime<=endCheck))
 end
 
-Env.IROTimeToUseSkill = function(GCDMultiply,AdjustPing)
-	return TMW_MC:IROTimeToUseSkill(GCDMultiply,AdjustPing)
+Env.IROTimeToUseSkill = function(GCDMultiply,AdjustPing,usePingAtGCD,usPingAtSpell)
+	return TMW_MC:IROTimeToUseSkill(GCDMultiply,AdjustPing,usePingAtGCD,usPingAtSpell,0.2)
 end
 
 ConditionCategory:RegisterCondition(10,  "TMWMCIROTIMETOUSESKILL", {
@@ -1104,6 +1131,12 @@ ConditionCategory:RegisterCondition(10,  "TMWMCIROTIMETOUSESKILL", {
 	name2=function(editbox) 
 		editbox:SetTexts("ping adjust",'e.g. 1\nthat mean return true if casting 1 sec befor finish')
 	end,
+		check = function(check)
+		check:SetTexts("Use World Ping.","use (World Ping+300) but not more than 1/2 of GCD")
+	end,
+	check2= function(check)
+		check:SetTexts("Use World Ping.","use (World Ping+300) but not more than 1/2 of Spell Cast")
+	end,
 	texttable = {
 		[0] = "should use skill",
 		[1] = "shouldnot use skill",
@@ -1112,9 +1145,9 @@ ConditionCategory:RegisterCondition(10,  "TMWMCIROTIMETOUSESKILL", {
     tcoords = CNDT.COMMON.standardtcoords,
 	funcstr = function(c, parent)
 		if c.Level==0 then
-			return [[IROTimeToUseSkill(tonumber(c.NameRaw),tonumber(c.Name2Raw))]]
+			return [[IROTimeToUseSkill(tonumber(c.NameRaw),tonumber(c.Name2Raw),c.Checked,c.Checked2)]]
 		else
-			return [[not IROTimeToUseSkill(tonumber(c.NameRaw),tonumber(c.Name2Raw))]]		
+			return [[not IROTimeToUseSkill(tonumber(c.NameRaw),tonumber(c.Name2Raw),c.Checked,c.Checked2)]]		
 		end
     end,	
 })

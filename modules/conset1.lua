@@ -94,14 +94,13 @@ end
 temp_allBuffByMe ={[1]=0,[2]={}}
 --[1]=timer , [2]= [GUID] = result
 
-function Env.allBuffByMe(unit)
+function Env.allBuffByMe(unit,needLowerCaseName)
 
     --*********return table of [Buff name] = Buff time remaining
 	local allBuff={}
 	local unitGUID = _UnitGUID(unit)
 	if not unitGUID then return allBuff end
 	local currentTimer = _GetTime()
-
 
 	if (temp_allBuffByMe[1]==currentTimer)and(temp_allBuffByMe[2][unitGUID]) then
 		return temp_allBuffByMe[2][unitGUID]
@@ -112,14 +111,22 @@ function Env.allBuffByMe(unit)
 		temp_allBuffByMe[2]={}
 	end
 
-    local buffName,expTime,i
-
-    for i=1,40 do
-        buffName,_,_,_,_,expTime = _UnitAura(unit, i, "PLAYER|HELPFUL")
-        if buffName then 
-            allBuff[buffName]=expTime-GetTime()
-        else break end
-    end
+    local buffName,expTime
+	if needLowerCaseName then
+		for i=1,400 do
+			buffName,_,_,_,_,expTime = _UnitAura(unit, i, "PLAYER|HELPFUL")
+			if buffName then 
+				allBuff[string.lower(buffName)]=expTime-GetTime()
+			else break end
+		end
+	else
+		for i=1,400 do
+			buffName,_,_,_,_,expTime = _UnitAura(unit, i, "PLAYER|HELPFUL")
+			if buffName then 
+				allBuff[buffName]=expTime-GetTime()
+			else break end
+		end
+	end
 
 	temp_allBuffByMe[2][unitGUID]=allBuff
 

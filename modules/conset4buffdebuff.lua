@@ -16,6 +16,9 @@ function TMW_MC:CountBuff(nUnit,nDuration,nSetOfBuff)
     --nDutarion = lowerest duration to count e.g. 3
     --nSetOfDebuff = set of buff name that from c.Name e.g. ";arcane intellect;ice block;ice barrier;"
     -- NOTE. c.Name ll lower case and has ";" at first and last
+	local OldVal = Old_Val_Check("CountBuff",nUnit..nDuration..nSetOfBuff)
+	if OldVal then return OldVal end
+
     nUnit=nUnit or "target"
     nDuration=nDuration or 0
     local allBuff=allBuffByMe(nUnit,needLowerCaseName)
@@ -33,7 +36,10 @@ function TMW_MC:CountBuff(nUnit,nDuration,nSetOfBuff)
             end
         end
     end
+
+    Old_Val_Update("CountBuff",nUnit..nDuration..nSetOfBuff,bCount)
     return bCount
+
 end
 
 function Env.IROCountBuff(nUnit,nDuration,nSetOfBuff)

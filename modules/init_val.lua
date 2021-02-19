@@ -18,6 +18,7 @@ local CNDT = TMW.CNDT
 local Env = CNDT.Env
 local GetRealmName=GetRealmName
 local UnitGUID=UnitGUID
+local strsplit=strsplit
 
 local function printtable(a)
 	local k,v
@@ -25,6 +26,15 @@ local function printtable(a)
 		print(k,v)
 	end
     return 0        
+end
+
+function TMW_MC:TMWstrsplit(inputs)
+    --split c.Name to table
+    --e.g. c.Nameraw = "AAaa; bbbb; ccCC; DDdd"
+    -- then c.Name = ";aaaa;bbbb;cccc;dddd;"
+    -- this function split c.Name to table and lower case {[1]="aaaa",[2]="bbbb",[3]="cccc",[4]="dddd"}
+    inputs=string.sub(inputs,2,string.len(inputs)-1)
+    return strsplit(";",inputs)
 end
 
 IRO_Old_Val = {[1]=0,[2]={}}

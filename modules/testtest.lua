@@ -15,11 +15,11 @@ function Env.TMWMCTest(a,b,c,d)
 end
 
 Env.printc = function(c)
-	--print(c)
+	print(c)
 	return true
 end
 
-local ConditionCategory = CNDT:GetCategory("ATTRIBUTES_TMWMC_Test", 14, "Test Condition", true, false)
+local ConditionCategory = CNDT:GetCategory("ATTRIBUTES_TMWMC_Test", 32, "Test Condition", true, false)
 
 ConditionCategory:RegisterCondition(6,  "TMWMCTEST1111", {
     text = "Nearest / Furthest Enemy",

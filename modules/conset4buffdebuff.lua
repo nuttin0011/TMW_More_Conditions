@@ -6,6 +6,8 @@ local rc = LibStub("LibRangeCheck-2.0")
 
 local strsplit=strsplit
 local allBuffByMe=Env.allBuffByMe
+local Old_Val_Check = TMW.CNDT.Env.Old_Val_Check
+local Old_Val_Update = TMW.CNDT.Env.Old_Val_Update
 
 local ConditionCategory = CNDT:GetCategory("ATTRIBUTES_TMWMCBUFFDEBUFF", 13, "More Conditions Buff/Debuff", false, false)
 

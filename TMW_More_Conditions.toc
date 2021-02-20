@@ -12,9 +12,10 @@ modules/init_val.lua
 modules/conset1.lua
 modules/conset2.lua
 modules/conset3mage.lua
+modules/conset4buffdebuff.lua
 modules/WarlockPet.lua
 
 modules/Linked_Interrupt.lua
-modules/conset4buffdebuff.lua
-modules/testview.lua
+
+#modules/testview.lua
 # modules/testtest.lua

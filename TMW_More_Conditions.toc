@@ -13,6 +13,7 @@ modules/conset1.lua
 modules/conset2.lua
 modules/conset3mage.lua
 modules/conset4buffdebuff.lua
+modules/conset5ERO.lua
 modules/WarlockPet.lua
 
 modules/Linked_Interrupt.lua

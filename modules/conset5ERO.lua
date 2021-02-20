@@ -59,9 +59,9 @@ local modStr ={
 function TMW_MC:enSubMiniIROCode(IROcode)
 	--"ff042604" (Shift-F6)	--> 0x06 + 0x20 (shift code) --> 0x26
 	local modstr = modStr[string.sub(IROcode,3,4)]
-	if not modstr then return -1 end
+	if not modstr then return 0 end
 	local miniIROCode = IROcolorCode[string.sub(IROcode,5,6)]
-	if not miniIROCode then return -1 end
+	if not miniIROCode then return 0 end
 	return string.format("%02x",miniIROCode+modstr)
 end
 

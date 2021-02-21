@@ -85,3 +85,29 @@ ConditionCategory:RegisterCondition(6,  "TMWMCCOUNTBUFF", {
     end,	
 
 })
+
+ConditionCategory:RegisterCondition(5,  "TMWMCTRUE", {
+    text = "Always True",
+	tooltip = "Always True",
+	unit=false,
+	min = 0,
+    max = 1,
+	step = 1,
+    bolean = true,
+	nooperator = true,
+    levelChecks = true,
+	texttable = {
+		[0] = "True",
+		[1] = "False",
+	},
+    icon = "interface\\icons\\inv_jewelry_talisman_08",
+    tcoords = CNDT.COMMON.standardtcoords,
+	funcstr = function(c, parent)
+        if c.Level==0 then
+            return [[true]]
+        else
+            return [[false]]
+        end
+    end,	
+
+})

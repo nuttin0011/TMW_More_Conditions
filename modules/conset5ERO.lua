@@ -121,7 +121,7 @@ function TMW_MC:NextTimeCheckLockUseSkill()
 			return endTime+PingAdjust,true
 		end
 	else -- Player Not Casting/Channel
-		if GCDst then
+		if not GCDst then
 			-- Player Not Has GCDSpell
 			return currentTime+0.3,true
 		else

@@ -1,3 +1,15 @@
+local TMW = TMW
+local TMW_MC = TMW_More_Conditions
+local CNDT = TMW.CNDT
+local Env = CNDT.Env
+local GCDSpell=TMW.GCDSpell
+local GetSpellCooldown=GetSpellCooldown
+local UnitCastingInfo=UnitCastingInfo
+local UnitChannelInfo=UnitChannelInfo
+local GetTime=GetTime
+
+
+
 -- this function Change Normal IROcode --> miniIROCode
 -- it's ll compress 3 Icon --> 1 Icon
 -- ctrl		= 001 00000 = 32	= 0x20
@@ -10,6 +22,8 @@
 -- c1+c2+c3 = miniIROCode = "ff860d01"
 -- NOTE. need to swap byte c1 and c3 cause of EroDPS PixelGetColor function
 -- TMW_MC:enMiniIROcode("ff002100","ff003000","ff042604")="ff860d01"
+
+
 
 local IROcolorCode ={
 	["00"]=0x00,
@@ -84,4 +98,58 @@ function TMW_MC:enMiniIROcode(IROcode1,IROcode2,IROcode3)
 	local miniIROCode3 = TMW_MC:enSubMiniIROCode(IROcode3)
 	return "ff"..miniIROCode3..miniIROCode2..miniIROCode1
 end
+
+local PingAdjust = 0.2 --sec
+
+function TMW_MC:NextTimeCheckLockUseSkill()
+	--return NextTimeToCheckAgain, CanUse Skill Now?
+	local GCDst,GCDdu=GetSpellCooldown(GCDSpell)
+	local spellname, _, _, startTimeMS, endTimeMS = UnitCastingInfo("player")
+	if not spellname then
+		spellname, _, _, startTimeMS, endTimeMS = UnitChannelInfo("player")
+	end	
+	local currentTime=GetTime()	
+	local WorldPing=(select(4,GetNetStats())/1000)
+	local endTime,CutPoint
+	
+	if spellname then --Player Casting/Channel Spell
+		endTime=(endTimeMS/1000)
+		CutPoint=endTime-(WorldPing+PingAdjust)
+		if currentTime<CutPoint then
+			return CutPoint,false
+		else
+			return endTime+PingAdjust,true
+		end
+	else -- Player Not Casting/Channel
+		if GCDst then
+			-- Player Not Has GCDSpell
+			return currentTime+0.3,true
+		else
+			endTime=GCDst+GCDdu
+			CutPoint=endTime-(WorldPing+PingAdjust)
+			if currentTime<CutPoint then
+				return CutPoint,false
+			else
+				return endTime+PingAdjust,true
+			end			
+		end
+	end
+end
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 

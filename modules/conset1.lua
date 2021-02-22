@@ -1048,7 +1048,7 @@ function TMW_MC:IROTimeToUseSkill(GCDMultiply,AdjustPing,usePingAtGCD,usePingAtS
 	GCDMultiply=GCDMultiply or 0.5
 	AdjustPing=AdjustPing or 1
 	endCheckPingPredict=endCheckPingPredict or 0.2
-	local BeginCheckFromPingPredict = 0.3
+	local BeginCheckFromPingPredict = 0.2
 	
 
 	
@@ -1139,10 +1139,10 @@ ConditionCategory:RegisterCondition(10,  "TMWMCIROTIMETOUSESKILL", {
 		editbox:SetTexts("ping adjust",'e.g. 1\nthat mean return true if casting 1 sec befor finish')
 	end,
 		check = function(check)
-		check:SetTexts("Use World Ping.","use (World Ping+300) but not more than 1/2 of GCD")
+		check:SetTexts("Use World Ping.","use (World Ping+200) but not more than 1/2 of GCD")
 	end,
 	check2= function(check)
-		check:SetTexts("Use World Ping.","use (World Ping+300) but not more than 1/2 of Spell Cast")
+		check:SetTexts("Use World Ping.","use (World Ping+200) but not more than 1/2 of Spell Cast")
 	end,
 	texttable = {
 		[0] = "should use skill",

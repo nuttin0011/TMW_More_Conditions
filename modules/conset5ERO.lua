@@ -99,9 +99,9 @@ function TMW_MC:enMiniIROcode(IROcode1,IROcode2,IROcode3)
 	return "ff"..miniIROCode3..miniIROCode2..miniIROCode1
 end
 
-local PingAdjust = 0.2 --sec
+local DefaultPingAdjust = 0.2 --sec
 
-function TMW_MC:NextTimeCheckLockUseSkill()
+function TMW_MC:NextTimeCheckLockUseSkill(PingAdjust)
 	--return NextTimeToCheckAgain, CanUse Skill Now?
 	local GCDst,GCDdu=GetSpellCooldown(GCDSpell)
 	local spellname, _, _, startTimeMS, endTimeMS = UnitCastingInfo("player")
@@ -111,7 +111,7 @@ function TMW_MC:NextTimeCheckLockUseSkill()
 	local currentTime=GetTime()	
 	local WorldPing=(select(4,GetNetStats())/1000)
 	local endTime,CutPoint
-	
+	PingAdjust=PingAdjust or DefaultPingAdjust
 	if spellname then --Player Casting/Channel Spell
 		endTime=(endTimeMS/1000)
 		CutPoint=endTime-(WorldPing+PingAdjust)

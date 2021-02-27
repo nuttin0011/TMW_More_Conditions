@@ -291,3 +291,10 @@ function IsMyTurnToInterrupt()
     (next(IRODPSInterruptTable[UnitGUID("target")])==nil) or 
     (IRODPSInterruptTable[UnitGUID("target")][1] == IROInterrupterName)
 end
+
+
+function GCDActiveLessThan(ttime)
+    ttime = ttime or 0.2
+    local s,d = GetSpellCooldown(TMW.GCDSpell)
+    return ((s+d)-GetTime())<ttime
+end

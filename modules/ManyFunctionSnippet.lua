@@ -72,9 +72,6 @@ function PercentCastbar(PercentCast, MustInterruptAble, MaxTMS, MinTMS)
     return  wantInterrupt
 end
 
-
-
-
 ----------------------------------------------------------------------------------
 if not IROInterruptTier then
     IROInterruptTier = {}
@@ -278,7 +275,7 @@ if IROFrame == nil then
 end
 
 if not IROC_TimerHandle then
-    IROC_TimerHandle = C_Timer.NewTicker(0.1, function() 
+    IROC_TimerHandle = C_Timer.NewTicker(0.2, function() 
             if IROSendISM and UnitExists("target") and UnitCanAttack("player", "target") and IsItemInRange("item:28767", "target") then
                 IROSendISM()
             end

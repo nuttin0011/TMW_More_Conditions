@@ -538,8 +538,10 @@ local ItemRangeCheck = {
 local ItemNameToCheck8 = "item:"..ItemRangeCheck[1]
 
 function TMW_MC:IROEnemyCountIn8yd(Rlevel)
+
 	--return enemy count in Range Default 8 yard Max 8
 	Rlevel = Rlevel or 0
+	--Rlevel 0=8,1=15,2=20,3=30,4=40,5=10 yard
 	--print(Rlevel)
 	local OldVal=Old_Val_Check("IROEnemyCountIn8yd",Rlevel)
 	if OldVal then return OldVal end
@@ -560,7 +562,6 @@ function TMW_MC:IROEnemyCountIn8yd(Rlevel)
 	Old_Val_Update("IROEnemyCountIn8yd",Rlevel,count)
 	
     return  count
-	
 end
 
 ConditionCategory:RegisterCondition(8.9,  "TMWMCIROENEMYCOUNTIN8YD", {

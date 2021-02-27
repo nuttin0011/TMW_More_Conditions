@@ -2,9 +2,13 @@
 -- this file save many function for paste to TMW Snippet LUA
 
 --function IROEnemyCountIn8yd(Rlevel)
---function PercentCastbar(PercentCast, MustInterruptAble, MaxTMS, MinTMS)
+--function PercentCastbar(PercentCast, MustInterruptAble, MaxTMS, MinTMS,nUnit)
 --function function IsMyTurnToInterrupt()
-
+--function GCDActiveLessThan(ttime)
+--function SumHPMobinCombat()
+--function SumHPMobin8yd()
+--function IROTargetVVHP(nMultipy)
+--function IROEnemyGroupVVHP(nMultipy)
 
 local ItemRangeCheck = {
     [1]=34368, -- Attuned Crystal Cores 8 yard
@@ -34,12 +38,13 @@ function IROEnemyCountIn8yd(Rlevel)
     return  count
 end
 
-function PercentCastbar(PercentCast, MustInterruptAble, MaxTMS, MinTMS)
+function PercentCastbar(PercentCast, MustInterruptAble, MaxTMS, MinTMS,nUnit)
+    nUnit=nUnit or "target"
     PercentCast = PercentCast or 0.8
     if MustInterruptAble == nil then MustInterruptAble = true end
     MaxTMS = MaxTMS or 2000
     MinTMS = MinTMS or 800
-    local castingName, _, _, startTimeMS, endTimeMS, _, _, notInterruptible= UnitCastingInfo("target")
+    local castingName, _, _, startTimeMS, endTimeMS, _, _, notInterruptible= UnitCastingInfo(nUnit)
     
     local wantInterrupt = false
     
@@ -59,7 +64,7 @@ function PercentCastbar(PercentCast, MustInterruptAble, MaxTMS, MinTMS)
         end
         return  wantInterrupt
     end
-    local channelName, _, _, CstartTimeMS, CendTimeMS,_, CnotInterruptible= UnitChannelInfo("target") 
+    local channelName, _, _, CstartTimeMS, CendTimeMS,_, CnotInterruptible= UnitChannelInfo(nUnit) 
     if (channelName ~= nil) and (not (CnotInterruptible and MustInterruptAble)) then
         PercentCast = 1-PercentCast
         local totalcastTime = CendTimeMS-CstartTimeMS
@@ -298,3 +303,46 @@ function GCDActiveLessThan(ttime)
     local s,d = GetSpellCooldown(TMW.GCDSpell)
     return ((s+d)-GetTime())<ttime
 end
+
+function SumHPMobinCombat()
+    local sumhp =0
+    local ii,nn
+    for ii =1,30 do
+        nn='nameplate'..ii
+        if UnitExists(nn) and UnitAffectingCombat(nn) then
+            sumhp=sumhp+ UnitHealth(nn)
+        end
+    end
+    return sumhp
+end
+
+function SumHPMobin8yd()
+    local sumhp =0
+    local ii,nn
+    for ii =1,30 do
+        nn='nameplate'..ii
+        if UnitExists(nn) and CheckInteractDistance(nn,2) then
+            sumhp=sumhp+ UnitHealth(nn)
+    end end
+    return sumhp
+end
+
+function IROTargetVVHP(nMultipy)
+    nMultipy=nMultipy or 2
+    local nG=GetNumGroupMembers()
+    local playerHealth=UnitHealth("player")
+    local targetHealth=UnitHealthMax("target")
+    nG=(nG==0) and 1 or nG
+    return (nMultipy*playerHealth*nG)<targetHealth
+end
+
+function IROEnemyGroupVVHP(nMultipy)
+    nMultipy=nMultipy or 3
+    local nG=GetNumGroupMembers()
+    local playerHealth=UnitHealth("player")
+    local EnemyGroupHP=SumHPMobinCombat()
+    nG=(nG==0) and 1 or nG
+    return (nMultipy*playerHealth*nG)<EnemyGroupHP
+end
+
+

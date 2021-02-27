@@ -214,7 +214,7 @@ function TMW_MC:PlayerPartyHP(IsHealthMax)
 	if IsHealthMax then
 		playerHP=UnitHealthMax("player")
 	else
-		playerHP=UnitHealth("player")		
+		playerHP=UnitHealth("player")
 	end
 	return playerHP
 end

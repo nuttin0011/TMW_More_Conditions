@@ -1,14 +1,21 @@
 
 -- this file save many function for paste to TMW Snippet LUA
 
---function IROEnemyCountIn8yd(Rlevel)
---function PercentCastbar(PercentCast, MustInterruptAble, MaxTMS, MinTMS,nUnit)
---function function IsMyTurnToInterrupt()
---function GCDActiveLessThan(ttime)
---function SumHPMobinCombat()
---function SumHPMobin8yd()
---function IROTargetVVHP(nMultipy)
---function IROEnemyGroupVVHP(nMultipy)
+--function IROEnemyCountIn8yd(Rlevel) ; return count
+--function PercentCastbar(PercentCast, MustInterruptAble, MaxTMS, MinTMS,nUnit) ; return true/false
+--function IsMyTurnToInterrupt() ; return true/false
+--function GCDActiveLessThan(ttime) ; return true/false
+--function SumHPMobinCombat() ; return SumHP
+--function SumHPMobin8yd() ; return SumHP
+--function IROTargetVVHP(nMultipy) ; return (nMultipy*playerHealth*nG)<targetHealth
+--function IROEnemyGroupVVHP(nMultipy) ; return (nMultipy*playerHealth*nG)<EnemyGroupHP
+
+function TMW.CNDT.Env.IRODPSversion()
+
+    print('ERO DPS template 9.0.2/1c ')
+    
+    return  true
+end
 
 local ItemRangeCheck = {
     [1]=34368, -- Attuned Crystal Cores 8 yard

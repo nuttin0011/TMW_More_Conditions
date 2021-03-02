@@ -1,5 +1,5 @@
 
--- Version 9.0.2/2
+-- Many Function Version 9.0.2/2
 -- this file save many function for paste to TMW Snippet LUA
 
 --function IROEnemyCountIn8yd(Rlevel) ; return count

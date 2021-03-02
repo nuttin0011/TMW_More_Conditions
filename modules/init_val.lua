@@ -309,9 +309,6 @@ function TMW.CNDT.Env.PercentCastbar(PercentCast, MustInterruptAble,unit, MinTMS
         currentcastTime = (GetTime()*1000)-CstartTimeMS 
         
         if (currentcastTime>=MinTMS) and (currentcastTime<=(totalcastTime-MinTMS)) then
-            -- dont interrupt when cast < MinTMS and nerly finish
-            --percentcastTime = currentcastTime/totalcastTime
-            --wantInterrupt = percentcastTime >= PercentCast
 			wantInterrupt = true
         end
         

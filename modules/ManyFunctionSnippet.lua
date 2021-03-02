@@ -1,8 +1,9 @@
 
+-- Version 9.0.2/2
 -- this file save many function for paste to TMW Snippet LUA
 
 --function IROEnemyCountIn8yd(Rlevel) ; return count
---function PercentCastbar(PercentCast, MustInterruptAble, MaxTMS, MinTMS,nUnit) ; return true/false
+--function PercentCastbar(PercentCast, MustInterruptAble,unit, MinTMS,MaxTMS); return true/false
 --function IsMyTurnToInterrupt() ; return true/false
 --function GCDActiveLessThan(ttime) ; return true/false
 --function SumHPMobinCombat() ; return SumHP
@@ -45,19 +46,24 @@ function IROEnemyCountIn8yd(Rlevel)
     return  count
 end
 
-function PercentCastbar(PercentCast, MustInterruptAble, MaxTMS, MinTMS,nUnit)
-    nUnit=nUnit or "target"
-    PercentCast = PercentCast or 0.8
+function PercentCastbar(PercentCast, MustInterruptAble,unit, MinTMS,MaxTMS)
+    
+    PercentCast = PercentCast or 0.6
     if MustInterruptAble == nil then MustInterruptAble = true end
     MaxTMS = MaxTMS or 2000
     MinTMS = MinTMS or 800
-    local castingName, _, _, startTimeMS, endTimeMS, _, _, notInterruptible= UnitCastingInfo(nUnit)
+	unit = unit or "target"
+    
+    local castingName, _, _, startTimeMS, endTimeMS, _, _, notInterruptible= UnitCastingInfo(unit)
     
     local wantInterrupt = false
-    
+	local totalcastTime
+    local currentcastTime
+	local percentcastTime
+	
     if (castingName ~= nil) and(not(notInterruptible and MustInterruptAble)) then
-        local totalcastTime = endTimeMS-startTimeMS
-        local currentcastTime = (GetTime()*1000)-startTimeMS       
+        totalcastTime = endTimeMS-startTimeMS
+        currentcastTime = (GetTime()*1000)-startTimeMS       
         
         if (totalcastTime-currentcastTime)>MaxTMS then
             -- if cast time > MaxTMS ms dont interrupt
@@ -66,21 +72,26 @@ function PercentCastbar(PercentCast, MustInterruptAble, MaxTMS, MinTMS,nUnit)
             -- if cast time < MinTMS ms dont interrupt
             wantInterrupt = true
         else
-            local percentcastTime = currentcastTime/totalcastTime
+            percentcastTime = currentcastTime/totalcastTime
             wantInterrupt = percentcastTime >= PercentCast
         end
         return  wantInterrupt
     end
-    local channelName, _, _, CstartTimeMS, CendTimeMS,_, CnotInterruptible= UnitChannelInfo(nUnit) 
+    
+    local channelName, _, _, CstartTimeMS, CendTimeMS,_, CnotInterruptible= UnitChannelInfo(unit) 
+    
     if (channelName ~= nil) and (not (CnotInterruptible and MustInterruptAble)) then
         PercentCast = 1-PercentCast
-        local totalcastTime = CendTimeMS-CstartTimeMS
-        local currentcastTime = (GetTime()*1000)-CstartTimeMS 
-        if (currentcastTime>=MinTMS) and (currentcastTime<=totalcastTime-MinTMS) then
-            -- dont interrupt when cast < MinTMS and nerly finish
-            local percentcastTime = currentcastTime/totalcastTime
-            wantInterrupt = percentcastTime >= PercentCast
-    end end
+        totalcastTime = CendTimeMS-CstartTimeMS
+        currentcastTime = (GetTime()*1000)-CstartTimeMS 
+        
+        if (currentcastTime>=MinTMS) and (currentcastTime<=(totalcastTime-MinTMS)) then
+			wantInterrupt = true
+        end
+        
+        
+    end 
+    
     return  wantInterrupt
 end
 
@@ -316,7 +327,7 @@ function SumHPMobinCombat()
     local ii,nn
     for ii =1,30 do
         nn='nameplate'..ii
-        if UnitExists(nn) and UnitAffectingCombat(nn) then
+        if UnitExists(nn) and UnitAffectingCombat(nn) and UnitCanAttack("player", nn) then
             sumhp=sumhp+ UnitHealth(nn)
         end
     end
@@ -328,7 +339,7 @@ function SumHPMobin8yd()
     local ii,nn
     for ii =1,30 do
         nn='nameplate'..ii
-        if UnitExists(nn) and CheckInteractDistance(nn,2) then
+        if UnitExists(nn) and CheckInteractDistance(nn,2) and UnitCanAttack("player", nn) then
             sumhp=sumhp+ UnitHealth(nn)
     end end
     return sumhp

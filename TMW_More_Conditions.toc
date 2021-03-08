@@ -18,7 +18,6 @@ modules/conset6druid.lua
 
 modules/WarlockPet.lua
 
-modules/Linked_Interrupt.lua
 #modules/Icon_Tool_Tip_IRO.lua
 #modules/testview.lua
 # modules/testtest.lua

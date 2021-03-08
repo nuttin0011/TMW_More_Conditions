@@ -1,10 +1,12 @@
 
--- Many Function Version 9.0.2/2
+-- Many Function Version 9.0.2/3
 -- this file save many function for paste to TMW Snippet LUA
 
 --function IROEnemyCountIn8yd(Rlevel) ; return count
 --function PercentCastbar(PercentCast, MustInterruptAble,unit, MinTMS,MaxTMS); return true/false
---function IsMyTurnToInterrupt() ; return true/false
+--function IsMyTurnToInterrupt() ; return true/false ; 
+--			interruptCounterName == "wantinterrupt" by default
+--			active only Counter interruptCounterName == 1
 --function GCDActiveLessThan(ttime) ; return true/false
 --function SumHPMobinCombat() ; return SumHP
 --function SumHPMobin8yd() ; return SumHP
@@ -13,7 +15,7 @@
 
 function TMW.CNDT.Env.IRODPSversion()
 
-    print('ERO DPS template 9.0.2/1c ')
+    print('IRO DPS template 9.0.2/1c ')
     
     return  true
 end
@@ -138,29 +140,27 @@ end
 ------------------------------------
 -----  function IROSendISM  -----
 if not IROSendISM then
-    IROSendISM = function(isForce)
+    IROSendISM = function(isForce,ForceInterruptStatus)
         local tGUID=(UnitGUID("target") or "error")
-
-        local currentSpec = GetSpecialization()
-        IROSpecID  = GetSpecializationInfo(currentSpec)
-
-        IROInterrupterName = IROInterruptTier[IROSpecID][1].. '-'..IROPlayerName.. '-' ..GetRealmName()
-        IROInterruptSpellName = IROInterruptTier[IROSpecID][2]
-
-        local canInterrupt
-        if IROInterruptSpellName == '' then
-            canInterrupt=false
-        else
-            canInterrupt= (GetSpellCooldown(IROInterruptSpellName) == 0) and (IsSpellInRange(IROInterruptSpellName, "target")==1)
+        
+        local canInterrupt = ForceInterruptStatus
+        
+        if canInterrupt == nil then
+            if IROInterruptSpellName == '' then
+                canInterrupt=false
+            else
+                canInterrupt= (GetSpellCooldown(IROInterruptSpellName) == 0) and (IsSpellInRange(IROInterruptSpellName, "target")==1)
+            end
+            
+            if (IROSpecID>=265)and(IROSpecID<=267) then
+                --Warlock
+                local iSpell=GetSpellInfo(IROInterruptSpellName)
+                if (iSpell~='Axe Toss')and(iSpell~='Spell Lock') then
+                canInterrupt=false end
+            end
         end
         
-        if (IROSpecID>=265)and(IROSpecID<=267) then
-            --Warlock
-            local iSpell=GetSpellInfo(IROInterruptSpellName)
-            if (iSpell~='Axe Toss')and(iSpell~='Spell Lock') then
-            canInterrupt=false end
-        end
-
+        
         if (((tGUID~= IROTargetGUIDForInterrupt) and canInterrupt)or ((not OldcanInterruptStatus)or isForce)and canInterrupt) then
             OldcanInterruptStatus = true
             IROTargetGUIDForInterrupt=tGUID
@@ -284,7 +284,12 @@ IROprefix = "IRODPS"
 IROPlayerName = GetUnitName("player")
 -- true = ready , false = not ready
 OldcanInterruptStatus = true
+oldInterruptCounterStatus=false
+sendedIROSendISMafterNoMobExists=false
 IRODPSInterruptTable = {}
+if not interruptCounterName then
+	interruptCounterName="wantinterrupt"
+end
 
 if IROFrame == nil then
     IROFrame = CreateFrame("Frame")
@@ -298,11 +303,31 @@ if IROFrame == nil then
 end
 
 if not IROC_TimerHandle then
-    IROC_TimerHandle = C_Timer.NewTicker(0.2, function() 
-            if IROSendISM and UnitExists("target") and UnitCanAttack("player", "target") and IsItemInRange("item:28767", "target") then
-                IROSendISM()
-            end
-        end)
+    IROC_TimerHandle = C_Timer.NewTicker(0.1, function()
+			if (not UnitExists(target))
+				or(not UnitCanAttack("player", "target"))
+				or UnitIsDead("target")
+				or(not IsItemInRange("item:28767", "target"))
+			then
+				if not sendedIROSendISMafterNoMobExists then
+					IROSendISM(true,false)
+					sendedIROSendISMafterNoMobExists=true
+				end
+				return 1
+            else
+				sendedIROSendISMafterNoMobExists=false
+			end
+			
+			local cc=TMW_ST:GetCounter(interruptCounterName)
+			if IROSendISM and ((cc==1)or oldInterruptCounterStatus)then
+				if cc==0 then
+					IROSendISM(true,false)
+				else
+					IROSendISM()
+				end
+			end
+			oldInterruptCounterStatus=cc==1
+		end)
 end
 
 -------------------EOF---------------------

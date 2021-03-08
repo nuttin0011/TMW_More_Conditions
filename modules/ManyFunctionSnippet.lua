@@ -1,5 +1,5 @@
 
--- Many Function Version 9.0.2/3
+-- Many Function Version 9.0.2/4
 -- this file save many function for paste to TMW Snippet LUA
 
 --function IROEnemyCountIn8yd(Rlevel) ; return count
@@ -282,11 +282,20 @@ end
 IROTargetGUIDForInterrupt = ''
 IROprefix = "IRODPS"
 IROPlayerName = GetUnitName("player")
+
+local currentSpec = GetSpecialization()
+IROSpecID  = GetSpecializationInfo(currentSpec)
+
 -- true = ready , false = not ready
 OldcanInterruptStatus = true
 oldInterruptCounterStatus=false
 sendedIROSendISMafterNoMobExists=false
 IRODPSInterruptTable = {}
+
+IROInterrupterName = IROInterruptTier[IROSpecID][1].. '-'..IROPlayerName.. '-' ..GetRealmName()
+IROInterruptSpellName = IROInterruptTier[IROSpecID][2]
+
+
 if not interruptCounterName then
 	interruptCounterName="wantinterrupt"
 end

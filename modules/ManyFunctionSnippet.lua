@@ -164,7 +164,9 @@ function SumHPMobinCombat()
     local ii,nn
     for ii =1,30 do
         nn='nameplate'..ii
-        if UnitExists(nn) and UnitAffectingCombat(nn) and UnitCanAttack("player", nn) then
+        if UnitExists(nn) and UnitCanAttack("player", nn) 
+		and (UnitAffectingCombat(nn) or IsItemInRange(ItemNameToCheck8, nn))
+		then
             sumhp=sumhp+ UnitHealth(nn)
         end
     end

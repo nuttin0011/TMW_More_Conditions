@@ -1,8 +1,9 @@
 
--- Many Function Version 9.0.2/5
+-- Many Function Version 9.0.2/6
 -- this file save many function for paste to TMW Snippet LUA
 
 --function IROEnemyCountIn8yd(Rlevel) ; return count
+--function IROEnemyCountInRange(nRange) ; return count, nRange = yard e.g. 2 5 8 15 20 30 40 50 200
 --function PercentCastbar(PercentCast, MustInterruptAble,unit, MinTMS,MaxTMS); return true/false
 --function GCDActiveLessThan(ttime) ; return true/false
 --function SumHPMobinCombat() ; return SumHP
@@ -24,7 +25,7 @@ function IROEnemyCountIn8yd(Rlevel)
     Rlevel = Rlevel or 0
     --Rlevel 0=8,1=15,2=20,3=30,4=40,5=10 yard
     local ItemNameToCheck = "item:"..ItemRangeCheck[Rlevel+1]
-    local i,nn,count
+    local nn,count
     local count=0
     for i=1,30 do
         nn='nameplate'..i
@@ -36,6 +37,71 @@ function IROEnemyCountIn8yd(Rlevel)
         if count>=8 then break end
     end
     return  count
+end
+
+local ItemRangeCheck2 = {
+    [2] =37727, -- Ruby Acorn
+    [3] =42732, -- Everfrost Razor
+    [4] =129055, -- Shoe Shine Kit
+    [5] =8149, -- Voodoo Charm
+    [7] =61323, -- Ruby Seeds
+    [8] =34368, -- Attuned Crystal Cores
+    [10] =32321, -- Sparrowhawk Net
+    [15] =33069, -- Sturdy Rope
+    [20] =10645, -- Gnomish Death Ray
+    [25] =24268, -- Netherweave Net
+    [30] =835, -- Large Rope Net
+    [35] =24269, -- Heavy Netherweave Net
+    [38] =140786, -- Ley Spider Eggs
+    [40] =28767, -- The Decapitator
+    [45] =23836, -- Goblin Rocket Launcher
+    [50] =116139, -- Haunting Memento
+    [55] =74637, -- Kiryn's Poison Vial
+    [60] =32825, -- Soul Cannon
+    [70] =41265, -- Eyesore Blaster
+    [80] =35278, -- Reinforced Net
+    [90] =133925, -- Fel Lash
+    [100] =33119, -- Malister's Frost Wand
+    [150] =46954, -- Flaming Spears
+    [200] =75208, -- Rancher's Lariat
+}
+
+old_IROEnemyCountInRange_check={}
+for k,v in pairs(ItemRangeCheck2) do
+	old_IROEnemyCountInRange_check[k]={}
+end
+--format old_IROEnemyCountInRange_check[yard][1] = time
+--       old_IROEnemyCountInRange_check[yard][2] = count
+function IROEnemyCountInRange(nRange)
+	nRange = nRange or 8
+	if nRange<2 then nRange=2 end
+	while(ItemRangeCheck2[nRange]==nil)do
+		nRange=nRange-1
+	end
+	
+	local currentTime=GetTime()
+	
+	if old_IROEnemyCountInRange_check[nRange][1]==currentTime then
+		return old_IROEnemyCountInRange_check[nRange][2]
+	end
+	
+    local ItemNameToCheck = "item:"..ItemRangeCheck2[nRange]
+    local nn,count
+    local count=0
+    for i=1,30 do
+        nn='nameplate'..i
+        if UnitExists(nn) and UnitCanAttack("player", nn) then
+            if IsItemInRange(ItemNameToCheck, nn) then
+                count=count+1
+            end
+        end
+        if count>=8 then break end
+    end
+
+	old_IROEnemyCountInRange_check[nRange][1]=currentTime
+	old_IROEnemyCountInRange_check[nRange][2]=count		
+	
+    return count
 end
 
 function PercentCastbar(PercentCast, MustInterruptAble,unit, MinTMS,MaxTMS)

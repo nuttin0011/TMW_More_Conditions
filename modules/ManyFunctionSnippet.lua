@@ -1,5 +1,5 @@
 
--- Many Function Version 9.0.2/6
+-- Many Function Version 9.0.2/7
 -- this file save many function for paste to TMW Snippet LUA
 
 --function IROEnemyCountIn8yd(Rlevel) ; return count
@@ -10,6 +10,7 @@
 --function SumHPMobin8yd() ; return SumHP
 --function IROTargetVVHP(nMultipy) ; return (nMultipy*playerHealth*nG)<targetHealth
 --function IROEnemyGroupVVHP(nMultipy) ; return (nMultipy*playerHealth*nG)<EnemyGroupHP
+--function IsUsableExecute(nUnit) ; return true/false
 
 local ItemRangeCheck = {
     [1]=34368, -- Attuned Crystal Cores 8 yard
@@ -202,4 +203,31 @@ function IROEnemyGroupVVHP(nMultipy)
     return (nMultipy*playerHealth*nG)<EnemyGroupHP
 end
 
+function IsUsableExecute(nUnit)
+    nUnit=nUnit or "target"
+    local uH ,uHM, uHP, ItemNameToCheck, isCondemn
+    local Talentname,Talentselected
+    local isMassacre
+
+    if UnitCanAttack("player", nUnit) then
+        _, Talentname, _, Talentselected = GetTalentInfo(3,1,1)
+        isMassacre = (Talentname=="Massacre") and Talentselected
+        uHM=UnitHealthMax(nUnit)
+        uH=UnitHealth(nUnit)
+        uHP=(uH/uHM)*100
+        ItemNameToCheck = "item:"..ItemRangeCheck2[3]
+        isCondemn = GetSpellInfo("execute")=="Condemn"
+
+        if (uHP>0)
+        and (IsItemInRange(ItemNameToCheck, nUnit))
+        and ((uHP<20) or ((uHP<35) and isMassacre) or ((uHP>80) and isCondemn))
+        then
+            return true
+        else
+            return false
+        end
+    else
+        return false
+    end
+end
 

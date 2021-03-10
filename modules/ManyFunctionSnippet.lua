@@ -205,21 +205,20 @@ end
 
 function IsUsableExecute(nUnit)
     nUnit=nUnit or "target"
-    local uH ,uHM, uHP, ItemNameToCheck, isCondemn
+    local uH ,uHM, uHP, isCondemn
     local Talentname,Talentselected
     local isMassacre
+    local ItemNameToCheck = "item:"..ItemRangeCheck2[3]
 
-    if UnitCanAttack("player", nUnit) then
+    if UnitCanAttack("player", nUnit) and IsItemInRange(ItemNameToCheck, nUnit) then
         _, Talentname, _, Talentselected = GetTalentInfo(3,1,1)
         isMassacre = (Talentname=="Massacre") and Talentselected
         uHM=UnitHealthMax(nUnit)
         uH=UnitHealth(nUnit)
         uHP=(uH/uHM)*100
-        ItemNameToCheck = "item:"..ItemRangeCheck2[3]
         isCondemn = GetSpellInfo("execute")=="Condemn"
 
         if (uHP>0)
-        and (IsItemInRange(ItemNameToCheck, nUnit))
         and ((uHP<20) or ((uHP<35) and isMassacre) or ((uHP>80) and isCondemn))
         then
             return true

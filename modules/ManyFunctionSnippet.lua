@@ -1,5 +1,5 @@
 
--- Many Function Version 9.0.2/7
+-- Many Function Version 9.0.5/9
 -- this file save many function for paste to TMW Snippet LUA
 
 --function IROEnemyCountIn8yd(Rlevel) ; return count
@@ -11,6 +11,37 @@
 --function IROTargetVVHP(nMultipy) ; return (nMultipy*playerHealth*nG)<targetHealth
 --function IROEnemyGroupVVHP(nMultipy) ; return (nMultipy*playerHealth*nG)<EnemyGroupHP
 --function IsUsableExecute(nUnit) ; return true/false
+--function GCDCDTime() ; return GCD length time, = 1.5*(100/(100+UnitSpellHaste("player")))
+--function isMyInterruptSpellReady() ; true/false
+--function TMW.CNDT.Env.CooldownDuration([spellName/Id, e.g. "execute"], [include GCD, true/false]); return CD remain (sec)
+
+--function IRO_Old_Val.Check(functionName,input_val_string) ; return Old Val at Same GetTime() , or nil
+--function IRO_Old_Val.Update(functionName,input_val_string,result_val) ; update Old_Val at same GetTime()
+
+--var IROSpecID = GetSpecializationInfo(GetSpecialization()),e.g. 62="Mage arcane",63="Mage fire",64="Mage frost"
+
+
+local _, Talentname, _, Talentselected = GetTalentInfo(3,1,1)
+local isMassacre = (Talentname=="Massacre") and Talentselected
+local isCondemn = GetSpellInfo("execute")=="Condemn"
+local kk=0
+
+if not IROSpecID then
+    IROSpecID = GetSpecializationInfo(GetSpecialization())
+end
+local function fspecOnEvent(self, event, ...)
+    --print("old Spec :"..IROSpecID)
+    IROSpecID = GetSpecializationInfo(GetSpecialization())
+    --print("new Spec :"..IROSpecID)
+    _, Talentname, _, Talentselected = GetTalentInfo(3,1,1)
+    isMassacre = (Talentname=="Massacre") and Talentselected
+    isCondemn = GetSpellInfo("execute")=="Condemn"
+end
+local fspec = CreateFrame("Frame")
+fspec:RegisterEvent("PLAYER_SPECIALIZATION_CHANGED")
+fspec:RegisterEvent("ACTIVE_TALENT_GROUP_CHANGED")
+fspec:RegisterEvent("PLAYER_TALENT_UPDATE")
+fspec:SetScript("OnEvent", fspecOnEvent)
 
 local ItemRangeCheck = {
     [1]=34368, -- Attuned Crystal Cores 8 yard
@@ -21,6 +52,27 @@ local ItemRangeCheck = {
     [6]=32321, -- Sparrowhawk Net 10 yard
 }
 local ItemNameToCheck8 = "item:"..ItemRangeCheck[1]
+
+if not IRO_Old_Val then
+    IRO_Old_Val = {Timer=0,Old_Val={},
+        Check = function(functionName,input_val_string)
+            return ((IRO_Old_Val.Timer==GetTime())and IRO_Old_Val.Old_Val[functionName] and IRO_Old_Val.Old_Val[functionName][input_val_string])
+             and IRO_Old_Val.Old_Val[functionName][input_val_string] or nil
+        end,
+        Update = function(functionName,input_val_string,result_val)
+            local currenTimer = GetTime()
+            if IRO_Old_Val.Timer < currenTimer then
+                IRO_Old_Val.Timer = currenTimer
+                IRO_Old_Val.Old_Val = {}
+            end
+            if not IRO_Old_Val.Old_Val[functionName] then 
+                IRO_Old_Val.Old_Val[functionName]={} 
+            end
+            IRO_Old_Val.Old_Val[functionName][input_val_string]=result_val
+        end
+    }
+end
+
 function IROEnemyCountIn8yd(Rlevel)
     --return enemy count in Range Default 8 yard Max 8
     Rlevel = Rlevel or 0
@@ -67,25 +119,14 @@ local ItemRangeCheck2 = {
     [200] =75208, -- Rancher's Lariat
 }
 
-old_IROEnemyCountInRange_check={}
-for k,v in pairs(ItemRangeCheck2) do
-	old_IROEnemyCountInRange_check[k]={}
-end
---format old_IROEnemyCountInRange_check[yard][1] = time
---       old_IROEnemyCountInRange_check[yard][2] = count
 function IROEnemyCountInRange(nRange)
-	nRange = nRange or 8
+    nRange = nRange or 8
+	local OldVal=IRO_Old_Val.Check("IROEnemyCountInRange",nRange)
+	if OldVal then return OldVal end
 	if nRange<2 then nRange=2 end
 	while(ItemRangeCheck2[nRange]==nil)do
 		nRange=nRange-1
 	end
-	
-	local currentTime=GetTime()
-	
-	if old_IROEnemyCountInRange_check[nRange][1]==currentTime then
-		return old_IROEnemyCountInRange_check[nRange][2]
-	end
-	
     local ItemNameToCheck = "item:"..ItemRangeCheck2[nRange]
     local nn,count
     local count=0
@@ -98,28 +139,69 @@ function IROEnemyCountInRange(nRange)
         end
         if count>=8 then break end
     end
-
-	old_IROEnemyCountInRange_check[nRange][1]=currentTime
-	old_IROEnemyCountInRange_check[nRange][2]=count		
-	
+	IRO_Old_Val.Update("IROEnemyCountInRange",nRange,count)
     return count
 end
 
+if not IROInterruptTier then
+    IROInterruptTier = {}
+    IROInterruptTier[71] = {'B','Pummel'} -- Arm
+    IROInterruptTier[72] = {'B','Pummel'} -- fury
+    IROInterruptTier[73] = {'A','Pummel'} -- Protection
+    IROInterruptTier[265] = {'D','Command Demon'} -- Aff [Spell Lock]
+    IROInterruptTier[266] = {'D','Command Demon'} -- Demo
+    IROInterruptTier[267] = {'D','Command Demon'} -- Dest
+    IROInterruptTier[262] = {'C','Wind Shear'} -- Element
+    IROInterruptTier[263] = {'B','Wind Shear'} -- Enha
+    IROInterruptTier[264] = {'D','Wind Shear'} -- Resto
+    IROInterruptTier[259] = {'B','Kick'} -- Ass
+    IROInterruptTier[260] = {'B','Kick'} -- Out
+    IROInterruptTier[261] = {'B','Kick'} -- Sub
+    IROInterruptTier[256] = {'N',''} -- Disc
+    IROInterruptTier[257] = {'N',''} -- Holy
+    IROInterruptTier[258] = {'D','Silence'} -- Shadow
+    IROInterruptTier[65] = {'N',''} -- Holy
+    IROInterruptTier[66] = {'A','Rebuke'} -- Port
+    IROInterruptTier[67] = {'B','Rebuke'} -- Ret
+    IROInterruptTier[268] = {'A','Spear Hand Strike'} -- Brewmaster
+    IROInterruptTier[270] = {'N',''} -- Mistweaver
+    IROInterruptTier[269] = {'B','Spear Hand Strike'} -- Windwalker
+    IROInterruptTier[62] = {'C','Counterspell'} -- arcane
+    IROInterruptTier[63] = {'C','Counterspell'} -- fire
+    IROInterruptTier[64] = {'C','Counterspell'} -- frost
+    IROInterruptTier[253] = {'C','Counter Shot'} -- Beast Mastery
+    IROInterruptTier[254] = {'C','Counter Shot'} -- Marksmanship
+    IROInterruptTier[255] = {'C','Muzzle'} -- Survival
+    IROInterruptTier[102] = {'C','Solar Beam'} -- Balance
+    IROInterruptTier[103] = {'B','Skull Bash'} -- Feral
+    IROInterruptTier[104] = {'A','Skull Bash'} -- Guardian
+    IROInterruptTier[105] = {'N',''} -- Restoration
+    IROInterruptTier[577] = {'B','Disrupt'} -- Havoc
+    IROInterruptTier[581] = {'A','Disrupt'} -- Vengeance
+    IROInterruptTier[250] = {'A','Mind Freeze'} -- Blood
+    IROInterruptTier[251] = {'B','Mind Freeze'} -- frost
+    IROInterruptTier[252] = {'B','Mind Freeze'} -- unholy
+end
+
+function isMyInterruptSpellReady()
+    if IROInterruptTier and IROSpecID then
+        return TMW.CNDT.Env.CooldownDuration(IROInterruptTier[IROSpecID][2])==0
+    else
+        return false
+    end
+end
+
 function PercentCastbar(PercentCast, MustInterruptAble,unit, MinTMS,MaxTMS)
-    
     PercentCast = PercentCast or 0.6
     if MustInterruptAble == nil then MustInterruptAble = true end
     MaxTMS = MaxTMS or 2000
     MinTMS = MinTMS or 800
 	unit = unit or "target"
-    
     local castingName, _, _, startTimeMS, endTimeMS, _, _, notInterruptible= UnitCastingInfo(unit)
-    
     local wantInterrupt = false
 	local totalcastTime
     local currentcastTime
 	local percentcastTime
-	
     if (castingName ~= nil) and(not(notInterruptible and MustInterruptAble)) then
         totalcastTime = endTimeMS-startTimeMS
         currentcastTime = (GetTime()*1000)-startTimeMS       
@@ -136,21 +218,15 @@ function PercentCastbar(PercentCast, MustInterruptAble,unit, MinTMS,MaxTMS)
         end
         return  wantInterrupt
     end
-    
     local channelName, _, _, CstartTimeMS, CendTimeMS,_, CnotInterruptible= UnitChannelInfo(unit) 
-    
     if (channelName ~= nil) and (not (CnotInterruptible and MustInterruptAble)) then
         PercentCast = 1-PercentCast
         totalcastTime = CendTimeMS-CstartTimeMS
         currentcastTime = (GetTime()*1000)-CstartTimeMS 
-        
         if (currentcastTime>=MinTMS) and (currentcastTime<=(totalcastTime-MinTMS)) then
 			wantInterrupt = true
         end
-        
-        
     end 
-    
     return  wantInterrupt
 end
 
@@ -203,30 +279,55 @@ function IROEnemyGroupVVHP(nMultipy)
     return (nMultipy*playerHealth*nG)<EnemyGroupHP
 end
 
+local ItemNameToCheck2 = "item:"..ItemRangeCheck2[3]
+
 function IsUsableExecute(nUnit)
     nUnit=nUnit or "target"
-    local uH ,uHM, uHP, isCondemn
-    local Talentname,Talentselected
-    local isMassacre
-    local ItemNameToCheck = "item:"..ItemRangeCheck2[3]
-
-    if UnitCanAttack("player", nUnit) and IsItemInRange(ItemNameToCheck, nUnit) then
-        _, Talentname, _, Talentselected = GetTalentInfo(3,1,1)
-        isMassacre = (Talentname=="Massacre") and Talentselected
+    local OldVal=IRO_Old_Val.Check("IsUsableExecute",nUnit)
+	if OldVal then return OldVal end
+    local uH ,uHM, uHP, output
+    if UnitCanAttack("player", nUnit) and IsItemInRange(ItemNameToCheck2, nUnit) then
         uHM=UnitHealthMax(nUnit)
         uH=UnitHealth(nUnit)
         uHP=(uH/uHM)*100
-        isCondemn = GetSpellInfo("execute")=="Condemn"
-
-        if (uHP>0)
-        and ((uHP<20) or ((uHP<35) and isMassacre) or ((uHP>80) and isCondemn))
-        then
-            return true
-        else
-            return false
-        end
+        output=(uHP>0) and ((uHP<20) or ((uHP<35) and isMassacre) or ((uHP>80) and isCondemn))
+        IRO_Old_Val.Update("IsUsableExecute",nUnit,output)
+        return output
     else
+        IRO_Old_Val.Update("IsUsableExecute",nUnit,false)
         return false
     end
 end
+
+local IROClassGCDOneSec = { 
+    [259]=true,[260]=true,[261]=true, -- rogue
+    [269]=true, -- monk WW
+    [103]=true, -- druid feral
+}
+
+local function round(number, decimals)
+	return (("%%.%df"):format(decimals)):format(number)
+end
+
+function GCDCDTime()
+	--return GCD CD
+	local OldVal=IRO_Old_Val.Check("GCDCDTime","")
+	if OldVal then return OldVal end
+	
+	local GCDCD=TMW.GCD
+
+	if GCDCD == 0 then
+		if not IROSpecID then IROSpecID = GetSpecializationInfo(GetSpecialization()) end
+		if IROClassGCDOneSec[IROSpecID] then
+			GCDCD = 1
+		else
+			GCDCD = round(1.5*(100/(100+UnitSpellHaste("player"))),2)
+		end
+	end
+		
+	IRO_Old_Val.Update("GCDCDTime","",GCDCD)
+	
+	return GCDCD
+end
+
 

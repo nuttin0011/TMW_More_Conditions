@@ -21,7 +21,7 @@ local print = TMW.print
 local Module = TMW:NewClass("IconModule_Tooltip", "IconModule")
 local title_default = function(icon)
 	
-	local line1 = "TellMeWhen " .. icon:GetIconName() .. icon.States[1].Color
+	local line1 = "TellMeWhen " .. icon:GetIconName() .. " " .. icon.States[1].Color
 	
 	return line1
 end

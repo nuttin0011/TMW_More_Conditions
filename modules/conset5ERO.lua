@@ -1,4 +1,4 @@
--- ERO DPS Decoder 9.0.2/1
+-- ERO DPS Decoder 9.0.5/1
 -- can copy this to LUA Snippted
 
 local TMW = TMW

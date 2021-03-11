@@ -1,5 +1,4 @@
-
--- Many Function Version 9.0.5/9
+-- Many Function Version 9.0.5/11
 -- this file save many function for paste to TMW Snippet LUA
 
 --function IROEnemyCountIn8yd(Rlevel) ; return count
@@ -14,17 +13,15 @@
 --function GCDCDTime() ; return GCD length time, = 1.5*(100/(100+UnitSpellHaste("player")))
 --function isMyInterruptSpellReady() ; true/false
 --function TMW.CNDT.Env.CooldownDuration([spellName/Id, e.g. "execute"], [include GCD, true/false]); return CD remain (sec)
-
 --function IRO_Old_Val.Check(functionName,input_val_string) ; return Old Val at Same GetTime() , or nil
 --function IRO_Old_Val.Update(functionName,input_val_string,result_val) ; update Old_Val at same GetTime()
 
 --var IROSpecID = GetSpecializationInfo(GetSpecialization()),e.g. 62="Mage arcane",63="Mage fire",64="Mage frost"
 
 
-local _, Talentname, _, Talentselected = GetTalentInfo(3,1,1)
-local isMassacre = (Talentname=="Massacre") and Talentselected
-local isCondemn = GetSpellInfo("execute")=="Condemn"
-local kk=0
+local Talentname, Talentselected
+local isMassacre = nil
+local isCondemn = nil
 
 if not IROSpecID then
     IROSpecID = GetSpecializationInfo(GetSpecialization())
@@ -285,6 +282,14 @@ function IsUsableExecute(nUnit)
     nUnit=nUnit or "target"
     local OldVal=IRO_Old_Val.Check("IsUsableExecute",nUnit)
 	if OldVal then return OldVal end
+    if isMassacre==nil then
+        _, Talentname, _, Talentselected = GetTalentInfo(3,1,1)
+        isMassacre = (Talentname=="Massacre") and Talentselected
+    end
+    if isCondemn==nil then
+        isCondemn = GetSpellInfo("execute")=="Condemn"
+    end
+
     local uH ,uHM, uHP, output
     if UnitCanAttack("player", nUnit) and IsItemInRange(ItemNameToCheck2, nUnit) then
         uHM=UnitHealthMax(nUnit)

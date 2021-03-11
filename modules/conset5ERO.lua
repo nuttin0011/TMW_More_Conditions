@@ -2,7 +2,6 @@
 -- can copy this to LUA Snippted
 
 local TMW = TMW
---local TMW_MC = TMW_More_Conditions
 local CNDT = TMW.CNDT
 local Env = CNDT.Env
 local GCDSpell=TMW.GCDSpell
@@ -22,7 +21,7 @@ local GetTime=GetTime
 -- c3 = "ff042604" (Shift-F6)	--> 0x06 + 0x80 (shift code) --> 0x86
 -- c1+c2+c3 = miniIROCode = "ff860d01"
 -- NOTE. need to swap byte c1 and c3 cause of EroDPS PixelGetColor function
--- TMW_MC:enMiniIROcode("ff002100","ff003000","ff042604")="ff860d01"
+-- enMiniIROcode("ff002100","ff003000","ff042604")="ff860d01"
 
 local IROcolorCode ={
 	["00"]=0x00,
@@ -69,7 +68,6 @@ local modStr ={
 	["07"]=bit.lshift(0x07,5),
 }
 
---function TMW_MC:enSubMiniIROCode(IROcode)
 function enSubMiniIROCode(IROcode)
 	--"ff042604" (Shift-F6)	--> 0x06 + 0x20 (shift code) --> 0x26
 	-- if error return "00"
@@ -81,7 +79,6 @@ function enSubMiniIROCode(IROcode)
 	return string.format("%02x",miniIROCode+modstr)
 end
 
---function TMW_MC:getMetaIconColor(icon)
 function getMetaIconColor(icon)
 	local a=icon.__currentIcon
 	local b=a and a.__currentIcon or nil
@@ -93,11 +90,7 @@ function getMetaIconColor(icon)
 	return c
 end
 
---function TMW_MC:enMiniIROcode(IROcode1,IROcode2,IROcode3)
 function enMiniIROcode(IROcode1,IROcode2,IROcode3)
-	--local miniIROCode1 = TMW_MC:enSubMiniIROCode(IROcode1)
-	--local miniIROCode2 = TMW_MC:enSubMiniIROCode(IROcode2)
-	--local miniIROCode3 = TMW_MC:enSubMiniIROCode(IROcode3)
 	local miniIROCode1 = enSubMiniIROCode(IROcode1)
 	local miniIROCode2 = enSubMiniIROCode(IROcode2)
 	local miniIROCode3 = enSubMiniIROCode(IROcode3)
@@ -106,9 +99,7 @@ end
 
 local DefaultPingAdjust = 0.2 --sec
 
---function TMW_MC:NextTimeCheckLockUseSkill(PingAdjust)
 function NextTimeCheckLockUseSkill(PingAdjust)
-	--return NextTimeToCheckAgain, CanUse Skill Now?
 	local GCDst,GCDdu=GetSpellCooldown(GCDSpell)
 	local spellname, _, _, startTimeMS, endTimeMS = UnitCastingInfo("player")
 	if not spellname then
@@ -141,6 +132,3 @@ function NextTimeCheckLockUseSkill(PingAdjust)
 		end
 	end
 end
-
-
-

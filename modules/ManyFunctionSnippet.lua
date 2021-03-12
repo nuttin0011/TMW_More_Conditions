@@ -1,4 +1,4 @@
--- Many Function Version 9.0.5/11
+-- Many Function Version 9.0.5/12
 -- this file save many function for paste to TMW Snippet LUA
 
 --function IROEnemyCountIn8yd(Rlevel) ; return count
@@ -13,8 +13,8 @@
 --function GCDCDTime() ; return GCD length time, = 1.5*(100/(100+UnitSpellHaste("player")))
 --function isMyInterruptSpellReady() ; true/false
 --function TMW.CNDT.Env.CooldownDuration([spellName/Id, e.g. "execute"], [include GCD, true/false]); return CD remain (sec)
---function IRO_Old_Val.Check(functionName,input_val_string) ; return Old Val at Same GetTime() , or nil
---function IRO_Old_Val.Update(functionName,input_val_string,result_val) ; update Old_Val at same GetTime()
+--function ERO_Old_Val.Check(functionName,input_val_string) ; return Old Val at Same GetTime() , or nil
+--function ERO_Old_Val.Update(functionName,input_val_string,result_val) ; update Old_Val at same GetTime()
 
 --var IROSpecID = GetSpecializationInfo(GetSpecialization()),e.g. 62="Mage arcane",63="Mage fire",64="Mage frost"
 
@@ -50,22 +50,22 @@ local ItemRangeCheck = {
 }
 local ItemNameToCheck8 = "item:"..ItemRangeCheck[1]
 
-if not IRO_Old_Val then
-    IRO_Old_Val = {Timer=0,Old_Val={},
+if not ERO_Old_Val then
+    ERO_Old_Val = {Timer=0,Old_Val={},
         Check = function(functionName,input_val_string)
-            return ((IRO_Old_Val.Timer==GetTime())and IRO_Old_Val.Old_Val[functionName] and IRO_Old_Val.Old_Val[functionName][input_val_string])
-             and IRO_Old_Val.Old_Val[functionName][input_val_string] or nil
+            return ((ERO_Old_Val.Timer==GetTime())and ERO_Old_Val.Old_Val[functionName] and ERO_Old_Val.Old_Val[functionName][input_val_string])
+            and ERO_Old_Val.Old_Val[functionName][input_val_string] or nil
         end,
         Update = function(functionName,input_val_string,result_val)
             local currenTimer = GetTime()
-            if IRO_Old_Val.Timer < currenTimer then
-                IRO_Old_Val.Timer = currenTimer
-                IRO_Old_Val.Old_Val = {}
+            if ERO_Old_Val.Timer < currenTimer then
+                ERO_Old_Val.Timer = currenTimer
+                ERO_Old_Val.Old_Val = {}
             end
-            if not IRO_Old_Val.Old_Val[functionName] then 
-                IRO_Old_Val.Old_Val[functionName]={} 
+            if not ERO_Old_Val.Old_Val[functionName] then 
+                ERO_Old_Val.Old_Val[functionName]={} 
             end
-            IRO_Old_Val.Old_Val[functionName][input_val_string]=result_val
+            ERO_Old_Val.Old_Val[functionName][input_val_string]=result_val
         end
     }
 end
@@ -118,12 +118,12 @@ local ItemRangeCheck2 = {
 
 function IROEnemyCountInRange(nRange)
     nRange = nRange or 8
-	local OldVal=IRO_Old_Val.Check("IROEnemyCountInRange",nRange)
-	if OldVal then return OldVal end
-	if nRange<2 then nRange=2 end
-	while(ItemRangeCheck2[nRange]==nil)do
-		nRange=nRange-1
-	end
+    local OldVal=ERO_Old_Val.Check("IROEnemyCountInRange",nRange)
+    if OldVal then return OldVal end
+    if nRange<2 then nRange=2 end
+    while(ItemRangeCheck2[nRange]==nil)do
+        nRange=nRange-1
+    end
     local ItemNameToCheck = "item:"..ItemRangeCheck2[nRange]
     local nn,count
     local count=0
@@ -136,7 +136,7 @@ function IROEnemyCountInRange(nRange)
         end
         if count>=8 then break end
     end
-	IRO_Old_Val.Update("IROEnemyCountInRange",nRange,count)
+    ERO_Old_Val.Update("IROEnemyCountInRange",nRange,count)
     return count
 end
 
@@ -193,12 +193,12 @@ function PercentCastbar(PercentCast, MustInterruptAble,unit, MinTMS,MaxTMS)
     if MustInterruptAble == nil then MustInterruptAble = true end
     MaxTMS = MaxTMS or 2000
     MinTMS = MinTMS or 800
-	unit = unit or "target"
+    unit = unit or "target"
     local castingName, _, _, startTimeMS, endTimeMS, _, _, notInterruptible= UnitCastingInfo(unit)
     local wantInterrupt = false
-	local totalcastTime
+    local totalcastTime
     local currentcastTime
-	local percentcastTime
+    local percentcastTime
     if (castingName ~= nil) and(not(notInterruptible and MustInterruptAble)) then
         totalcastTime = endTimeMS-startTimeMS
         currentcastTime = (GetTime()*1000)-startTimeMS       
@@ -221,7 +221,7 @@ function PercentCastbar(PercentCast, MustInterruptAble,unit, MinTMS,MaxTMS)
         totalcastTime = CendTimeMS-CstartTimeMS
         currentcastTime = (GetTime()*1000)-CstartTimeMS 
         if (currentcastTime>=MinTMS) and (currentcastTime<=(totalcastTime-MinTMS)) then
-			wantInterrupt = true
+            wantInterrupt = true
         end
     end 
     return  wantInterrupt
@@ -239,8 +239,8 @@ function SumHPMobinCombat()
     for ii =1,30 do
         nn='nameplate'..ii
         if UnitExists(nn) and UnitCanAttack("player", nn) 
-		and (UnitAffectingCombat(nn) or IsItemInRange(ItemNameToCheck8, nn))
-		then
+        and (UnitAffectingCombat(nn) or IsItemInRange(ItemNameToCheck8, nn))
+        then
             sumhp=sumhp+ UnitHealth(nn)
         end
     end
@@ -280,8 +280,8 @@ local ItemNameToCheck2 = "item:"..ItemRangeCheck2[3]
 
 function IsUsableExecute(nUnit)
     nUnit=nUnit or "target"
-    local OldVal=IRO_Old_Val.Check("IsUsableExecute",nUnit)
-	if OldVal then return OldVal end
+    local OldVal=ERO_Old_Val.Check("IsUsableExecute",nUnit)
+    if OldVal then return OldVal end
     if isMassacre==nil then
         _, Talentname, _, Talentselected = GetTalentInfo(3,1,1)
         isMassacre = (Talentname=="Massacre") and Talentselected
@@ -289,17 +289,17 @@ function IsUsableExecute(nUnit)
     if isCondemn==nil then
         isCondemn = GetSpellInfo("execute")=="Condemn"
     end
-
+    
     local uH ,uHM, uHP, output
     if UnitCanAttack("player", nUnit) and IsItemInRange(ItemNameToCheck2, nUnit) then
         uHM=UnitHealthMax(nUnit)
         uH=UnitHealth(nUnit)
         uHP=(uH/uHM)*100
         output=(uHP>0) and ((uHP<20) or ((uHP<35) and isMassacre) or ((uHP>80) and isCondemn))
-        IRO_Old_Val.Update("IsUsableExecute",nUnit,output)
+        ERO_Old_Val.Update("IsUsableExecute",nUnit,output)
         return output
     else
-        IRO_Old_Val.Update("IsUsableExecute",nUnit,false)
+        ERO_Old_Val.Update("IsUsableExecute",nUnit,false)
         return false
     end
 end
@@ -311,28 +311,28 @@ local IROClassGCDOneSec = {
 }
 
 local function round(number, decimals)
-	return (("%%.%df"):format(decimals)):format(number)
+    return (("%%.%df"):format(decimals)):format(number)
 end
 
 function GCDCDTime()
-	--return GCD CD
-	local OldVal=IRO_Old_Val.Check("GCDCDTime","")
-	if OldVal then return OldVal end
-	
-	local GCDCD=TMW.GCD
-
-	if GCDCD == 0 then
-		if not IROSpecID then IROSpecID = GetSpecializationInfo(GetSpecialization()) end
-		if IROClassGCDOneSec[IROSpecID] then
-			GCDCD = 1
-		else
-			GCDCD = round(1.5*(100/(100+UnitSpellHaste("player"))),2)
-		end
-	end
-		
-	IRO_Old_Val.Update("GCDCDTime","",GCDCD)
-	
-	return GCDCD
+    --return GCD CD
+    local OldVal=ERO_Old_Val.Check("GCDCDTime","")
+    if OldVal then return OldVal end
+    
+    local GCDCD=TMW.GCD
+    
+    if GCDCD == 0 then
+        if not IROSpecID then IROSpecID = GetSpecializationInfo(GetSpecialization()) end
+        if IROClassGCDOneSec[IROSpecID] then
+            GCDCD = 1
+        else
+            GCDCD = round(1.5*(100/(100+UnitSpellHaste("player"))),2)
+        end
+    end
+    
+    ERO_Old_Val.Update("GCDCDTime","",GCDCD)
+    
+    return GCDCD
 end
 
 

@@ -1,5 +1,13 @@
--- ERO DPS Decoder 9.0.5/1
+-- ERO DPS Decoder 9.0.5/2
 -- can copy this to LUA Snippted
+
+--Setup UsedSkill System
+
+--Wait For Use Skill Icon Control
+--can use skill when "IROUsedSkillControl.Stage=1"
+--show icon that block Rotation "IROUsedSkillControl.NotReadyToUseSkill()==true"
+--@Numdot
+--/run IROUsedSkillControl.NumDotPress()
 
 local TMW = TMW
 local CNDT = TMW.CNDT
@@ -132,3 +140,50 @@ function NextTimeCheckLockUseSkill(PingAdjust)
 		end
 	end
 end
+
+--Setup UsedSkill System
+
+IROUsedSkillControl={}
+IROUsedSkillControl.Stage=1
+IROUsedSkillControl.pingadjust=0.25 
+IROUsedSkillControl.SkillHandle={}
+
+IROUsedSkillControl.NumDotPress = function()
+	IROUsedSkillControl.Stage=2
+	IROUsedSkillControl.Stage2to4()
+end
+IROUsedSkillControl.NotReadyToUseSkill = function()
+	return IROUsedSkillControl.Stage~=1
+end
+IROUsedSkillControl.Stage2to4 = function()
+	IROUsedSkillControl.Stage=3
+	table.insert(IROUsedSkillControl.SkillHandle,C_Timer.NewTimer(0.2,IROUsedSkillControl.CheckStageto4))
+end
+IROUsedSkillControl.CheckStageto4 = function()
+	if IROUsedSkillControl.Stage~=1 then
+		IROUsedSkillControl.Stage=4
+		IROUsedSkillControl.Stage4to1()
+	end
+end
+IROUsedSkillControl.Stage4to1 = function()
+	local currentTime
+	local IROTimeCheckUseSkill,IROCanUseSkill=NextTimeCheckLockUseSkill(IROUsedSkillControl.pingadjust)
+	if IROCanUseSkill then
+		for k,v in pairs(IROUsedSkillControl.SkillHandle) do
+			v:Cancel()
+		end
+		IROUsedSkillControl.SkillHandle={}
+		IROUsedSkillControl.Stage=1
+	else
+		IROUsedSkillControl.Stage=5
+		currentTime=GetTime()
+		if IROTimeCheckUseSkill <= currentTime then
+			table.insert(IROUsedSkillControl.SkillHandle,
+				C_Timer.NewTimer(0.2,IROUsedSkillControl.CheckStageto4))
+		else
+			table.insert(IROUsedSkillControl.SkillHandle,
+				C_Timer.NewTimer(IROTimeCheckUseSkill-currentTime,IROUsedSkillControl.CheckStageto4))
+		end
+	end
+end
+

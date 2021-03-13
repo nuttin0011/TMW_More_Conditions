@@ -105,6 +105,15 @@ function enMiniIROcode(IROcode1,IROcode2,IROcode3)
 	return "ff"..miniIROCode3..miniIROCode2..miniIROCode1
 end
 
+local WorldPing={}
+WorldPing.now=0
+WorldPing.adjustTiming=3 -- check World Ping Every 3 sec
+WorldPing.adjustWorldPing = function()
+	WorldPing.now=(select(4,GetNetStats())/1000)
+	C_Timer.After(WorldPing.adjustTiming,WorldPing.adjustWorldPing)
+end
+WorldPing.adjustWorldPing()
+
 local DefaultPingAdjust = 0.2 --sec
 
 function NextTimeCheckLockUseSkill(PingAdjust)
@@ -114,12 +123,11 @@ function NextTimeCheckLockUseSkill(PingAdjust)
 		spellname, _, _, startTimeMS, endTimeMS = UnitChannelInfo("player")
 	end	
 	local currentTime=GetTime()	
-	local WorldPing=(select(4,GetNetStats())/1000)
 	local endTime,CutPoint
 	PingAdjust=PingAdjust or DefaultPingAdjust
 	if spellname then --Player Casting/Channel Spell
 		endTime=(endTimeMS/1000)
-		CutPoint=endTime-(WorldPing+PingAdjust)
+		CutPoint=endTime-(WorldPing.now+PingAdjust)
 		if currentTime<CutPoint then
 			return CutPoint,false
 		else
@@ -131,7 +139,7 @@ function NextTimeCheckLockUseSkill(PingAdjust)
 			return currentTime+0.3,true
 		else
 			endTime=GCDst+GCDdu
-			CutPoint=endTime-(WorldPing+PingAdjust)
+			CutPoint=endTime-(WorldPing.now+PingAdjust)
 			if currentTime<CutPoint then
 				return CutPoint,false
 			else

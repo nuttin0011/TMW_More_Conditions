@@ -1,4 +1,4 @@
--- Many Function Version 9.0.5/12
+-- Many Function Version 9.0.5/13
 -- this file save many function for paste to TMW Snippet LUA
 
 --function IROEnemyCountIn8yd(Rlevel) ; return count
@@ -19,9 +19,9 @@
 --var IROSpecID = GetSpecializationInfo(GetSpecialization()),e.g. 62="Mage arcane",63="Mage fire",64="Mage frost"
 
 
-local Talentname, Talentselected
-local isMassacre = nil
-local isCondemn = nil
+local _, Talentname, _, Talentselected = GetTalentInfo(3,1,1)
+local isMassacre = (Talentname=="Massacre") and Talentselected
+local isCondemn = GetSpellInfo("execute")=="Condemn"
 
 if not IROSpecID then
     IROSpecID = GetSpecializationInfo(GetSpecialization())
@@ -282,14 +282,6 @@ function IsUsableExecute(nUnit)
     nUnit=nUnit or "target"
     local OldVal=ERO_Old_Val.Check("IsUsableExecute",nUnit)
     if OldVal then return OldVal end
-    if isMassacre==nil then
-        _, Talentname, _, Talentselected = GetTalentInfo(3,1,1)
-        isMassacre = (Talentname=="Massacre") and Talentselected
-    end
-    if isCondemn==nil then
-        isCondemn = GetSpellInfo("execute")=="Condemn"
-    end
-    
     local uH ,uHM, uHP, output
     if UnitCanAttack("player", nUnit) and IsItemInRange(ItemNameToCheck2, nUnit) then
         uHM=UnitHealthMax(nUnit)

@@ -107,7 +107,7 @@ end
 
 local WorldPing={}
 WorldPing.now=0
-WorldPing.adjustTiming=3 -- check World Ping Every 3 sec
+WorldPing.adjustTiming=3.14 -- check World Ping Every 3.14 sec
 WorldPing.adjustWorldPing = function()
 	WorldPing.now=(select(4,GetNetStats())/1000)
 	C_Timer.After(WorldPing.adjustTiming,WorldPing.adjustWorldPing)
@@ -155,13 +155,32 @@ IROUsedSkillControl={}
 IROUsedSkillControl.Stage=1
 IROUsedSkillControl.pingadjust=0.25 
 IROUsedSkillControl.SkillHandle={}
-
+IROUsedSkillControl.PlayerGUID=UnitGUID("player")
+IROUsedSkillControl.NextForceReady=0
+function IROUsedSkillControl.OnEvent(self, event)
+	local _, subevent, _, sourceGUID = CombatLogGetCurrentEventInfo()
+	if (sourceGUID==IROUsedSkillControl.PlayerGUID)and(subevent=="SPELL_CAST_FAILED")
+	then IROUsedSkillControl.forceReady() end
+end
+IROUsedSkillControl.f = CreateFrame("Frame")
+IROUsedSkillControl.f:RegisterEvent("COMBAT_LOG_EVENT_UNFILTERED")
+IROUsedSkillControl.f:SetScript("OnEvent", IROUsedSkillControl.OnEvent)
 IROUsedSkillControl.NumDotPress = function()
 	IROUsedSkillControl.Stage=2
 	IROUsedSkillControl.Stage2to4()
 end
 IROUsedSkillControl.NotReadyToUseSkill = function()
 	return IROUsedSkillControl.Stage~=1
+end
+IROUsedSkillControl.forceReady = function()
+	local currentTime=GetTime()
+	if IROUsedSkillControl.NextForceReady>currentTime then return end
+	IROUsedSkillControl.NextForceReady=currentTime+0.19
+	for k,v in pairs(IROUsedSkillControl.SkillHandle) do
+		v:Cancel()
+	end
+	IROUsedSkillControl.SkillHandle={}
+	IROUsedSkillControl.Stage=1
 end
 IROUsedSkillControl.Stage2to4 = function()
 	IROUsedSkillControl.Stage=3
@@ -177,21 +196,15 @@ IROUsedSkillControl.Stage4to1 = function()
 	local currentTime
 	local IROTimeCheckUseSkill,IROCanUseSkill=NextTimeCheckLockUseSkill(IROUsedSkillControl.pingadjust)
 	if IROCanUseSkill then
-		for k,v in pairs(IROUsedSkillControl.SkillHandle) do
-			v:Cancel()
-		end
-		IROUsedSkillControl.SkillHandle={}
-		IROUsedSkillControl.Stage=1
+		IROUsedSkillControl.forceReady()
 	else
 		IROUsedSkillControl.Stage=5
 		currentTime=GetTime()
-		if IROTimeCheckUseSkill <= currentTime then
-			table.insert(IROUsedSkillControl.SkillHandle,
-				C_Timer.NewTimer(0.2,IROUsedSkillControl.CheckStageto4))
-		else
-			table.insert(IROUsedSkillControl.SkillHandle,
-				C_Timer.NewTimer(IROTimeCheckUseSkill-currentTime,IROUsedSkillControl.CheckStageto4))
-		end
+		local dT=IROTimeCheckUseSkill-currentTime
+		if dT>0.2 then dT=0.2 end
+		if dT<0 then dT=0 end
+		table.insert(IROUsedSkillControl.SkillHandle,
+			C_Timer.NewTimer(dT,IROUsedSkillControl.CheckStageto4))
 	end
 end
 

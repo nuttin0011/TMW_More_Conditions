@@ -1,4 +1,4 @@
--- Many Function Version 9.0.5/14
+-- Many Function Version 9.0.5/15
 -- this file save many function for paste to TMW Snippet LUA
 
 --function IROEnemyCountIn8yd(Rlevel) ; return count
@@ -13,32 +13,40 @@
 --function GCDCDTime() ; return GCD length time, = 1.5*(100/(100+UnitSpellHaste("player")))
 --function isMyInterruptSpellReady() ; true/false
 --function TMW.CNDT.Env.CooldownDuration([spellName/Id, e.g. "execute"], [include GCD, true/false]); return CD remain (sec)
---function ERO_Old_Val.Check(functionName,input_val_string) ; return Old Val at Same GetTime() , or nil
---function ERO_Old_Val.Update(functionName,input_val_string,result_val) ; update Old_Val at same GetTime()
-
+--function IROVar.ERO_Old_Val.Check(functionName,input_val_string) ; return Old Val at Same GetTime() , or nil
+--function IROVar.ERO_Old_Val.Update(functionName,input_val_string,result_val) ; update Old_Val at same GetTime()
+--function IROVar.Debug() show some Debug val
 --var IROSpecID = GetSpecializationInfo(GetSpecialization()),e.g. 62="Mage arcane",63="Mage fire",64="Mage frost"
 
-local _, Talentname, _, Talentselected = GetTalentInfo(3,1,1)
-local isMassacre = (Talentname=="Massacre") and Talentselected
-local isCondemn = GetSpellInfo("execute")=="Condemn"
+IROVar={}
+_,IROVar.Talentname,_,IROVar.Talentselected=GetTalentInfo(3,1,1)
+IROVar.isMassacre = (IROVar.Talentname=="Massacre") and IROVar.Talentselected
+IROVar.isCondemn = GetSpellInfo("execute")=="Condemn"
+IROVar.DebugMode = false
 
+--setup Event Respec + Talent
+function IROVar.Debug()
+    IROVar.DebugMode=true
+end
+function IROVar.UpdateVar()
+    --print("old Spec :"..IROSpecID)
+    IROSpecID = GetSpecializationInfo(GetSpecialization())
+    --print("new Spec :"..IROSpecID)
+    _,IROVar.Talentname,_,IROVar.Talentselected=GetTalentInfo(3,1,1)
+    IROVar.isMassacre = (IROVar.Talentname=="Massacre") and IROVar.Talentselected
+    IROVar.isCondemn = GetSpellInfo("execute")=="Condemn"
+end
+function IROVar.fspecOnEvent(self, event, ...)
+    IROVar.UpdateVar()
+end
 if not IROSpecID then
     IROSpecID = GetSpecializationInfo(GetSpecialization())
-    local function fspecOnEvent(self, event, ...)
-        --print("old Spec :"..IROSpecID)
-        IROSpecID = GetSpecializationInfo(GetSpecialization())
-        --print("new Spec :"..IROSpecID)
-        _, Talentname, _, Talentselected = GetTalentInfo(3,1,1)
-        isMassacre = (Talentname=="Massacre") and Talentselected
-        isCondemn = GetSpellInfo("execute")=="Condemn"
-    end
-    local fspec = CreateFrame("Frame")
-    fspec:RegisterEvent("PLAYER_SPECIALIZATION_CHANGED")
-    fspec:RegisterEvent("ACTIVE_TALENT_GROUP_CHANGED")
-    fspec:RegisterEvent("PLAYER_TALENT_UPDATE")
-    fspec:SetScript("OnEvent", fspecOnEvent)
+    IROVar.fspec = CreateFrame("Frame")
+    IROVar.fspec:RegisterEvent("PLAYER_SPECIALIZATION_CHANGED")
+    IROVar.fspec:RegisterEvent("ACTIVE_TALENT_GROUP_CHANGED")
+    IROVar.fspec:RegisterEvent("PLAYER_TALENT_UPDATE")
+    IROVar.fspec:SetScript("OnEvent", IROVar.fspecOnEvent)
 end
-
 
 local ItemRangeCheck = {
     [1]=34368, -- Attuned Crystal Cores 8 yard
@@ -48,27 +56,27 @@ local ItemRangeCheck = {
     [5]=28767, -- The Decapitator 40 yard
     [6]=32321, -- Sparrowhawk Net 10 yard
 }
-local ItemNameToCheck8 = "item:"..ItemRangeCheck[1]
+IROVar.ItemNameToCheck8 = "item:"..ItemRangeCheck[1]
 
-if not ERO_Old_Val then
-    ERO_Old_Val = {Timer=0,Old_Val={},
-        Check = function(functionName,input_val_string)
-            return ((ERO_Old_Val.Timer==GetTime())and ERO_Old_Val.Old_Val[functionName] and ERO_Old_Val.Old_Val[functionName][input_val_string])
-            and ERO_Old_Val.Old_Val[functionName][input_val_string] or nil
-        end,
-        Update = function(functionName,input_val_string,result_val)
-            local currenTimer = GetTime()
-            if ERO_Old_Val.Timer < currenTimer then
-                ERO_Old_Val.Timer = currenTimer
-                ERO_Old_Val.Old_Val = {}
-            end
-            if not ERO_Old_Val.Old_Val[functionName] then 
-                ERO_Old_Val.Old_Val[functionName]={} 
-            end
-            ERO_Old_Val.Old_Val[functionName][input_val_string]=result_val
+
+IROVar.ERO_Old_Val = {Timer=0,Old_Val={},
+    Check = function(functionName,input_val_string)
+        return ((IROVar.ERO_Old_Val.Timer==GetTime())and IROVar.ERO_Old_Val.Old_Val[functionName] and IROVar.ERO_Old_Val.Old_Val[functionName][input_val_string])
+        and IROVar.ERO_Old_Val.Old_Val[functionName][input_val_string] or nil
+    end,
+    Update = function(functionName,input_val_string,result_val)
+        local currenTimer = GetTime()
+        if IROVar.ERO_Old_Val.Timer < currenTimer then
+            IROVar.ERO_Old_Val.Timer = currenTimer
+            IROVar.ERO_Old_Val.Old_Val = {}
         end
-    }
-end
+        if not IROVar.ERO_Old_Val.Old_Val[functionName] then 
+            IROVar.ERO_Old_Val.Old_Val[functionName]={} 
+        end
+        IROVar.ERO_Old_Val.Old_Val[functionName][input_val_string]=result_val
+    end
+}
+
 
 function IROEnemyCountIn8yd(Rlevel)
     --return enemy count in Range Default 8 yard Max 8
@@ -80,7 +88,7 @@ function IROEnemyCountIn8yd(Rlevel)
     for i=1,30 do
         nn='nameplate'..i
         if UnitExists(nn) and UnitCanAttack("player", nn) then
-            if IsItemInRange(ItemNameToCheck8, nn)or(UnitAffectingCombat(nn)and IsItemInRange(ItemNameToCheck, nn)) then
+            if IsItemInRange(IROVar.ItemNameToCheck8, nn)or(UnitAffectingCombat(nn)and IsItemInRange(ItemNameToCheck, nn)) then
                 count=count+1
             end
         end
@@ -118,7 +126,7 @@ local ItemRangeCheck2 = {
 
 function IROEnemyCountInRange(nRange)
     nRange = nRange or 8
-    local OldVal=ERO_Old_Val.Check("IROEnemyCountInRange",nRange)
+    local OldVal=IROVar.ERO_Old_Val.Check("IROEnemyCountInRange",nRange)
     if OldVal then return OldVal end
     if nRange<2 then nRange=2 end
     while(ItemRangeCheck2[nRange]==nil)do
@@ -136,7 +144,7 @@ function IROEnemyCountInRange(nRange)
         end
         if count>=8 then break end
     end
-    ERO_Old_Val.Update("IROEnemyCountInRange",nRange,count)
+    IROVar.ERO_Old_Val.Update("IROEnemyCountInRange",nRange,count)
     return count
 end
 
@@ -239,7 +247,7 @@ function SumHPMobinCombat()
     for ii =1,30 do
         nn='nameplate'..ii
         if UnitExists(nn) and UnitCanAttack("player", nn) 
-        and (UnitAffectingCombat(nn) or IsItemInRange(ItemNameToCheck8, nn))
+        and (UnitAffectingCombat(nn) or IsItemInRange(IROVar.ItemNameToCheck8, nn))
         then
             sumhp=sumhp+ UnitHealth(nn)
         end
@@ -276,22 +284,35 @@ function IROEnemyGroupVVHP(nMultipy)
     return (nMultipy*playerHealth*nG)<EnemyGroupHP
 end
 
-local ItemNameToCheck2 = "item:"..ItemRangeCheck2[3]
+IROVar.ItemNameToCheck2 = "item:"..ItemRangeCheck2[3]
 
 function IsUsableExecute(nUnit)
+    if IROVar.DebugMode then
+        local _,Talentname,_,Talentselected=GetTalentInfo(3,1,1)
+        local isMassacre = (Talentname=="Massacre") and Talentselected
+        local isCondemn = GetSpellInfo("execute")=="Condemn"
+        if isMassacre~=IROVar.isMassacre then
+            print("isMassacre = "..(isMassacre and "true" or "false"))
+            print("IROVar.isMassacre = "..(IROVar.isMassacre and "true" or "false"))
+        end
+        if isCondemn~=IROVar.isCondemn then
+            print("isCondemn = "..(isCondemn and "true" or "false"))
+            print("IROVar.isCondemn = "..(IROVar.isCondemn and "true" or "false"))           
+        end
+    end
     nUnit=nUnit or "target"
-    local OldVal=ERO_Old_Val.Check("IsUsableExecute",nUnit)
+    local OldVal=IROVar.ERO_Old_Val.Check("IsUsableExecute",nUnit)
     if OldVal then return OldVal end
     local uH ,uHM, uHP, output
-    if UnitCanAttack("player", nUnit) and IsItemInRange(ItemNameToCheck2, nUnit) then
+    if UnitCanAttack("player", nUnit) and IsItemInRange(IROVar.ItemNameToCheck2, nUnit) then
         uHM=UnitHealthMax(nUnit)
         uH=UnitHealth(nUnit)
         uHP=(uH/uHM)*100
-        output=(uHP>0) and ((uHP<20) or ((uHP<35) and isMassacre) or ((uHP>80) and isCondemn))
-        ERO_Old_Val.Update("IsUsableExecute",nUnit,output)
+        output=(uHP>0) and ((uHP<20) or ((uHP<35) and IROVar.isMassacre) or ((uHP>80) and IROVar.isCondemn))
+        IROVar.ERO_Old_Val.Update("IsUsableExecute",nUnit,output)
         return output
     else
-        ERO_Old_Val.Update("IsUsableExecute",nUnit,false)
+        IROVar.ERO_Old_Val.Update("IsUsableExecute",nUnit,false)
         return false
     end
 end
@@ -308,7 +329,7 @@ end
 
 function GCDCDTime()
     --return GCD CD
-    local OldVal=ERO_Old_Val.Check("GCDCDTime","")
+    local OldVal=IROVar.ERO_Old_Val.Check("GCDCDTime","")
     if OldVal then return OldVal end
     
     local GCDCD=TMW.GCD
@@ -322,7 +343,7 @@ function GCDCDTime()
         end
     end
     
-    ERO_Old_Val.Update("GCDCDTime","",GCDCD)
+    IROVar.ERO_Old_Val.Update("GCDCDTime","",GCDCD)
     
     return GCDCD
 end

@@ -1,4 +1,4 @@
--- Many Function Version 9.0.5/13
+-- Many Function Version 9.0.5/14
 -- this file save many function for paste to TMW Snippet LUA
 
 --function IROEnemyCountIn8yd(Rlevel) ; return count
@@ -25,20 +25,21 @@ local isCondemn = GetSpellInfo("execute")=="Condemn"
 
 if not IROSpecID then
     IROSpecID = GetSpecializationInfo(GetSpecialization())
+    local function fspecOnEvent(self, event, ...)
+        --print("old Spec :"..IROSpecID)
+        IROSpecID = GetSpecializationInfo(GetSpecialization())
+        --print("new Spec :"..IROSpecID)
+        _, Talentname, _, Talentselected = GetTalentInfo(3,1,1)
+        isMassacre = (Talentname=="Massacre") and Talentselected
+        isCondemn = GetSpellInfo("execute")=="Condemn"
+    end
+    local fspec = CreateFrame("Frame")
+    fspec:RegisterEvent("PLAYER_SPECIALIZATION_CHANGED")
+    fspec:RegisterEvent("ACTIVE_TALENT_GROUP_CHANGED")
+    fspec:RegisterEvent("PLAYER_TALENT_UPDATE")
+    fspec:SetScript("OnEvent", fspecOnEvent)
 end
-local function fspecOnEvent(self, event, ...)
-    --print("old Spec :"..IROSpecID)
-    IROSpecID = GetSpecializationInfo(GetSpecialization())
-    --print("new Spec :"..IROSpecID)
-    _, Talentname, _, Talentselected = GetTalentInfo(3,1,1)
-    isMassacre = (Talentname=="Massacre") and Talentselected
-    isCondemn = GetSpellInfo("execute")=="Condemn"
-end
-local fspec = CreateFrame("Frame")
-fspec:RegisterEvent("PLAYER_SPECIALIZATION_CHANGED")
-fspec:RegisterEvent("ACTIVE_TALENT_GROUP_CHANGED")
-fspec:RegisterEvent("PLAYER_TALENT_UPDATE")
-fspec:SetScript("OnEvent", fspecOnEvent)
+
 
 local ItemRangeCheck = {
     [1]=34368, -- Attuned Crystal Cores 8 yard

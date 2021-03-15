@@ -26,7 +26,8 @@ IROVar.DebugMode = false
 
 --setup Event Respec + Talent
 function IROVar.Debug()
-    IROVar.DebugMode=true
+    IROVar.DebugMode=not IROVar.DebugMode
+    print("IROVar.DebugMode : "..(IROVar.DebugMode and "On" or "Off"))
 end
 function IROVar.UpdateVar()
     --print("old Spec :"..IROSpecID)
@@ -61,7 +62,9 @@ IROVar.ItemNameToCheck8 = "item:"..ItemRangeCheck[1]
 
 IROVar.ERO_Old_Val = {Timer=0,Old_Val={},
     Check = function(functionName,input_val_string)
-        return ((IROVar.ERO_Old_Val.Timer==GetTime())and IROVar.ERO_Old_Val.Old_Val[functionName] and IROVar.ERO_Old_Val.Old_Val[functionName][input_val_string])
+        return ((IROVar.ERO_Old_Val.Timer==GetTime())
+        and IROVar.ERO_Old_Val.Old_Val[functionName] 
+        and IROVar.ERO_Old_Val.Old_Val[functionName][input_val_string])
         and IROVar.ERO_Old_Val.Old_Val[functionName][input_val_string] or nil
     end,
     Update = function(functionName,input_val_string,result_val)

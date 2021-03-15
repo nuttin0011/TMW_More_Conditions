@@ -18,7 +18,6 @@
 
 --var IROSpecID = GetSpecializationInfo(GetSpecialization()),e.g. 62="Mage arcane",63="Mage fire",64="Mage frost"
 
-
 local _, Talentname, _, Talentselected = GetTalentInfo(3,1,1)
 local isMassacre = (Talentname=="Massacre") and Talentselected
 local isCondemn = GetSpellInfo("execute")=="Condemn"

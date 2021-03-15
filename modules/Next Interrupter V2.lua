@@ -1,20 +1,20 @@
---Next Interrupter!!!! V 2.0
+--Next Interrupter!!!! V 2.1
 --WORK Only counter interruptCounterName=1
 
 interruptCounterName = "wantinterrupt"
 
--- (not NextInterrupter) or NextInterrupter.IsMyTurn()
+-- check use (not NextInterrupter) or NextInterrupter.IsMyTurn()
+-- or use ((not NextInterrupter)or(not NextInterrupter.Enabled)or(not NextInterrupter.ITable[UnitGUID("target")])or(next(NextInterrupter.ITable[UnitGUID("target")])==nil)or(NextInterrupter.ITable[UnitGUID("target")][1]==NextInterrupter.Name))
 --------CODE AERA-------------------
 if (not NextInterrupter) or (not NextInterrupter.Setuped) then
     NextInterrupter={}
     NextInterrupter.Setuped=false
     NextInterrupter.SpecID=nil
-    NextInterrupter.myInterruptSpell=nil
     NextInterrupter.Tier=nil
     NextInterrupter.SpellName=nil
     NextInterrupter.Name=nil
     NextInterrupter.PlayerName=nil
-    NextInterrupter.isWalock=nil
+    NextInterrupter.isWarlock=nil
     NextInterrupter.Enabled=false
     NextInterrupter.ITable={}
     NextInterrupter.AddonMessagePrefix = "IRODPSUN"
@@ -101,15 +101,16 @@ if (not NextInterrupter) or (not NextInterrupter.Setuped) then
             if (NextInterrupter.canInterrupt~=canInterrupt) or canInterrupt then
                 willSend = true
             end
+        else
+            if NextInterrupter.canInterrupt~=canInterrupt then willSend = true end
         end
-        if NextInterrupter.canInterrupt~=canInterrupt then willSend = true end
 
         if willSend then
             NextInterrupter.SendISM(canInterrupt)
         end
     end
     NextInterrupter.SendISM = function(ForceInterruptStatus)
-        print(GetTime().." SendedISM")
+        --print(GetTime().." SendedISM")
         local nUnit = "target"
         local tGUID=(UnitGUID(nUnit) or "0")
         local canInterrupt = ForceInterruptStatus
@@ -190,6 +191,7 @@ if (not NextInterrupter) or (not NextInterrupter.Setuped) then
             end
         end
         
+        local inamesub11=iname:sub(1,1)
         if iaction == "CI" then
             --print('if 2')
             ifound=false
@@ -199,7 +201,7 @@ if (not NextInterrupter) or (not NextInterrupter.Setuped) then
             end
             for ii in pairs(NextInterrupter.ITable[iGUID]) do
                 iIndex=ii
-                if iname:sub(1,1) < NextInterrupter.ITable[iGUID][ii]:sub(1,1) then
+                if inamesub11 < NextInterrupter.ITable[iGUID][ii]:sub(1,1) then
                     ifound=true
                     break
                 end
@@ -208,29 +210,28 @@ if (not NextInterrupter) or (not NextInterrupter.Setuped) then
             table.insert(NextInterrupter.ITable[iGUID],iIndex,iname) 
         end
     end
-
+    --Update all variable for 1st time
     NextInterrupter.updateSpec()
+    --Set Event to Check Spec
     NextInterrupter.fspec = CreateFrame("Frame")
     NextInterrupter.fspec:RegisterEvent("PLAYER_SPECIALIZATION_CHANGED")
     NextInterrupter.fspec:SetScript("OnEvent", NextInterrupter.updateSpec)
-
+    --Set Event To receive addon message
     NextInterrupter.AddonMFrame = CreateFrame("Frame")
     NextInterrupter.AddonMFrame:RegisterEvent("CHAT_MSG_ADDON")
     NextInterrupter.AddonMFrame:RegisterEvent("PLAYER_REGEN_DISABLED")
     NextInterrupter.AddonMFrame:SetScript("OnEvent", NextInterrupter.AddonMessageEvent)
     C_ChatInfo.RegisterAddonMessagePrefix(NextInterrupter.AddonMessagePrefix)
-
-    NextInterrupter.C_TimerHandle = C_Timer.NewTicker(0.1, function()  
+    --Set to Check Target Every 0.112 sec
+    NextInterrupter.C_TimerHandle = C_Timer.NewTicker(0.112, function()
         local cc=TMW_ST:GetCounter(interruptCounterName)
-        if cc==0 then
-            if NextInterrupter.Enabled then NextInterrupter.Disable() end
-            return
-        end
         if cc==1 then
             if not NextInterrupter.Enabled then NextInterrupter.Enable() end
             NextInterrupter.CheckAndSendISM()
+        else
+            if NextInterrupter.Enabled then NextInterrupter.Disable() end
         end
     end)
-
+    --set Done Setup
     NextInterrupter.Setuped=true
 end

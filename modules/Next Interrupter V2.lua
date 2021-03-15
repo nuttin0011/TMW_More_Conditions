@@ -3,11 +3,14 @@
 
 interruptCounterName = "wantinterrupt"
 
--- check use (not NextInterrupter) or NextInterrupter.IsMyTurn()
--- or use ((not NextInterrupter)or(not NextInterrupter.Enabled)or(not NextInterrupter.ITable[UnitGUID("target")])or(next(NextInterrupter.ITable[UnitGUID("target")])==nil)or(NextInterrupter.ITable[UnitGUID("target")][1]==NextInterrupter.Name))
+--[[ check use (not NextInterrupter) or NextInterrupter.IsMyTurn()
+ or use ((not NextInterrupter)or(not NextInterrupter.Enabled)or(not NextInterrupter.ITable[UnitGUID("target")])or(next(NextInterrupter.ITable[UnitGUID("target")])==nil)or(NextInterrupter.ITable[UnitGUID("target")][1]==NextInterrupter.Name))
+/run NextInterrupter.Debug()
+to debug --]]
 --------CODE AERA-------------------
 if (not NextInterrupter) or (not NextInterrupter.Setuped) then
     NextInterrupter={}
+    NextInterrupter.DebugMode=false
     NextInterrupter.Setuped=false
     NextInterrupter.SpecID=nil
     NextInterrupter.Tier=nil
@@ -59,6 +62,24 @@ if (not NextInterrupter) or (not NextInterrupter.Setuped) then
         [251] = {'B','Mind Freeze'}, -- frost
         [252] = {'B','Mind Freeze'}, -- unholy
     }
+    NextInterrupter.Debug = function()
+        NextInterrupter.DebugMode=not NextInterrupter.DebugMode
+        print("NextInterrupter Debug Mode : "..(NextInterrupter.DebugMode and "On" or "Off"))
+    end
+    NextInterrupter.PrintTable = function()
+        if next(NextInterrupter.ITable)==nil then
+            print("-----{table empty}")
+        else
+            for k,v in pairs(NextInterrupter.ITable) do
+                print(k)
+                local iname="-----"
+                for _,v2 in pairs(v) do 
+                    iname=iname.."{"..v2.."} " 
+                end
+                print(iname)
+            end 
+        end
+    end
     NextInterrupter.updateSpec = function()
         NextInterrupter.SpecID=GetSpecializationInfo(GetSpecialization())
         NextInterrupter.Tier=NextInterrupter.interruptTier[NextInterrupter.SpecID][1]
@@ -76,11 +97,17 @@ if (not NextInterrupter) or (not NextInterrupter.Setuped) then
             or (NextInterrupter.ITable[uGUID][1]==NextInterrupter.Name)
     end
     NextInterrupter.Enable = function()
+        if NextInterrupter.DebugMode then
+            print("*** NextInterrupter.Enable : "..GetTime())
+        end
         NextInterrupter.Enabled=true
         NextInterrupter.updateSpec()
         NextInterrupter.SendISM()
     end
     NextInterrupter.Disable = function()
+        if NextInterrupter.DebugMode then
+            print("*** NextInterrupter.Disable : "..GetTime())
+        end
         NextInterrupter.Enabled=false
         NextInterrupter.SendISM(false)
     end
@@ -110,7 +137,9 @@ if (not NextInterrupter) or (not NextInterrupter.Setuped) then
         end
     end
     NextInterrupter.SendISM = function(ForceInterruptStatus)
-        --print(GetTime().." SendedISM")
+        if NextInterrupter.DebugMode then
+            print("//SendedISM : "..GetTime())
+        end
         local nUnit = "target"
         local tGUID=(UnitGUID(nUnit) or "0")
         local canInterrupt = ForceInterruptStatus
@@ -132,6 +161,9 @@ if (not NextInterrupter) or (not NextInterrupter.Setuped) then
         local SendTarget = NextInterrupter.PlayerName
         local Prefix = NextInterrupter.AddonMessagePrefix
         local SendMessage = (canInterrupt and 'CI^' or 'CN^')..NextInterrupter.Name.."^"..tGUID
+        if NextInterrupter.DebugMode then
+            print(">>>> "..SendType..' : "'..SendMessage..'"')
+        end        
         C_ChatInfo.SendAddonMessage(Prefix, SendMessage, SendType,SendTarget)
     end
     NextInterrupter.AddonMessageEvent = function(self, event, ...)
@@ -140,7 +172,7 @@ if (not NextInterrupter) or (not NextInterrupter.Setuped) then
             -- incombat event
             --print('in in')
             -- force send message
-            NextInterrupter.SendISM()
+            if NextInterrupter.Enabled then NextInterrupter.SendISM() end
         end
         if event~="CHAT_MSG_ADDON" then
             return 0
@@ -162,7 +194,10 @@ if (not NextInterrupter) or (not NextInterrupter.Setuped) then
             --print(m1)
             return 0
         end
-
+        if NextInterrupter.DebugMode then
+            print("\\\\ReciveISM : "..GetTime())
+            print('<<<< "'..m2..'"')
+        end  
         local iaction,iname,iGUID = strsplit("^", m2,3)
         local iMobID,iIndex,ii,ifound
 
@@ -175,12 +210,13 @@ if (not NextInterrupter) or (not NextInterrupter.Setuped) then
         end
 
         -- cannot interrupt / used interrupt skill
-        
+        local TableEdited=false
         if (iaction=="CN")or(iaction=="CI") then
             --print('if 1')
             for iMobID in pairs(NextInterrupter.ITable) do
                 for iIndex in pairs(NextInterrupter.ITable[iMobID]) do
                     if NextInterrupter.ITable[iMobID][iIndex]==iname then
+                        TableEdited=true
                         table.remove(NextInterrupter.ITable[iMobID],iIndex)
                         if next(NextInterrupter.ITable[iMobID])==nil then
                             NextInterrupter.ITable[iMobID]=nil
@@ -207,8 +243,17 @@ if (not NextInterrupter) or (not NextInterrupter.Setuped) then
                 end
             end
             if not ifound then iIndex=iIndex+1 end
+            TableEdited=true
             table.insert(NextInterrupter.ITable[iGUID],iIndex,iname) 
         end
+        if NextInterrupter.DebugMode then
+            if TableEdited then
+                print(GetTime().." Table Change")
+                NextInterrupter.PrintTable()
+            else
+                print(GetTime().." Table Not Change")
+            end
+        end       
     end
     --Update all variable for 1st time
     NextInterrupter.updateSpec()

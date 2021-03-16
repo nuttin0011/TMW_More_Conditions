@@ -53,7 +53,7 @@ local IROcolorCode ={
 	["37"]=0x14, --{Numpad7}
 	["38"]=0x15, --{Numpad8}
 	["39"]=0x16, --{Numpad9}
-	["3a"]=0x17, --{NumpadDot}	
+	["3a"]=0x17, --{NumpadDot}
 	["3b"]=0x18, --{NumpadAdd}
 	["3c"]=0x19, --{NumpadSub}
 	["3d"]=0x1a, --{NumpadMult}
@@ -120,7 +120,7 @@ function NextTimeCheckLockUseSkill(PingAdjust)
 	if not spellname then
 		spellname, _, _, _, endTimeMS = UnitChannelInfo("player")
 	end
-	local currentTime=GetTime()	
+	local currentTime=GetTime()
 	local endTime,CutPoint
 	PingAdjust=PingAdjust or DefaultPingAdjust
 	if spellname then --Player Casting/Channel Spell

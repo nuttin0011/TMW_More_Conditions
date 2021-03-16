@@ -1,4 +1,4 @@
---Next Interrupter!!!! V 2.1
+--Next Interrupter!!!! V 2.2
 --WORK Only counter interruptCounterName=1
 
 InterruptCounterName = "wantinterrupt"
@@ -15,6 +15,7 @@ Debug
 --------CODE AERA-------------------
 if (not NextInterrupter) or (not NextInterrupter.Setuped) then
     NextInterrupter={}
+    NextInterrupter.ver="Next Interrupter!!!! V 2.2"
     NextInterrupter.DebugMode=false
     NextInterrupter.Setuped=false
     NextInterrupter.SpecID=nil
@@ -71,6 +72,9 @@ if (not NextInterrupter) or (not NextInterrupter.Setuped) then
         NextInterrupter.DebugMode=not NextInterrupter.DebugMode
         print("NextInterrupter Debug Mode : "..(NextInterrupter.DebugMode and "On" or "Off"))
     end
+    NextInterrupter.Version = function()
+        print(NextInterrupter.ver)
+    end
     NextInterrupter.PrintTable = function()
         if next(NextInterrupter.ITable)==nil then
             print("-----{table empty}")
@@ -87,8 +91,13 @@ if (not NextInterrupter) or (not NextInterrupter.Setuped) then
     end
     NextInterrupter.updateSpec = function()
         NextInterrupter.SpecID=GetSpecializationInfo(GetSpecialization())
-        NextInterrupter.Tier=NextInterrupter.interruptTier[NextInterrupter.SpecID][1]
-        NextInterrupter.SpellName=NextInterrupter.interruptTier[NextInterrupter.SpecID][2]
+        if not NextInterrupter.interruptTier[NextInterrupter.SpecID] then
+            NextInterrupter.Tier="F"
+            NextInterrupter.SpellName=""
+        else
+            NextInterrupter.Tier=NextInterrupter.interruptTier[NextInterrupter.SpecID][1]
+            NextInterrupter.SpellName=NextInterrupter.interruptTier[NextInterrupter.SpecID][2]
+        end
         NextInterrupter.PlayerName=UnitName("player")
         NextInterrupter.Name=NextInterrupter.Tier..'-'..NextInterrupter.PlayerName..'-'..GetRealmName()
         NextInterrupter.isWarlock=(NextInterrupter.SpecID>=265)and(NextInterrupter.SpecID<=267)

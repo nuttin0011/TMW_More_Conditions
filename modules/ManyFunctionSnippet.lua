@@ -1,4 +1,4 @@
--- Many Function Version 9.0.5/15
+-- Many Function Version 9.0.5/16
 -- this file save many function for paste to TMW Snippet LUA
 
 --function IROEnemyCountIn8yd(Rlevel) ; return count
@@ -63,7 +63,7 @@ IROVar.ItemNameToCheck8 = "item:"..ItemRangeCheck[1]
 IROVar.ERO_Old_Val = {Timer=0,Old_Val={},
     Check = function(functionName,input_val_string)
         return ((IROVar.ERO_Old_Val.Timer==GetTime())
-        and IROVar.ERO_Old_Val.Old_Val[functionName] 
+        and IROVar.ERO_Old_Val.Old_Val[functionName]
         and IROVar.ERO_Old_Val.Old_Val[functionName][input_val_string])
         and IROVar.ERO_Old_Val.Old_Val[functionName][input_val_string] or nil
     end,
@@ -73,8 +73,8 @@ IROVar.ERO_Old_Val = {Timer=0,Old_Val={},
             IROVar.ERO_Old_Val.Timer = currenTimer
             IROVar.ERO_Old_Val.Old_Val = {}
         end
-        if not IROVar.ERO_Old_Val.Old_Val[functionName] then 
-            IROVar.ERO_Old_Val.Old_Val[functionName]={} 
+        if not IROVar.ERO_Old_Val.Old_Val[functionName] then
+            IROVar.ERO_Old_Val.Old_Val[functionName]={}
         end
         IROVar.ERO_Old_Val.Old_Val[functionName][input_val_string]=result_val
     end
@@ -212,12 +212,12 @@ function PercentCastbar(PercentCast, MustInterruptAble,unit, MinTMS,MaxTMS)
     local percentcastTime
     if (castingName ~= nil) and(not(notInterruptible and MustInterruptAble)) then
         totalcastTime = endTimeMS-startTimeMS
-        currentcastTime = (GetTime()*1000)-startTimeMS       
-        
+        currentcastTime = (GetTime()*1000)-startTimeMS
+
         if (totalcastTime-currentcastTime)>MaxTMS then
             -- if cast time > MaxTMS ms dont interrupt
             wantInterrupt = false
-        elseif (totalcastTime-currentcastTime)<MinTMS then 
+        elseif (totalcastTime-currentcastTime)<MinTMS then
             -- if cast time < MinTMS ms dont interrupt
             wantInterrupt = true
         else
@@ -226,11 +226,11 @@ function PercentCastbar(PercentCast, MustInterruptAble,unit, MinTMS,MaxTMS)
         end
         return  wantInterrupt
     end
-    local channelName, _, _, CstartTimeMS, CendTimeMS,_, CnotInterruptible= UnitChannelInfo(unit) 
+    local channelName, _, _, CstartTimeMS, CendTimeMS,_, CnotInterruptible= UnitChannelInfo(unit)
     if (channelName ~= nil) and (not (CnotInterruptible and MustInterruptAble)) then
         PercentCast = 1-PercentCast
         totalcastTime = CendTimeMS-CstartTimeMS
-        currentcastTime = (GetTime()*1000)-CstartTimeMS 
+        currentcastTime = (GetTime()*1000)-CstartTimeMS
         if (currentcastTime>=MinTMS) and (currentcastTime<=(totalcastTime-MinTMS)) then
             wantInterrupt = true
         end
@@ -245,16 +245,19 @@ function GCDActiveLessThan(ttime)
 end
 
 function SumHPMobinCombat()
+    local Old_Val=IROVar.ERO_Old_Val.Check("SumHPMobinCombat","")
+    if Old_Val then return Old_Val end
     local sumhp =0
     local nn
     for ii =1,30 do
         nn='nameplate'..ii
-        if UnitExists(nn) and UnitCanAttack("player", nn) 
+        if UnitExists(nn) and UnitCanAttack("player", nn)
         and (UnitAffectingCombat(nn) or IsItemInRange(IROVar.ItemNameToCheck8, nn))
         then
             sumhp=sumhp+ UnitHealth(nn)
         end
     end
+    IROVar.ERO_Old_Val.Update("SumHPMobinCombat","",sumhp)
     return sumhp
 end
 
@@ -300,7 +303,7 @@ function IsUsableExecute(nUnit)
         end
         if isCondemn~=IROVar.isCondemn then
             print("isCondemn = "..(isCondemn and "true" or "false"))
-            print("IROVar.isCondemn = "..(IROVar.isCondemn and "true" or "false"))           
+            print("IROVar.isCondemn = "..(IROVar.isCondemn and "true" or "false"))
         end
     end
     nUnit=nUnit or "target"
@@ -320,7 +323,7 @@ function IsUsableExecute(nUnit)
     end
 end
 
-local IROClassGCDOneSec = { 
+local IROClassGCDOneSec = {
     [259]=true,[260]=true,[261]=true, -- rogue
     [269]=true, -- monk WW
     [103]=true, -- druid feral

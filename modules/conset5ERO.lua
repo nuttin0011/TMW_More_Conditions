@@ -10,8 +10,6 @@
 --/run IROUsedSkillControl.NumDotPress()
 
 local TMW = TMW
-local CNDT = TMW.CNDT
-local Env = CNDT.Env
 local GCDSpell=TMW.GCDSpell
 local GetSpellCooldown=GetSpellCooldown
 local UnitCastingInfo=UnitCastingInfo
@@ -118,10 +116,10 @@ local DefaultPingAdjust = 0.2 --sec
 
 function NextTimeCheckLockUseSkill(PingAdjust)
 	local GCDst,GCDdu=GetSpellCooldown(GCDSpell)
-	local spellname, _, _, startTimeMS, endTimeMS = UnitCastingInfo("player")
+	local spellname, _, _, _, endTimeMS = UnitCastingInfo("player")
 	if not spellname then
-		spellname, _, _, startTimeMS, endTimeMS = UnitChannelInfo("player")
-	end	
+		spellname, _, _, _, endTimeMS = UnitChannelInfo("player")
+	end
 	local currentTime=GetTime()	
 	local endTime,CutPoint
 	PingAdjust=PingAdjust or DefaultPingAdjust
@@ -144,7 +142,7 @@ function NextTimeCheckLockUseSkill(PingAdjust)
 				return CutPoint,false
 			else
 				return endTime+PingAdjust,true
-			end			
+			end
 		end
 	end
 end
@@ -153,11 +151,11 @@ end
 
 IROUsedSkillControl={}
 IROUsedSkillControl.Stage=1
-IROUsedSkillControl.pingadjust=0.25 
+IROUsedSkillControl.pingadjust=0.25
 IROUsedSkillControl.SkillHandle={}
 IROUsedSkillControl.PlayerGUID=UnitGUID("player")
 IROUsedSkillControl.NextForceReady=0
-function IROUsedSkillControl.OnEvent(self, event)
+function IROUsedSkillControl.OnEvent()
 	local _, subevent, _, sourceGUID = CombatLogGetCurrentEventInfo()
 	if (sourceGUID==IROUsedSkillControl.PlayerGUID)and(subevent=="SPELL_CAST_FAILED")
 	then IROUsedSkillControl.forceReady() end
@@ -176,7 +174,7 @@ IROUsedSkillControl.forceReady = function()
 	local currentTime=GetTime()
 	if IROUsedSkillControl.NextForceReady>currentTime then return end
 	IROUsedSkillControl.NextForceReady=currentTime+0.19
-	for k,v in pairs(IROUsedSkillControl.SkillHandle) do
+	for _,v in pairs(IROUsedSkillControl.SkillHandle) do
 		v:Cancel()
 	end
 	IROUsedSkillControl.SkillHandle={}

@@ -1,12 +1,17 @@
 --Next Interrupter!!!! V 2.1
 --WORK Only counter interruptCounterName=1
 
-interruptCounterName = "wantinterrupt"
+InterruptCounterName = "wantinterrupt"
 
---[[ check use (not NextInterrupter) or NextInterrupter.IsMyTurn()
- or use ((not NextInterrupter)or(not NextInterrupter.Enabled)or(not NextInterrupter.ITable[UnitGUID("target")])or(next(NextInterrupter.ITable[UnitGUID("target")])==nil)or(NextInterrupter.ITable[UnitGUID("target")][1]==NextInterrupter.Name))
+--[[ check use
+(not NextInterrupter) or NextInterrupter.IsMyTurn()
+
+or use
+((not NextInterrupter)or(not NextInterrupter.Enabled)or(not NextInterrupter.ITable[UnitGUID("target")])or(next(NextInterrupter.ITable[UnitGUID("target")])==nil)or(NextInterrupter.ITable[UnitGUID("target")][1]==NextInterrupter.Name))
+
+Debug
 /run NextInterrupter.Debug()
-to debug --]]
+--]]
 --------CODE AERA-------------------
 if (not NextInterrupter) or (not NextInterrupter.Setuped) then
     NextInterrupter={}
@@ -74,7 +79,7 @@ if (not NextInterrupter) or (not NextInterrupter.Setuped) then
                 print(k)
                 local iname="-----"
                 for _,v2 in pairs(v) do 
-                    iname=iname.."{"..v2.."} " 
+                    iname=iname.."{"..v2.."} "
                 end
                 print(iname)
             end 
@@ -199,7 +204,7 @@ if (not NextInterrupter) or (not NextInterrupter.Setuped) then
             print('<<<< "'..m2..'"')
         end  
         local iaction,iname,iGUID = strsplit("^", m2,3)
-        local iMobID,iIndex,ii,ifound
+        local iIndex,ifound
 
         if iname==NextInterrupter.Name then
             if (iaction=="CN") then
@@ -214,19 +219,18 @@ if (not NextInterrupter) or (not NextInterrupter.Setuped) then
         if (iaction=="CN")or(iaction=="CI") then
             --print('if 1')
             for iMobID in pairs(NextInterrupter.ITable) do
-                for iIndex in pairs(NextInterrupter.ITable[iMobID]) do
-                    if NextInterrupter.ITable[iMobID][iIndex]==iname then
+                for iiIndex in pairs(NextInterrupter.ITable[iMobID]) do
+                    if NextInterrupter.ITable[iMobID][iiIndex]==iname then
                         TableEdited=true
-                        table.remove(NextInterrupter.ITable[iMobID],iIndex)
+                        table.remove(NextInterrupter.ITable[iMobID],iiIndex)
                         if next(NextInterrupter.ITable[iMobID])==nil then
                             NextInterrupter.ITable[iMobID]=nil
                         end
                         break
-                    end 
+                    end
                 end
             end
         end
-        
         local inamesub11=iname:sub(1,1)
         if iaction == "CI" then
             --print('if 2')
@@ -244,7 +248,7 @@ if (not NextInterrupter) or (not NextInterrupter.Setuped) then
             end
             if not ifound then iIndex=iIndex+1 end
             TableEdited=true
-            table.insert(NextInterrupter.ITable[iGUID],iIndex,iname) 
+            table.insert(NextInterrupter.ITable[iGUID],iIndex,iname)
         end
         if NextInterrupter.DebugMode then
             if TableEdited then
@@ -253,7 +257,7 @@ if (not NextInterrupter) or (not NextInterrupter.Setuped) then
             else
                 print(GetTime().." Table Not Change")
             end
-        end       
+        end
     end
     --Update all variable for 1st time
     NextInterrupter.updateSpec()
@@ -269,7 +273,7 @@ if (not NextInterrupter) or (not NextInterrupter.Setuped) then
     C_ChatInfo.RegisterAddonMessagePrefix(NextInterrupter.AddonMessagePrefix)
     --Set to Check Target Every 0.112 sec
     NextInterrupter.C_TimerHandle = C_Timer.NewTicker(0.112, function()
-        local cc=TMW_ST:GetCounter(interruptCounterName)
+        local cc=TMW_ST:GetCounter(InterruptCounterName)
         if cc==1 then
             if not NextInterrupter.Enabled then NextInterrupter.Enable() end
             NextInterrupter.CheckAndSendISM()

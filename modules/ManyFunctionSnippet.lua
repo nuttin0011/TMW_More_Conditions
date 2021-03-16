@@ -37,7 +37,7 @@ function IROVar.UpdateVar()
     IROVar.isMassacre = (IROVar.Talentname=="Massacre") and IROVar.Talentselected
     IROVar.isCondemn = GetSpellInfo("execute")=="Condemn"
 end
-function IROVar.fspecOnEvent(self, event, ...)
+function IROVar.fspecOnEvent()
     IROVar.UpdateVar()
 end
 if not IROSpecID then
@@ -97,7 +97,7 @@ function IROEnemyCountIn8yd(Rlevel)
         end
         if count>=8 then break end
     end
-    return  count
+    return count
 end
 
 local ItemRangeCheck2 = {
@@ -136,7 +136,7 @@ function IROEnemyCountInRange(nRange)
         nRange=nRange-1
     end
     local ItemNameToCheck = "item:"..ItemRangeCheck2[nRange]
-    local nn,count
+    local nn
     local count=0
     for i=1,30 do
         nn='nameplate'..i
@@ -234,7 +234,7 @@ function PercentCastbar(PercentCast, MustInterruptAble,unit, MinTMS,MaxTMS)
         if (currentcastTime>=MinTMS) and (currentcastTime<=(totalcastTime-MinTMS)) then
             wantInterrupt = true
         end
-    end 
+    end
     return  wantInterrupt
 end
 
@@ -246,7 +246,7 @@ end
 
 function SumHPMobinCombat()
     local sumhp =0
-    local ii,nn
+    local nn
     for ii =1,30 do
         nn='nameplate'..ii
         if UnitExists(nn) and UnitCanAttack("player", nn) 
@@ -260,7 +260,7 @@ end
 
 function SumHPMobin8yd()
     local sumhp =0
-    local ii,nn
+    local nn
     for ii =1,30 do
         nn='nameplate'..ii
         if UnitExists(nn) and CheckInteractDistance(nn,2) and UnitCanAttack("player", nn) then
@@ -334,9 +334,7 @@ function GCDCDTime()
     --return GCD CD
     local OldVal=IROVar.ERO_Old_Val.Check("GCDCDTime","")
     if OldVal then return OldVal end
-    
     local GCDCD=TMW.GCD
-    
     if GCDCD == 0 then
         if not IROSpecID then IROSpecID = GetSpecializationInfo(GetSpecialization()) end
         if IROClassGCDOneSec[IROSpecID] then
@@ -345,9 +343,7 @@ function GCDCDTime()
             GCDCD = round(1.5*(100/(100+UnitSpellHaste("player"))),2)
         end
     end
-    
     IROVar.ERO_Old_Val.Update("GCDCDTime","",GCDCD)
-    
     return GCDCD
 end
 

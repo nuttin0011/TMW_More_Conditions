@@ -3,6 +3,7 @@
         "TMW_ST",
         "strsplit",
         "TMW",
-        "bit"
+        "bit",
+        "strlower"
     ]
 }

@@ -1,4 +1,4 @@
--- Many Function Version 9.0.5/16
+-- Many Function Version 9.0.5/17
 -- this file save many function for paste to TMW Snippet LUA
 
 --function IROEnemyCountIn8yd(Rlevel) ; return count
@@ -19,10 +19,30 @@
 --var IROSpecID = GetSpecializationInfo(GetSpecialization()),e.g. 62="Mage arcane",63="Mage fire",64="Mage frost"
 
 IROVar={}
+function IROVar:fspecOnEvent(event)
+    if IROVar.DebugMode then print("Event : "..((event~=nil) and event or "nil")) end
+    if event=="ZONE_CHANGED" then
+        C_Timer.After(10,IROVar.UpdateVar)
+    else
+        C_Timer.After(1,IROVar.UpdateVar)
+    end
+end
+if not IROSpecID then
+    IROSpecID = GetSpecializationInfo(GetSpecialization())
+    IROVar.fspec = CreateFrame("Frame")
+    --IROVar.fspec:RegisterEvent("PLAYER_SPECIALIZATION_CHANGED")
+    --IROVar.fspec:RegisterEvent("ACTIVE_TALENT_GROUP_CHANGED")
+    IROVar.fspec:RegisterEvent("PLAYER_TALENT_UPDATE")
+    IROVar.fspec:RegisterEvent("ZONE_CHANGED")
+    IROVar.fspec:SetScript("OnEvent", IROVar.fspecOnEvent)
+end
+
 _,IROVar.Talentname,_,IROVar.Talentselected=GetTalentInfo(3,1,1)
 IROVar.isMassacre = (IROVar.Talentname=="Massacre") and IROVar.Talentselected
 IROVar.isCondemn = GetSpellInfo("execute")=="Condemn"
 IROVar.DebugMode = false
+IROVar.JustShowDebug = 0
+IROVar.ShowDebugDelay = 2 -- sec
 
 --setup Event Respec + Talent
 function IROVar.Debug()
@@ -30,23 +50,27 @@ function IROVar.Debug()
     print("IROVar.DebugMode : "..(IROVar.DebugMode and "On" or "Off"))
 end
 function IROVar.UpdateVar()
-    --print("old Spec :"..IROSpecID)
-    IROSpecID = GetSpecializationInfo(GetSpecialization())
-    --print("new Spec :"..IROSpecID)
+    local newSpec = GetSpecializationInfo(GetSpecialization())
     _,IROVar.Talentname,_,IROVar.Talentselected=GetTalentInfo(3,1,1)
-    IROVar.isMassacre = (IROVar.Talentname=="Massacre") and IROVar.Talentselected
-    IROVar.isCondemn = GetSpellInfo("execute")=="Condemn"
-end
-function IROVar.fspecOnEvent()
-    IROVar.UpdateVar()
-end
-if not IROSpecID then
-    IROSpecID = GetSpecializationInfo(GetSpecialization())
-    IROVar.fspec = CreateFrame("Frame")
-    IROVar.fspec:RegisterEvent("PLAYER_SPECIALIZATION_CHANGED")
-    IROVar.fspec:RegisterEvent("ACTIVE_TALENT_GROUP_CHANGED")
-    IROVar.fspec:RegisterEvent("PLAYER_TALENT_UPDATE")
-    IROVar.fspec:SetScript("OnEvent", IROVar.fspecOnEvent)
+    local newisMassacre=(IROVar.Talentname=="Massacre") and IROVar.Talentselected
+    local newisCondemn=GetSpellInfo("execute")=="Condemn"
+    if IROVar.DebugMode then
+        if (IROSpecID~=newSpec) and (newSpec~=nil)  then
+            print("old Spec :"..((IROSpecID~=nil) and IROSpecID or "nil"))
+            print("new Spec :"..((newSpec~=nil) and newSpec or "nil"))
+        end
+        if IROVar.isMassacre~=newisMassacre then
+            print("old isMassacre :"..(IROVar.isMassacre and "true" or "false"))
+            print("new isMassacre :"..(newisMassacre and "true" or "false"))
+        end
+        if IROVar.isCondemn~=newisCondemn then
+            print("old isCondemn :"..(IROVar.isCondemn and "true" or "false"))
+            print("new isCondemn :"..(newisCondemn and "true" or "false"))
+        end
+    end
+    IROSpecID = newSpec or IROSpecID
+    IROVar.isMassacre = newisMassacre
+    IROVar.isCondemn = newisCondemn
 end
 
 local ItemRangeCheck = {
@@ -297,13 +321,19 @@ function IsUsableExecute(nUnit)
         local _,Talentname,_,Talentselected=GetTalentInfo(3,1,1)
         local isMassacre = (Talentname=="Massacre") and Talentselected
         local isCondemn = GetSpellInfo("execute")=="Condemn"
-        if isMassacre~=IROVar.isMassacre then
+        local showeddebug = false
+        if (isMassacre~=IROVar.isMassacre) and (IROVar.JustShowDebug<GetTime()) then
+            showeddebug=true
             print("isMassacre = "..(isMassacre and "true" or "false"))
             print("IROVar.isMassacre = "..(IROVar.isMassacre and "true" or "false"))
         end
-        if isCondemn~=IROVar.isCondemn then
+        if (isCondemn~=IROVar.isCondemn) and (IROVar.JustShowDebug<GetTime()) then
+            showeddebug=true
             print("isCondemn = "..(isCondemn and "true" or "false"))
             print("IROVar.isCondemn = "..(IROVar.isCondemn and "true" or "false"))
+        end
+        if showeddebug then
+            IROVar.JustShowDebug=GetTime()+IROVar.ShowDebugDelay
         end
     end
     nUnit=nUnit or "target"

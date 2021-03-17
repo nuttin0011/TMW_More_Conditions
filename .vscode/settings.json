@@ -4,6 +4,7 @@
         "strsplit",
         "TMW",
         "bit",
-        "strlower"
+        "strlower",
+        "ter"
     ]
 }

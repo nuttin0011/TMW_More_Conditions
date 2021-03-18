@@ -1,4 +1,4 @@
--- Many Function Version 9.0.5/17
+-- Many Function Version 9.0.5/18
 -- this file save many function for paste to TMW Snippet LUA
 
 --function IROEnemyCountIn8yd(Rlevel) ; return count
@@ -194,7 +194,7 @@ if not IROInterruptTier then
     IROInterruptTier[258] = {'D','Silence'} -- Shadow
     IROInterruptTier[65] = {'N',''} -- Holy
     IROInterruptTier[66] = {'A','Rebuke'} -- Port
-    IROInterruptTier[67] = {'B','Rebuke'} -- Ret
+    IROInterruptTier[70] = {'B','Rebuke'} -- Ret
     IROInterruptTier[268] = {'A','Spear Hand Strike'} -- Brewmaster
     IROInterruptTier[270] = {'N',''} -- Mistweaver
     IROInterruptTier[269] = {'B','Spear Hand Strike'} -- Windwalker

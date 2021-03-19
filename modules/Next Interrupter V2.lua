@@ -1,4 +1,4 @@
---Next Interrupter!!!! V 2.2
+--Next Interrupter!!!! V 2.3
 --WORK Only counter interruptCounterName=1
 
 InterruptCounterName = "wantinterrupt"
@@ -15,7 +15,7 @@ Debug
 --------CODE AERA-------------------
 if (not NextInterrupter) or (not NextInterrupter.Setuped) then
     NextInterrupter={}
-    NextInterrupter.ver="Next Interrupter!!!! V 2.2"
+    NextInterrupter.ver="Next Interrupter!!!! V 2.3"
     NextInterrupter.DebugMode=false
     NextInterrupter.Setuped=false
     NextInterrupter.SpecID=nil
@@ -48,7 +48,7 @@ if (not NextInterrupter) or (not NextInterrupter.Setuped) then
         [258] = {'D','Silence'}, -- Shadow
         [65] = {'N',''}, -- Holy
         [66] = {'A','Rebuke'}, -- Port
-        [67] = {'B','Rebuke'}, -- Ret
+        [70] = {'B','Rebuke'}, -- Ret
         [268] = {'A','Spear Hand Strike'}, -- Brewmaster
         [270] = {'N',''}, -- Mistweaver
         [269] = {'B','Spear Hand Strike'}, -- Windwalker

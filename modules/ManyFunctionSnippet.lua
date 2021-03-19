@@ -1,4 +1,4 @@
--- Many Function Version 9.0.5/18
+-- Many Function Version 9.0.5/19
 -- this file save many function for paste to TMW Snippet LUA
 
 --function IROEnemyCountIn8yd(Rlevel) ; return count
@@ -19,6 +19,17 @@
 --var IROSpecID = GetSpecializationInfo(GetSpecialization()),e.g. 62="Mage arcane",63="Mage fire",64="Mage frost"
 
 IROVar={}
+_,IROVar.Talentname,_,IROVar.Talentselected=GetTalentInfo(3,1,1)
+IROVar.isMassacre = (IROVar.Talentname=="Massacre") and IROVar.Talentselected
+IROVar.isCondemn = GetSpellInfo("execute")=="Condemn"
+IROVar.DebugMode = false
+IROVar.JustShowDebug = 0
+IROVar.ShowDebugDelay = 2 -- sec
+IROVar.iHaveInterruptSpell = false
+function IROVar.Debug()
+    IROVar.DebugMode=not IROVar.DebugMode
+    print("IROVar.DebugMode : "..(IROVar.DebugMode and "On" or "Off"))
+end
 function IROVar:fspecOnEvent(event)
     if IROVar.DebugMode then print("Event : "..((event~=nil) and event or "nil")) end
     if event=="ZONE_CHANGED" then
@@ -35,19 +46,6 @@ if not IROSpecID then
     IROVar.fspec:RegisterEvent("PLAYER_TALENT_UPDATE")
     IROVar.fspec:RegisterEvent("ZONE_CHANGED")
     IROVar.fspec:SetScript("OnEvent", IROVar.fspecOnEvent)
-end
-
-_,IROVar.Talentname,_,IROVar.Talentselected=GetTalentInfo(3,1,1)
-IROVar.isMassacre = (IROVar.Talentname=="Massacre") and IROVar.Talentselected
-IROVar.isCondemn = GetSpellInfo("execute")=="Condemn"
-IROVar.DebugMode = false
-IROVar.JustShowDebug = 0
-IROVar.ShowDebugDelay = 2 -- sec
-
---setup Event Respec + Talent
-function IROVar.Debug()
-    IROVar.DebugMode=not IROVar.DebugMode
-    print("IROVar.DebugMode : "..(IROVar.DebugMode and "On" or "Off"))
 end
 function IROVar.UpdateVar()
     local newSpec = GetSpecializationInfo(GetSpecialization())
@@ -71,7 +69,10 @@ function IROVar.UpdateVar()
     IROSpecID = newSpec or IROSpecID
     IROVar.isMassacre = newisMassacre
     IROVar.isCondemn = newisCondemn
+    IROVar.iHaveInterruptSpell = GetSpellInfo(IROInterruptTier[IROSpecID][2])~=nil
 end
+
+C_Timer.After(5,IROVar.UpdateVar) --update 5 sec after login
 
 local ItemRangeCheck = {
     [1]=34368, -- Attuned Crystal Cores 8 yard

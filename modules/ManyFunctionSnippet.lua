@@ -1,4 +1,4 @@
--- Many Function Version 9.0.5/19
+-- Many Function Version 9.0.5/20
 -- this file save many function for paste to TMW Snippet LUA
 
 --function IROEnemyCountIn8yd(Rlevel) ; return count
@@ -17,6 +17,7 @@
 --function IROVar.ERO_Old_Val.Update(functionName,input_val_string,result_val) ; update Old_Val at same GetTime()
 --function IROVar.Debug() show some Debug val
 --var IROSpecID = GetSpecializationInfo(GetSpecialization()),e.g. 62="Mage arcane",63="Mage fire",64="Mage frost"
+--IROVar.CheckDPSRange = function(nUnit) ; return Can Dps Unit?
 
 IROVar={}
 _,IROVar.Talentname,_,IROVar.Talentselected=GetTalentInfo(3,1,1)
@@ -26,6 +27,7 @@ IROVar.DebugMode = false
 IROVar.JustShowDebug = 0
 IROVar.ShowDebugDelay = 2 -- sec
 IROVar.iHaveInterruptSpell = false
+IROVar.SkillCheckDPSRange = nil
 function IROVar.Debug()
     IROVar.DebugMode=not IROVar.DebugMode
     print("IROVar.DebugMode : "..(IROVar.DebugMode and "On" or "Off"))
@@ -69,7 +71,13 @@ function IROVar.UpdateVar()
     IROSpecID = newSpec or IROSpecID
     IROVar.isMassacre = newisMassacre
     IROVar.isCondemn = newisCondemn
-    IROVar.iHaveInterruptSpell = GetSpellInfo(IROInterruptTier[IROSpecID][2])~=nil
+    if IROInterruptTier[IROSpecID] then
+        IROVar.iHaveInterruptSpell = GetSpellInfo(IROInterruptTier[IROSpecID][2])~=nil
+        IROVar.SkillCheckDPSRange = IROInterruptTier[IROSpecID][3]
+    else
+        IROVar.iHaveInterruptSpell = false
+        IROVar.SkillCheckDPSRange = nil
+    end
 end
 
 C_Timer.After(5,IROVar.UpdateVar) --update 5 sec after login
@@ -84,6 +92,11 @@ local ItemRangeCheck = {
 }
 IROVar.ItemNameToCheck8 = "item:"..ItemRangeCheck[1]
 
+IROVar.CheckDPSRange = function(nUnit)
+    if IROVar.SkillCheckDPSRange == nil then return true end
+    nUnit = nUnit or "target"
+    return IsSpellInRange(IROVar.SkillCheckDPSRange,nUnit)==1
+end
 
 IROVar.ERO_Old_Val = {Timer=0,Old_Val={},
     Check = function(functionName,input_val_string)
@@ -176,45 +189,44 @@ function IROEnemyCountInRange(nRange)
     return count
 end
 
-if not IROInterruptTier then
-    IROInterruptTier = {}
-    IROInterruptTier[71] = {'B','Pummel'} -- Arm
-    IROInterruptTier[72] = {'B','Pummel'} -- fury
-    IROInterruptTier[73] = {'A','Pummel'} -- Protection
-    IROInterruptTier[265] = {'D','Command Demon'} -- Aff [Spell Lock]
-    IROInterruptTier[266] = {'D','Command Demon'} -- Demo
-    IROInterruptTier[267] = {'D','Command Demon'} -- Dest
-    IROInterruptTier[262] = {'C','Wind Shear'} -- Element
-    IROInterruptTier[263] = {'B','Wind Shear'} -- Enha
-    IROInterruptTier[264] = {'D','Wind Shear'} -- Resto
-    IROInterruptTier[259] = {'B','Kick'} -- Ass
-    IROInterruptTier[260] = {'B','Kick'} -- Out
-    IROInterruptTier[261] = {'B','Kick'} -- Sub
-    IROInterruptTier[256] = {'N',''} -- Disc
-    IROInterruptTier[257] = {'N',''} -- Holy
-    IROInterruptTier[258] = {'D','Silence'} -- Shadow
-    IROInterruptTier[65] = {'N',''} -- Holy
-    IROInterruptTier[66] = {'A','Rebuke'} -- Port
-    IROInterruptTier[70] = {'B','Rebuke'} -- Ret
-    IROInterruptTier[268] = {'A','Spear Hand Strike'} -- Brewmaster
-    IROInterruptTier[270] = {'N',''} -- Mistweaver
-    IROInterruptTier[269] = {'B','Spear Hand Strike'} -- Windwalker
-    IROInterruptTier[62] = {'C','Counterspell'} -- arcane
-    IROInterruptTier[63] = {'C','Counterspell'} -- fire
-    IROInterruptTier[64] = {'C','Counterspell'} -- frost
-    IROInterruptTier[253] = {'C','Counter Shot'} -- Beast Mastery
-    IROInterruptTier[254] = {'C','Counter Shot'} -- Marksmanship
-    IROInterruptTier[255] = {'C','Muzzle'} -- Survival
-    IROInterruptTier[102] = {'C','Solar Beam'} -- Balance
-    IROInterruptTier[103] = {'B','Skull Bash'} -- Feral
-    IROInterruptTier[104] = {'A','Skull Bash'} -- Guardian
-    IROInterruptTier[105] = {'N',''} -- Restoration
-    IROInterruptTier[577] = {'B','Disrupt'} -- Havoc
-    IROInterruptTier[581] = {'A','Disrupt'} -- Vengeance
-    IROInterruptTier[250] = {'A','Mind Freeze'} -- Blood
-    IROInterruptTier[251] = {'B','Mind Freeze'} -- frost
-    IROInterruptTier[252] = {'B','Mind Freeze'} -- unholy
-end
+IROInterruptTier = {}
+--IROInterruptTier[specID]={interruptTier,interruptSpellName,DPSCheckSkill}
+IROInterruptTier[71] = {'B','Pummel','Pummel'} -- Arm
+IROInterruptTier[72] = {'B','Pummel','Pummel'} -- fury
+IROInterruptTier[73] = {'A','Pummel','Pummel'} -- Protection
+IROInterruptTier[265] = {'D','Command Demon','Corruption'} -- Aff [Spell Lock]
+IROInterruptTier[266] = {'D','Command Demon','Corruption'} -- Demo
+IROInterruptTier[267] = {'D','Command Demon','Corruption'} -- Dest
+IROInterruptTier[262] = {'C','Wind Shear','Lightning Bolt'} -- Element
+IROInterruptTier[263] = {'B','Wind Shear','primal strike'} -- Enha
+IROInterruptTier[264] = {'D','Wind Shear','Lightning Bolt'} -- Resto
+IROInterruptTier[259] = {'B','Kick','Kick'} -- Ass
+IROInterruptTier[260] = {'B','Kick','Kick'} -- Out
+IROInterruptTier[261] = {'B','Kick','Kick'} -- Sub
+IROInterruptTier[256] = {'N','','Smite'} -- Disc
+IROInterruptTier[257] = {'N','','Smite'} -- Holy
+IROInterruptTier[258] = {'D','Silence','Smite'} -- Shadow
+IROInterruptTier[65] = {'N','','Crusader Strike'} -- Holy
+IROInterruptTier[66] = {'A','Rebuke','Crusader Strike'} -- Port
+IROInterruptTier[70] = {'B','Rebuke','Crusader Strike'} -- Ret
+IROInterruptTier[268] = {'A','Spear Hand Strike','Tiger Palm'} -- Brewmaster
+IROInterruptTier[270] = {'N','','Tiger Palm'} -- Mistweaver
+IROInterruptTier[269] = {'B','Spear Hand Strike','Tiger Palm'} -- Windwalker
+IROInterruptTier[62] = {'C','Counterspell','Fire Blast'} -- arcane
+IROInterruptTier[63] = {'C','Counterspell','Fire Blast'} -- fire
+IROInterruptTier[64] = {'C','Counterspell','Fire Blast'} -- frost
+IROInterruptTier[253] = {'C','Counter Shot','Arcane Shot'} -- Beast Mastery
+IROInterruptTier[254] = {'C','Counter Shot','Arcane Shot'} -- Marksmanship
+IROInterruptTier[255] = {'C','Muzzle','Raptor Strike'} -- Survival
+IROInterruptTier[102] = {'C','Solar Beam','Moonfire'} -- Balance
+IROInterruptTier[103] = {'B','Skull Bash','Rake'} -- Feral
+IROInterruptTier[104] = {'A','Skull Bash','Mangle'} -- Guardian
+IROInterruptTier[105] = {'N','','Moonfire'} -- Restoration
+IROInterruptTier[577] = {'B','Disrupt','Chaos Strike'} -- Havoc
+IROInterruptTier[581] = {'A','Disrupt','Chaos Strike'} -- Vengeance
+IROInterruptTier[250] = {'A','Mind Freeze','Death Strike'} -- Blood
+IROInterruptTier[251] = {'B','Mind Freeze','Death Strike'} -- frost
+IROInterruptTier[252] = {'B','Mind Freeze','Death Strike'} -- unholy
 
 function isMyInterruptSpellReady()
     if IROInterruptTier and IROSpecID then

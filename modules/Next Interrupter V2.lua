@@ -1,4 +1,4 @@
---Next Interrupter!!!! V 2.3
+--Next Interrupter!!!! V 2.5
 --WORK Only counter interruptCounterName=1
 
 InterruptCounterName = "wantinterrupt"
@@ -13,9 +13,10 @@ Debug
 /run NextInterrupter.Debug()
 --]]
 --------CODE AERA-------------------
+if not AceGUI then AceGUI = LibStub("AceGUI-3.0") end
 if (not NextInterrupter) or (not NextInterrupter.Setuped) then
     NextInterrupter={}
-    NextInterrupter.ver="Next Interrupter!!!! V 2.3"
+    NextInterrupter.ver="Next Interrupter!!!! V 2.5"
     NextInterrupter.DebugMode=false
     NextInterrupter.Setuped=false
     NextInterrupter.SpecID=nil
@@ -70,10 +71,89 @@ if (not NextInterrupter) or (not NextInterrupter.Setuped) then
     }
     NextInterrupter.Debug = function()
         NextInterrupter.DebugMode=not NextInterrupter.DebugMode
-        print("NextInterrupter Debug Mode : "..(NextInterrupter.DebugMode and "On" or "Off"))
+        if NextInterrupter.DebugMode then
+            print("NextInterrupter Debug Mode : "..(NextInterrupter.DebugMode and "On" or "Off"))
+        end
+        if NextInterrupter.DebugMode and
+        ((not NextInterrupter.DebugFrame) or
+        (not NextInterrupter.DebugFrame:IsVisible())) then
+            NextInterrupter.DebugFrame=AceGUI:Create("Frame")
+            NextInterrupter.DebugFrame:SetTitle("NextInterrupter Queue")
+            NextInterrupter.DebugFrame:SetLayout("Fill")
+            NextInterrupter.DebugFrame:SetWidth(500)
+            NextInterrupter.DebugFrame:SetHeight(300)
+            NextInterrupter.DebugFrame:SetPoint("TOPLEFT","UIParent","TOPLEFT",20,-50)
+            NextInterrupter.DebugFrame:SetCallback("OnClose", function(widget)
+              AceGUI:Release(widget)
+              NextInterrupter.DebugMode=false
+              print("NextInterrupter Debug Mode : "..(NextInterrupter.DebugMode and "On" or "Off"))
+              if NextInterrupter.UpdateTreeHandle then NextInterrupter.UpdateTreeHandle:Cancel() end
+            end)
+            NextInterrupter.TreeGroup = AceGUI:Create("TreeGroup")
+            NextInterrupter.TreeGroupStatus = { groups = {} }
+            for i=1,10 do
+                NextInterrupter.TreeGroupStatus.groups[i]=true
+            end
+            NextInterrupter.TreeGroupStatus.treewidth=400
+            NextInterrupter.TreeGroup:SetStatusTable( NextInterrupter.TreeGroupStatus )
+            NextInterrupter.DebugFrame:AddChild(NextInterrupter.TreeGroup)
+            --NextInterrupter.UpdateTreeHandle = C_Timer.NewTicker(0.05, NextInterrupter.updateTree)
+        end
+        if not NextInterrupter.DebugMode then
+            if NextInterrupter.DebugFrame and NextInterrupter.DebugFrame:IsVisible() then
+                AceGUI:Release(NextInterrupter.DebugFrame)
+                if NextInterrupter.UpdateTreeHandle then NextInterrupter.UpdateTreeHandle:Cancel() end
+            end
+        end
     end
     NextInterrupter.Version = function()
         print(NextInterrupter.ver)
+    end
+    NextInterrupter.CompareTable = function(a,b)
+        local function subcompare(aa,bb)
+            if (not aa) or (not bb) then return false end
+            local equal=true
+            for k,v in pairs(aa) do
+                if type(v)=="table" then
+                    equal=NextInterrupter.CompareTable(v,bb[k])
+                    if not equal then break end
+                elseif (equal) and (v~=bb[k]) then
+                    equal=false
+                    break
+                end
+            end
+            return equal
+        end
+        local eq = subcompare(a,b)
+        if eq then eq=subcompare(b,a) end
+        return eq
+    end
+    NextInterrupter.oldTree ={}
+    NextInterrupter.updateTree= function(NotCompareTableBeforUpdate)
+        if (not NextInterrupter) or (not NextInterrupter.ITable) then return end
+        local NITree = {}
+        local i=1
+        for k,v in pairs(NextInterrupter.ITable) do
+            local NIsubTree = {}
+            for k2,v2 in pairs(v) do
+                table.insert(NIsubTree,{
+                    value=k2,
+                    text=v2
+                })
+            end
+            table.insert(NITree,{
+                value= i,
+                text = k,
+                children=NIsubTree
+            })
+            i=i+1
+        end
+        if NotCompareTableBeforUpdate or
+        (not NextInterrupter.CompareTable(NextInterrupter.oldTree,NITree))
+        then
+            NextInterrupter.oldTree=NITree
+            NextInterrupter.TreeGroup:SetTree(NITree)
+        end
     end
     NextInterrupter.PrintTable = function()
         if next(NextInterrupter.ITable)==nil then
@@ -171,13 +251,13 @@ if (not NextInterrupter) or (not NextInterrupter.Setuped) then
         end
         NextInterrupter.canInterrupt=canInterrupt
         NextInterrupter.TargetGUID=tGUID
-        local SendType = IsInInstance() and "INSTANCE_CHAT" or (IsInRaid() and "RAID" or (IsInGroup() and "PARTY" or "WHISPER"))
+        local SendType = IsInGroup(LE_PARTY_CATEGORY_INSTANCE) and "INSTANCE_CHAT" or (IsInRaid() and "RAID" or (IsInGroup() and "PARTY" or "WHISPER"))
         local SendTarget = NextInterrupter.PlayerName
         local Prefix = NextInterrupter.AddonMessagePrefix
         local SendMessage = (canInterrupt and 'CI^' or 'CN^')..NextInterrupter.Name.."^"..tGUID
         if NextInterrupter.DebugMode then
             print(">>>> "..SendType..' : "'..SendMessage..'"')
-        end        
+        end
         C_ChatInfo.SendAddonMessage(Prefix, SendMessage, SendType,SendTarget)
     end
     NextInterrupter.AddonMessageEvent = function(self, event, ...)
@@ -204,14 +284,14 @@ if (not NextInterrupter) or (not NextInterrupter.Setuped) then
         -- ['GUIDMob2'] = { 'PlayerName1','PlayerName2'....}
         -- .... }
         
-        if m1 ~= NextInterrupter.AddonMessagePrefix then 
+        if m1 ~= NextInterrupter.AddonMessagePrefix then
             --print(m1)
             return 0
         end
         if NextInterrupter.DebugMode then
             print("\\\\ReciveISM : "..GetTime())
             print('<<<< "'..m2..'"')
-        end  
+        end
         local iaction,iname,iGUID = strsplit("^", m2,3)
         local iIndex,ifound
 
@@ -262,7 +342,8 @@ if (not NextInterrupter) or (not NextInterrupter.Setuped) then
         if NextInterrupter.DebugMode then
             if TableEdited then
                 print(GetTime().." Table Change")
-                NextInterrupter.PrintTable()
+                NextInterrupter.updateTree(true)
+                --NextInterrupter.PrintTable()
             else
                 print(GetTime().." Table Not Change")
             end

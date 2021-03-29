@@ -31,6 +31,7 @@ if (not NextInterrupter) or (not NextInterrupter.Setuped) then
     NextInterrupter.imInList=false
     NextInterrupter.canInterrupt=false
     NextInterrupter.TargetGUID=''
+    NextInterrupter.Synced=true
     NextInterrupter.interruptTier={
         [71] = {'B','Pummel'}, -- Arm
         [72] = {'B','Pummel'}, -- fury
@@ -106,6 +107,31 @@ if (not NextInterrupter) or (not NextInterrupter.Setuped) then
             end
         end
     end
+    NextInterrupter.SyncCode = function()
+        local function SumStr(s)
+            if not s then return 0 end
+            local sum=0
+            local len=string.len(s)
+            for i =1,len do
+                sum=sum+string.byte(s,i)
+            end
+            return len,sum
+        end
+        local size = 0
+        local checksum = 0
+        for k,v in pairs(NextInterrupter.ITable) do
+            local l,s = SumStr(k)
+            size=size+l
+            checksum=checksum+s
+            for _,v2 in pairs(v) do
+                local l2,s2 = SumStr(v2)
+                size=size+l2
+                checksum=checksum+s2
+            end
+        end
+        return size..checksum
+    end
+
     NextInterrupter.Version = function()
         print(NextInterrupter.ver)
     end
@@ -133,6 +159,10 @@ if (not NextInterrupter) or (not NextInterrupter.Setuped) then
         if (not NextInterrupter) or (not NextInterrupter.ITable) then return end
         local NITree = {}
         local i=1
+        table.insert(NITree,{
+            value=0,
+            text=NextInterrupter.Synced and "Synced" or "not Synced"
+        })
         for k,v in pairs(NextInterrupter.ITable) do
             local NIsubTree = {}
             for k2,v2 in pairs(v) do
@@ -178,8 +208,8 @@ if (not NextInterrupter) or (not NextInterrupter.Setuped) then
             NextInterrupter.Tier=NextInterrupter.interruptTier[NextInterrupter.SpecID][1]
             NextInterrupter.SpellName=NextInterrupter.interruptTier[NextInterrupter.SpecID][2]
         end
-        NextInterrupter.PlayerName=UnitName("player")
-        NextInterrupter.Name=NextInterrupter.Tier..'-'..NextInterrupter.PlayerName..'-'..GetRealmName()
+        NextInterrupter.PlayerName=UnitName("player")..'-'..GetRealmName()
+        NextInterrupter.Name=NextInterrupter.Tier..'-'..NextInterrupter.PlayerName
         NextInterrupter.isWarlock=(NextInterrupter.SpecID>=265)and(NextInterrupter.SpecID<=267)
     end
     NextInterrupter.IsMyTurn = function(nUnit)
@@ -277,6 +307,7 @@ if (not NextInterrupter) or (not NextInterrupter.Setuped) then
         --m2 = CI/CN+^+interruptTier+-+CharactorName+^+GUIDmob
         -- CI = can interrupt
         -- CN = cannot interrupt
+        -- CK = Check Sync
         --exp 'CI^A-Kimiiro^Creature-0-3933-1-153258-0002AC77A2'
         --
         --IRODPSInterruptTable = {
@@ -302,7 +333,10 @@ if (not NextInterrupter) or (not NextInterrupter.Setuped) then
                 NextInterrupter.imInList=true
             end
         end
-
+        --CHECK SYNCED????
+        if (iaction=="CK") then
+        
+        end
         -- cannot interrupt / used interrupt skill
         local TableEdited=false
         if (iaction=="CN")or(iaction=="CI") then

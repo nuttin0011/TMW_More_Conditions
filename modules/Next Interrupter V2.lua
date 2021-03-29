@@ -31,7 +31,9 @@ if (not NextInterrupter) or (not NextInterrupter.Setuped) then
     NextInterrupter.imInList=false
     NextInterrupter.canInterrupt=false
     NextInterrupter.TargetGUID=''
-    NextInterrupter.Synced=true
+    NextInterrupter.CheckSyncCode="00"
+    NextInterrupter.CheckSyncRecive={}
+    NextInterrupter.DebugTextLog={}
     NextInterrupter.interruptTier={
         [71] = {'B','Pummel'}, -- Arm
         [72] = {'B','Pummel'}, -- fury
@@ -81,7 +83,7 @@ if (not NextInterrupter) or (not NextInterrupter.Setuped) then
             NextInterrupter.DebugFrame=AceGUI:Create("Frame")
             NextInterrupter.DebugFrame:SetTitle("NextInterrupter Queue")
             NextInterrupter.DebugFrame:SetLayout("Fill")
-            NextInterrupter.DebugFrame:SetWidth(500)
+            NextInterrupter.DebugFrame:SetWidth(600)
             NextInterrupter.DebugFrame:SetHeight(300)
             NextInterrupter.DebugFrame:SetPoint("TOPLEFT","UIParent","TOPLEFT",20,-50)
             NextInterrupter.DebugFrame:SetCallback("OnClose", function(widget)
@@ -92,12 +94,41 @@ if (not NextInterrupter) or (not NextInterrupter.Setuped) then
             end)
             NextInterrupter.TreeGroup = AceGUI:Create("TreeGroup")
             NextInterrupter.TreeGroupStatus = { groups = {} }
-            for i=1,10 do
+            for i=0,10 do
                 NextInterrupter.TreeGroupStatus.groups[i]=true
             end
-            NextInterrupter.TreeGroupStatus.treewidth=400
+            NextInterrupter.TreeGroupStatus.treewidth=350
             NextInterrupter.TreeGroup:SetStatusTable( NextInterrupter.TreeGroupStatus )
+            NextInterrupter.TreeGroup:SetLayout("Fill")
             NextInterrupter.DebugFrame:AddChild(NextInterrupter.TreeGroup)
+            NextInterrupter.ScrollFrame=AceGUI:Create("ScrollFrame")
+            NextInterrupter.ScrollFrame:SetLayout("List")
+            NextInterrupter.TreeGroup:AddChild(NextInterrupter.ScrollFrame)
+            NextInterrupter.Button=AceGUI:Create("Button")
+            NextInterrupter.Button:SetText("Check Sync")
+            NextInterrupter.Button:SetCallback("OnClick", function()
+                local SendType = IsInGroup(LE_PARTY_CATEGORY_INSTANCE) and "INSTANCE_CHAT" or (IsInRaid() and "RAID" or (IsInGroup() and "PARTY" or "WHISPER"))
+                local SendTarget = NextInterrupter.PlayerName
+                local Prefix = NextInterrupter.AddonMessagePrefix
+                local SendMessage = "CK^"..NextInterrupter.PlayerName.."^00"
+                if NextInterrupter.DebugMode then
+                    NextInterrupter.AddDebugTextLog("//SendedISM : "..GetTime())
+                    NextInterrupter.AddDebugTextLog(">>>> "..SendType..' : "'..SendMessage..'"')
+                end
+                NextInterrupter.CheckSyncCode=NextInterrupter.SyncCode()
+                NextInterrupter.CheckSyncRecive={}
+                C_ChatInfo.SendAddonMessage(Prefix, SendMessage, SendType,SendTarget)
+            end)
+            NextInterrupter.Label=AceGUI:Create("Label")
+            local fontName, fontHeight, fontFlags = GameFontNormal:GetFont()
+            NextInterrupter.Label:SetFont(fontName,fontHeight*1.2,fontFlags)
+            NextInterrupter.Label:SetWidth(2048)
+            NextInterrupter.Label:SetText("")
+            NextInterrupter.ScrollFrame:AddChild(NextInterrupter.Button)
+            NextInterrupter.ScrollFrame:AddChild(NextInterrupter.Label)
+
+            NextInterrupter.updateTree(true)
+            NextInterrupter.AddDebugTextLog("*****Debug Mode ON!!")       
             --NextInterrupter.UpdateTreeHandle = C_Timer.NewTicker(0.05, NextInterrupter.updateTree)
         end
         if not NextInterrupter.DebugMode then
@@ -108,6 +139,7 @@ if (not NextInterrupter) or (not NextInterrupter.Setuped) then
         end
     end
     NextInterrupter.SyncCode = function()
+        local mul=0
         local function SumStr(s)
             if not s then return 0 end
             local sum=0
@@ -115,7 +147,8 @@ if (not NextInterrupter) or (not NextInterrupter.Setuped) then
             for i =1,len do
                 sum=sum+string.byte(s,i)
             end
-            return len,sum
+            mul=mul+1
+            return len,(sum*mul)
         end
         local size = 0
         local checksum = 0
@@ -131,7 +164,18 @@ if (not NextInterrupter) or (not NextInterrupter.Setuped) then
         end
         return size..checksum
     end
-
+    NextInterrupter.AddDebugTextLog = function(str,MaxLine)
+        if not str then return end
+        MaxLine=MaxLine or 200
+        local n=table.getn(NextInterrupter.DebugTextLog)+1
+        NextInterrupter.DebugTextLog[n]=str
+        local s=''
+        local startline = ((n-MaxLine)<1) and 1 or (n-MaxLine)
+        for i=startline,n do
+            s=NextInterrupter.DebugTextLog[i].."\n"..s
+        end
+        NextInterrupter.Label:SetText(s)
+    end
     NextInterrupter.Version = function()
         print(NextInterrupter.ver)
     end
@@ -159,12 +203,24 @@ if (not NextInterrupter) or (not NextInterrupter.Setuped) then
         if (not NextInterrupter) or (not NextInterrupter.ITable) then return end
         local NITree = {}
         local i=1
+        local NIsubTree = {}
+        for k,v in pairs(NextInterrupter.CheckSyncRecive)do
+            table.insert(NIsubTree,{
+                value=i,
+                text=k.." - "..v
+            })
+            i=i+1
+        end
+
         table.insert(NITree,{
             value=0,
-            text=NextInterrupter.Synced and "Synced" or "not Synced"
+            text="Sync Status - "..NextInterrupter.CheckSyncCode,
+            children=NIsubTree
         })
+
+        i=1
         for k,v in pairs(NextInterrupter.ITable) do
-            local NIsubTree = {}
+            NIsubTree = {}
             for k2,v2 in pairs(v) do
                 table.insert(NIsubTree,{
                     value=k2,
@@ -222,7 +278,8 @@ if (not NextInterrupter) or (not NextInterrupter.Setuped) then
     end
     NextInterrupter.Enable = function()
         if NextInterrupter.DebugMode then
-            print("*** NextInterrupter.Enable : "..GetTime())
+            NextInterrupter.AddDebugTextLog("*** NextInterrupter.Enable : "..GetTime())
+            --print("*** NextInterrupter.Enable : "..GetTime())
         end
         NextInterrupter.Enabled=true
         NextInterrupter.updateSpec()
@@ -230,7 +287,8 @@ if (not NextInterrupter) or (not NextInterrupter.Setuped) then
     end
     NextInterrupter.Disable = function()
         if NextInterrupter.DebugMode then
-            print("*** NextInterrupter.Disable : "..GetTime())
+            NextInterrupter.AddDebugTextLog("*** NextInterrupter.Disable : "..GetTime())
+            --print("*** NextInterrupter.Disable : "..GetTime())
         end
         NextInterrupter.Enabled=false
         NextInterrupter.SendISM(false)
@@ -262,7 +320,8 @@ if (not NextInterrupter) or (not NextInterrupter.Setuped) then
     end
     NextInterrupter.SendISM = function(ForceInterruptStatus)
         if NextInterrupter.DebugMode then
-            print("//SendedISM : "..GetTime())
+            NextInterrupter.AddDebugTextLog("//SendedISM : "..GetTime())
+            --print("//SendedISM : "..GetTime())
         end
         local nUnit = "target"
         local tGUID=(UnitGUID(nUnit) or "0")
@@ -286,7 +345,8 @@ if (not NextInterrupter) or (not NextInterrupter.Setuped) then
         local Prefix = NextInterrupter.AddonMessagePrefix
         local SendMessage = (canInterrupt and 'CI^' or 'CN^')..NextInterrupter.Name.."^"..tGUID
         if NextInterrupter.DebugMode then
-            print(">>>> "..SendType..' : "'..SendMessage..'"')
+            NextInterrupter.AddDebugTextLog(">>>> "..SendType..' : "'..SendMessage..'"')
+            --print(">>>> "..SendType..' : "'..SendMessage..'"')
         end
         C_ChatInfo.SendAddonMessage(Prefix, SendMessage, SendType,SendTarget)
     end
@@ -307,9 +367,11 @@ if (not NextInterrupter) or (not NextInterrupter.Setuped) then
         --m2 = CI/CN+^+interruptTier+-+CharactorName+^+GUIDmob
         -- CI = can interrupt
         -- CN = cannot interrupt
-        -- CK = Check Sync
         --exp 'CI^A-Kimiiro^Creature-0-3933-1-153258-0002AC77A2'
-        --
+        -- CK = Check Sync Please Return Sync Code to Sender
+        -- CR = Recive Sync Code
+        --e.g. 'CK^Kimiiro-Dreadmaul^00
+        --e.g. 'CR^Kimiiro-Dreadmaul^584655
         --IRODPSInterruptTable = {
         -- ['GUIDMob1'] = { 'PlayerName1','PlayerName2'....}
         -- ['GUIDMob2'] = { 'PlayerName1','PlayerName2'....}
@@ -320,8 +382,10 @@ if (not NextInterrupter) or (not NextInterrupter.Setuped) then
             return 0
         end
         if NextInterrupter.DebugMode then
-            print("\\\\ReciveISM : "..GetTime())
-            print('<<<< "'..m2..'"')
+            NextInterrupter.AddDebugTextLog("\\\\ReciveISM : "..GetTime())
+            NextInterrupter.AddDebugTextLog('<<<< "'..m2..'"')
+            --print("\\\\ReciveISM : "..GetTime())
+            --print('<<<< "'..m2..'"')
         end
         local iaction,iname,iGUID = strsplit("^", m2,3)
         local iIndex,ifound
@@ -333,9 +397,24 @@ if (not NextInterrupter) or (not NextInterrupter.Setuped) then
                 NextInterrupter.imInList=true
             end
         end
-        --CHECK SYNCED????
+        --CHECK SYNCED plase return code to sender
         if (iaction=="CK") then
-        
+            local SendType = "WHISPER"
+            local SendTarget = iname
+            local Prefix = NextInterrupter.AddonMessagePrefix
+            local SendMessage = "CR^"..NextInterrupter.PlayerName.."^"..NextInterrupter.SyncCode()
+            if NextInterrupter.DebugMode then
+                NextInterrupter.AddDebugTextLog("//SendedISM : "..GetTime())
+                NextInterrupter.AddDebugTextLog(">>>> "..SendType..' : "'..SendMessage..'"')
+                --print(">>>> "..SendType..' : "'..SendMessage..'"')
+            end
+            C_ChatInfo.SendAddonMessage(Prefix, SendMessage, SendType,SendTarget)
+            return
+        end
+        if (iaction=="CR") then
+            NextInterrupter.CheckSyncRecive[iname]=iGUID
+            NextInterrupter.updateTree(true)
+            return
         end
         -- cannot interrupt / used interrupt skill
         local TableEdited=false
@@ -375,11 +454,13 @@ if (not NextInterrupter) or (not NextInterrupter.Setuped) then
         end
         if NextInterrupter.DebugMode then
             if TableEdited then
-                print(GetTime().." Table Change")
+                NextInterrupter.AddDebugTextLog(GetTime().." Table Change")
+                --print(GetTime().." Table Change")
                 NextInterrupter.updateTree(true)
                 --NextInterrupter.PrintTable()
             else
-                print(GetTime().." Table Not Change")
+                NextInterrupter.AddDebugTextLog(GetTime().." Table Not Change")
+                --print(GetTime().." Table Not Change")
             end
         end
     end
@@ -405,6 +486,7 @@ if (not NextInterrupter) or (not NextInterrupter.Setuped) then
             if NextInterrupter.Enabled then NextInterrupter.Disable() end
         end
     end)
+    TMW_ST:UpdateCounter(InterruptCounterName,1)
     --set Done Setup
     NextInterrupter.Setuped=true
 end

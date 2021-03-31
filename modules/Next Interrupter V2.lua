@@ -1,4 +1,5 @@
---Next Interrupter!!!! V 2.5
+--Next Interrupter!!!! V 2.6
+
 --WORK Only counter interruptCounterName=1
 
 InterruptCounterName = "wantinterrupt"
@@ -13,6 +14,7 @@ Debug
 /run NextInterrupter.Debug()
 --]]
 --------CODE AERA-------------------
+TMW_ST:UpdateCounter(InterruptCounterName,1)
 if not AceGUI then AceGUI = LibStub("AceGUI-3.0") end
 if (not NextInterrupter) or (not NextInterrupter.Setuped) then
     NextInterrupter={}
@@ -486,7 +488,6 @@ if (not NextInterrupter) or (not NextInterrupter.Setuped) then
             if NextInterrupter.Enabled then NextInterrupter.Disable() end
         end
     end)
-    TMW_ST:UpdateCounter(InterruptCounterName,1)
     --set Done Setup
     NextInterrupter.Setuped=true
 end

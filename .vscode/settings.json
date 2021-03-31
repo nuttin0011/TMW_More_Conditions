@@ -5,6 +5,8 @@
         "TMW",
         "bit",
         "strlower",
-        "ter"
+        "ter",
+        "LibStub",
+        "LE_PARTY_CATEGORY_INSTANCE"
     ]
 }

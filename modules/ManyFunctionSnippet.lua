@@ -1,4 +1,4 @@
--- Many Function Version 9.0.5/21
+-- Many Function Version 9.0.5/22
 -- this file save many function for paste to TMW Snippet LUA
 
 --function IROEnemyCountIn8yd(Rlevel) ; return count
@@ -16,6 +16,7 @@
 --function IROVar.ERO_Old_Val.Check(functionName,input_val_string) ; return Old Val at Same GetTime() , or nil
 --function IROVar.ERO_Old_Val.Update(functionName,input_val_string,result_val) ; update Old_Val at same GetTime()
 --function IROVar.Debug() show some Debug val
+--function SumPartyHP() return party HP
 --var IROSpecID = GetSpecializationInfo(GetSpecialization()),e.g. 62="Mage arcane",63="Mage fire",64="Mage frost"
 --IROVar.CheckDPSRange = function(nUnit) ; return Can Dps Unit?
 
@@ -275,6 +276,29 @@ function GCDActiveLessThan(ttime)
     return ((s+d)-GetTime())<ttime
 end
 
+function SumPartyHP()
+    local Old_Val=IROVar.ERO_Old_Val.Check("SumPartyHP","")
+    if Old_Val then return Old_Val end
+    local sHP=0
+    if IsInRaid() then
+        local n = GetNumGroupMembers()
+        if n==0 then n=1 end
+        for i=1,n do
+            sHP=sHP+UnitHealth("raid"..i)
+        end
+    elseif IsInGroup() then
+        sHP=UnitHealth("player")
+        local n= GetNumGroupMembers()
+        for i=1,n-1 do
+            sHP=sHP+UnitHealth("party"..i)
+        end
+    else
+        sHP=UnitHealth("player")
+    end
+    IROVar.ERO_Old_Val.Update("SumPartyHP","",sHP)
+    return sHP
+end
+
 function SumHPMobinCombat()
     local Old_Val=IROVar.ERO_Old_Val.Check("SumHPMobinCombat","")
     if Old_Val then return Old_Val end
@@ -305,20 +329,16 @@ end
 
 function IROTargetVVHP(nMultipy)
     nMultipy=nMultipy or 2
-    local nG=GetNumGroupMembers()
-    local playerHealth=UnitHealth("player")
+    local playerHealth=SumPartyHP()
     local targetHealth=UnitHealthMax("target")
-    nG=(nG==0) and 1 or nG
-    return (nMultipy*playerHealth*nG)<targetHealth
+    return (nMultipy*playerHealth)<targetHealth
 end
 
 function IROEnemyGroupVVHP(nMultipy)
     nMultipy=nMultipy or 3
-    local nG=GetNumGroupMembers()
-    local playerHealth=UnitHealth("player")
+    local playerHealth=SumPartyHP()
     local EnemyGroupHP=SumHPMobinCombat()
-    nG=(nG==0) and 1 or nG
-    return (nMultipy*playerHealth*nG)<EnemyGroupHP
+    return (nMultipy*playerHealth)<EnemyGroupHP
 end
 
 IROVar.ItemNameToCheck2 = "item:"..ItemRangeCheck2[3]

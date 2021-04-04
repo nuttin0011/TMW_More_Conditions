@@ -1,4 +1,4 @@
--- Many Function Version 9.0.5/22
+-- Many Function Version 9.0.5/23
 -- this file save many function for paste to TMW Snippet LUA
 
 --function IROEnemyCountIn8yd(Rlevel) ; return count
@@ -29,6 +29,7 @@ IROVar.JustShowDebug = 0
 IROVar.ShowDebugDelay = 2 -- sec
 IROVar.iHaveInterruptSpell = false
 IROVar.SkillCheckDPSRange = nil
+IROVar.IsEquipShield = false
 function IROVar.Debug()
     IROVar.DebugMode=not IROVar.DebugMode
     print("IROVar.DebugMode : "..(IROVar.DebugMode and "On" or "Off"))
@@ -37,8 +38,13 @@ function IROVar:fspecOnEvent(event)
     if IROVar.DebugMode then print("Event : "..((event~=nil) and event or "nil")) end
     if event=="ZONE_CHANGED" then
         C_Timer.After(10,IROVar.UpdateVar)
-    else
+    elseif event=="PLAYER_TALENT_UPDATE" then
         C_Timer.After(1,IROVar.UpdateVar)
+    elseif event=="BAG_UPDATE" then
+        --do notthing yet
+    elseif event=="UNIT_INVENTORY_CHANGED" then
+        local ItemLink=GetInventoryItemLink("player", 17)--shield
+        IROVar.IsEquipShield=(ItemLink~=nil) and (select(7,GetItemInfo(ItemLink))=="Shields") or false
     end
 end
 if not IROSpecID then
@@ -48,6 +54,8 @@ if not IROSpecID then
     --IROVar.fspec:RegisterEvent("ACTIVE_TALENT_GROUP_CHANGED")
     IROVar.fspec:RegisterEvent("PLAYER_TALENT_UPDATE")
     IROVar.fspec:RegisterEvent("ZONE_CHANGED")
+    IROVar.fspec:RegisterEvent("BAG_UPDATE")
+    IROVar.fspec:RegisterEvent("UNIT_INVENTORY_CHANGED") 
     IROVar.fspec:SetScript("OnEvent", IROVar.fspecOnEvent)
 end
 function IROVar.UpdateVar()
@@ -79,6 +87,8 @@ function IROVar.UpdateVar()
         IROVar.iHaveInterruptSpell = false
         IROVar.SkillCheckDPSRange = nil
     end
+    local ItemLink=GetInventoryItemLink("player", 17)--shield
+    IROVar.IsEquipShield=(ItemLink~=nil) and (select(7,GetItemInfo(ItemLink))=="Shields") or false
 end
 
 C_Timer.After(5,IROVar.UpdateVar) --update 5 sec after login

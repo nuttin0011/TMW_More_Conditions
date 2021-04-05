@@ -1,4 +1,4 @@
--- ERO DPS Decoder 9.0.5/2
+-- ERO DPS Decoder 9.0.5/3
 -- can copy this to LUA Snippted
 
 --Setup UsedSkill System
@@ -9,7 +9,6 @@
 --@Numdot
 --/run IROUsedSkillControl.NumDotPress()
 
-local TMW = TMW
 local GCDSpell=TMW.GCDSpell
 local GetSpellCooldown=GetSpellCooldown
 local UnitCastingInfo=UnitCastingInfo

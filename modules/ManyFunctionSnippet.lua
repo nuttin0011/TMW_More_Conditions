@@ -1,4 +1,4 @@
--- Many Function Version 9.0.5/23
+-- Many Function Version 9.0.5/24
 -- this file save many function for paste to TMW Snippet LUA
 
 --function IROEnemyCountIn8yd(Rlevel) ; return count
@@ -49,15 +49,17 @@ function IROVar:fspecOnEvent(event)
 end
 if not IROSpecID then
     IROSpecID = GetSpecializationInfo(GetSpecialization())
-    IROVar.fspec = CreateFrame("Frame")
-    --IROVar.fspec:RegisterEvent("PLAYER_SPECIALIZATION_CHANGED")
-    --IROVar.fspec:RegisterEvent("ACTIVE_TALENT_GROUP_CHANGED")
-    IROVar.fspec:RegisterEvent("PLAYER_TALENT_UPDATE")
-    IROVar.fspec:RegisterEvent("ZONE_CHANGED")
-    IROVar.fspec:RegisterEvent("BAG_UPDATE")
-    IROVar.fspec:RegisterEvent("UNIT_INVENTORY_CHANGED") 
-    IROVar.fspec:SetScript("OnEvent", IROVar.fspecOnEvent)
 end
+
+IROVar.fspec = CreateFrame("Frame")
+--IROVar.fspec:RegisterEvent("PLAYER_SPECIALIZATION_CHANGED")
+--IROVar.fspec:RegisterEvent("ACTIVE_TALENT_GROUP_CHANGED")
+IROVar.fspec:RegisterEvent("PLAYER_TALENT_UPDATE")
+IROVar.fspec:RegisterEvent("ZONE_CHANGED")
+IROVar.fspec:RegisterEvent("BAG_UPDATE")
+IROVar.fspec:RegisterEvent("UNIT_INVENTORY_CHANGED")
+IROVar.fspec:SetScript("OnEvent", IROVar.fspecOnEvent)
+
 function IROVar.UpdateVar()
     local newSpec = GetSpecializationInfo(GetSpecialization())
     _,IROVar.Talentname,_,IROVar.Talentselected=GetTalentInfo(3,1,1)

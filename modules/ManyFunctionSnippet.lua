@@ -9,7 +9,7 @@
 --function SumHPMobin8yd() ; return SumHP
 --function IROTargetVVHP(nMultipy) ; return (nMultipy*playerHealth*nG)<targetHealth
 --function IROEnemyGroupVVHP(nMultipy) ; return (nMultipy*playerHealth*nG)<EnemyGroupHP
---function IsUsableExecute(nUnit) ; return true/false
+
 --function GCDCDTime() ; return GCD length time, = 1.5*(100/(100+UnitSpellHaste("player")))
 --function isMyInterruptSpellReady() ; true/false
 --function TMW.CNDT.Env.CooldownDuration([spellName/Id, e.g. "execute"], [include GCD, true/false]); return CD remain (sec)
@@ -19,16 +19,12 @@
 --function SumPartyHP() return party HP
 --var IROSpecID = GetSpecializationInfo(GetSpecialization()),e.g. 62="Mage arcane",63="Mage fire",64="Mage frost"
 --IROVar.CheckDPSRange = function(nUnit) ; return Can Dps Unit?
---function IROVar.LockPet(PetType) return true/false
-----PetType 1=Felg 2=Succ 4=Felh 8=Voidw 16=Imp can use 3 for check felg+succ
 
-IROVar={}
+if not IROVar then IROVar={} end
 _,IROVar.Talentname,_,IROVar.Talentselected=GetTalentInfo(3,1,1)
 IROVar.isMassacre = (IROVar.Talentname=="Massacre") and IROVar.Talentselected
 IROVar.isCondemn = GetSpellInfo("execute")=="Condemn"
 IROVar.DebugMode = false
-IROVar.JustShowDebug = 0
-IROVar.ShowDebugDelay = 2 -- sec
 IROVar.iHaveInterruptSpell = false
 IROVar.SkillCheckDPSRange = nil
 IROVar.IsEquipShield = false
@@ -61,27 +57,6 @@ IROVar.fspec:RegisterEvent("ZONE_CHANGED")
 IROVar.fspec:RegisterEvent("BAG_UPDATE")
 IROVar.fspec:RegisterEvent("UNIT_INVENTORY_CHANGED")
 IROVar.fspec:SetScript("OnEvent", IROVar.fspecOnEvent)
-
-function IROVar.LockPet(PetType)
-    if IROVar.LockPetActive then return bit.band(IROVar.LockPetActive,PetType)~=0 end
-    IROVar.LockPetEvent = CreateFrame("Frame")
-    IROVar.LockPetOnEvent=function()
-        IROVar.LockPetActive=0
-        local spellName = GetSpellInfo("Command Demon")
-        if UnitExists("pet") and (not UnitIsDead("pet")) then
-            if spellName == "Axe Toss" then IROVar.LockPetActive = 1
-            elseif spellName == "Seduction" then IROVar.LockPetActive = 2
-            elseif spellName == "Spell Lock" then IROVar.LockPetActive = 4
-            elseif spellName == "Shadow Bulwark" then IROVar.LockPetActive = 8
-            elseif spellName == "Singe Magic" then IROVar.LockPetActive = 16
-            end
-        end
-    end
-    IROVar.LockPetEvent:RegisterEvent("UNIT_PET")
-    IROVar.LockPetEvent:SetScript("OnEvent", IROVar.LockPetOnEvent)
-    IROVar.LockPetOnEvent()
-    return IROVar.LockPet(PetType)
-end
 
 function IROVar.UpdateVar()
     local newSpec = GetSpecializationInfo(GetSpecialization())
@@ -160,7 +135,7 @@ function IROEnemyCountIn8yd(Rlevel)
     Rlevel = Rlevel or 0
     --Rlevel 0=8,1=15,2=20,3=30,4=40,5=10 yard
     local ItemNameToCheck = "item:"..ItemRangeCheck[Rlevel+1]
-    local nn,count
+    local nn
     local count=0
     for i=1,30 do
         nn='nameplate'..i
@@ -376,44 +351,7 @@ function IROEnemyGroupVVHP(nMultipy)
     return (nMultipy*playerHealth)<EnemyGroupHP
 end
 
-IROVar.ItemNameToCheck2 = "item:"..ItemRangeCheck2[3]
 
-function IsUsableExecute(nUnit)
-    if IROVar.DebugMode then
-        local _,Talentname,_,Talentselected=GetTalentInfo(3,1,1)
-        local isMassacre = (Talentname=="Massacre") and Talentselected
-        local isCondemn = GetSpellInfo("execute")=="Condemn"
-        local showeddebug = false
-        if (isMassacre~=IROVar.isMassacre) and (IROVar.JustShowDebug<GetTime()) then
-            showeddebug=true
-            print("isMassacre = "..(isMassacre and "true" or "false"))
-            print("IROVar.isMassacre = "..(IROVar.isMassacre and "true" or "false"))
-        end
-        if (isCondemn~=IROVar.isCondemn) and (IROVar.JustShowDebug<GetTime()) then
-            showeddebug=true
-            print("isCondemn = "..(isCondemn and "true" or "false"))
-            print("IROVar.isCondemn = "..(IROVar.isCondemn and "true" or "false"))
-        end
-        if showeddebug then
-            IROVar.JustShowDebug=GetTime()+IROVar.ShowDebugDelay
-        end
-    end
-    nUnit=nUnit or "target"
-    local OldVal=IROVar.ERO_Old_Val.Check("IsUsableExecute",nUnit)
-    if OldVal then return OldVal end
-    local uH ,uHM, uHP, output
-    if UnitCanAttack("player", nUnit) and IsItemInRange(IROVar.ItemNameToCheck2, nUnit) then
-        uHM=UnitHealthMax(nUnit)
-        uH=UnitHealth(nUnit)
-        uHP=(uH/uHM)*100
-        output=(uHP>0) and ((uHP<20) or ((uHP<35) and IROVar.isMassacre) or ((uHP>80) and IROVar.isCondemn))
-        IROVar.ERO_Old_Val.Update("IsUsableExecute",nUnit,output)
-        return output
-    else
-        IROVar.ERO_Old_Val.Update("IsUsableExecute",nUnit,false)
-        return false
-    end
-end
 
 local IROClassGCDOneSec = {
     [259]=true,[260]=true,[261]=true, -- rogue

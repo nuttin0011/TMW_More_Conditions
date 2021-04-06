@@ -162,7 +162,6 @@ end
 function TMW_MC:PredictSS()
 	-- if (trust_segment_cast == Ture) Must Recalculate
 	-- if (trust_segment_cast == False) Must Use old_val
-	
 	local currentTime = _GetTime()
 
 	if old_timer_check == currentTime then

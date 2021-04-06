@@ -11,7 +11,6 @@ IROVar.War.isMass = false
 IROVar.War.isCondemn = false
 IROVar.War.isEquipShield = false
 
-
 function IROVar.War.CanExx(U)
     U=U or "target"
     if not IROVar.War.FOnEvent then IROVar.War.SetupEventCheck() end

@@ -58,7 +58,6 @@ function IROVar.UpdateVar()
         IROVar.InterruptSpell = nil
         IROVar.SkillCheckDPSRange = nil
     end
-
 end
 
 C_Timer.After(5,IROVar.UpdateVar) --update 5 sec after login

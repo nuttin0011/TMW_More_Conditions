@@ -21,11 +21,8 @@
 --IROVar.CheckDPSRange = function(nUnit) ; return Can Dps Unit?
 
 if not IROVar then IROVar={} end
---_,IROVar.Talentname,_,IROVar.Talentselected=GetTalentInfo(3,1,1)
---IROVar.isMassacre = (IROVar.Talentname=="Massacre") and IROVar.Talentselected
---IROVar.isCondemn = GetSpellInfo("execute")=="Condemn"
 IROVar.DebugMode = false
-IROVar.iHaveInterruptSpell = false
+IROVar.InterruptSpell = nil
 IROVar.SkillCheckDPSRange = nil
 IROVar.IsEquipShield = false
 function IROVar.Debug()
@@ -34,16 +31,7 @@ function IROVar.Debug()
 end
 function IROVar:fspecOnEvent(event)
     if IROVar.DebugMode then print("Event : "..((event~=nil) and event or "nil")) end
-    if event=="ZONE_CHANGED" then
-        C_Timer.After(10,IROVar.UpdateVar)
-    elseif event=="PLAYER_TALENT_UPDATE" then
-        C_Timer.After(1,IROVar.UpdateVar)
-    elseif event=="BAG_UPDATE" then
-        --do notthing yet
-    elseif event=="UNIT_INVENTORY_CHANGED" then
-        local ItemLink=GetInventoryItemLink("player", 17)--shield
-        IROVar.IsEquipShield=(ItemLink~=nil) and (select(7,GetItemInfo(ItemLink))=="Shields") or false
-    end
+    C_Timer.After(3,IROVar.UpdateVar)
 end
 
 if not IROSpecID then
@@ -51,45 +39,26 @@ if not IROSpecID then
 end
 
 IROVar.fspec = CreateFrame("Frame")
---IROVar.fspec:RegisterEvent("PLAYER_SPECIALIZATION_CHANGED")
---IROVar.fspec:RegisterEvent("ACTIVE_TALENT_GROUP_CHANGED")
-IROVar.fspec:RegisterEvent("PLAYER_TALENT_UPDATE")
-IROVar.fspec:RegisterEvent("ZONE_CHANGED")
-IROVar.fspec:RegisterEvent("BAG_UPDATE")
-IROVar.fspec:RegisterEvent("UNIT_INVENTORY_CHANGED")
+IROVar.fspec:RegisterEvent("PLAYER_SPECIALIZATION_CHANGED")
 IROVar.fspec:SetScript("OnEvent", IROVar.fspecOnEvent)
 
 function IROVar.UpdateVar()
     local newSpec = GetSpecializationInfo(GetSpecialization())
-    _,IROVar.Talentname,_,IROVar.Talentselected=GetTalentInfo(3,1,1)
-    local newisMassacre=(IROVar.Talentname=="Massacre") and IROVar.Talentselected
-    local newisCondemn=GetSpellInfo("execute")=="Condemn"
     if IROVar.DebugMode then
         if (IROSpecID~=newSpec) and (newSpec~=nil)  then
             print("old Spec :"..((IROSpecID~=nil) and IROSpecID or "nil"))
             print("new Spec :"..((newSpec~=nil) and newSpec or "nil"))
         end
-        if IROVar.isMassacre~=newisMassacre then
-            print("old isMassacre :"..(IROVar.isMassacre and "true" or "false"))
-            print("new isMassacre :"..(newisMassacre and "true" or "false"))
-        end
-        if IROVar.isCondemn~=newisCondemn then
-            print("old isCondemn :"..(IROVar.isCondemn and "true" or "false"))
-            print("new isCondemn :"..(newisCondemn and "true" or "false"))
-        end
     end
     IROSpecID = newSpec or IROSpecID
-    IROVar.isMassacre = newisMassacre
-    IROVar.isCondemn = newisCondemn
     if IROInterruptTier[IROSpecID] then
-        IROVar.iHaveInterruptSpell = GetSpellInfo(IROInterruptTier[IROSpecID][2])~=nil
+        IROVar.InterruptSpell = GetSpellInfo(IROInterruptTier[IROSpecID][2])
         IROVar.SkillCheckDPSRange = IROInterruptTier[IROSpecID][3]
     else
-        IROVar.iHaveInterruptSpell = false
+        IROVar.InterruptSpell = nil
         IROVar.SkillCheckDPSRange = nil
     end
-    local ItemLink=GetInventoryItemLink("player", 17)--shield
-    IROVar.IsEquipShield=(ItemLink~=nil) and (select(7,GetItemInfo(ItemLink))=="Shields") or false
+
 end
 
 C_Timer.After(5,IROVar.UpdateVar) --update 5 sec after login
@@ -129,7 +98,6 @@ IROVar.ERO_Old_Val = {Timer=0,Old_Val={},
         IROVar.ERO_Old_Val.Old_Val[functionName][input_val_string]=result_val
     end
 }
-
 
 function IROEnemyCountIn8yd(Rlevel)
     --return enemy count in Range Default 8 yard Max 8
@@ -239,13 +207,18 @@ IROInterruptTier[581] = {'A','Disrupt','Chaos Strike'} -- Vengeance
 IROInterruptTier[250] = {'A','Mind Freeze','Death Strike'} -- Blood
 IROInterruptTier[251] = {'B','Mind Freeze','Death Strike'} -- frost
 IROInterruptTier[252] = {'B','Mind Freeze','Death Strike'} -- unholy
+IROInterruptTier.CDEnd=0
 
-function isMyInterruptSpellReady()
-    if IROInterruptTier and IROSpecID then
-        return TMW.CNDT.Env.CooldownDuration(IROInterruptTier[IROSpecID][2])==0
-    else
+function IsMyInterruptSpellReady()
+    if not IROVar.InterruptSpell then return false end
+    local currentTime=GetTime()
+    if IROInterruptTier.CDEnd>currentTime then return false end
+    local CD=TMW.CNDT.Env.CooldownDuration(IROVar.InterruptSpell)
+    if CD>0 then
+        IROInterruptTier.CDEnd=CD+currentTime
         return false
     end
+    return true
 end
 
 function PercentCastbar2(PercentCast, MustInterruptAble,unit, MinTMS,MaxTMS)

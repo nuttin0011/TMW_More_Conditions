@@ -349,4 +349,65 @@ function GCDCDTime()
     return GCDCD
 end
 
+--Temp Val of allDeBuffByMe
+IROVar.temp_allDeBuffByMe ={[1]=0,[2]={}}
+--[1]=timer , [2]= [GUID] = result
+function IROVar.allDeBuffByMe(unit)
+    --*********return table of [Debuff name] = Debuff time remaining
+	local allDeBuff={}
+	local unitGUID = UnitGUID(unit)
+	if not unitGUID then return allDeBuff end
+	local currentTimer = GetTime()
+	if (IROVar.temp_allDeBuffByMe[1]==currentTimer)and(IROVar.temp_allDeBuffByMe[2][unitGUID]) then
+		return IROVar.temp_allDeBuffByMe[2][unitGUID]
+	end
+	if IROVar.temp_allDeBuffByMe[1]<currentTimer then
+		IROVar.temp_allDeBuffByMe[1]=currentTimer
+		IROVar.temp_allDeBuffByMe[2]={}
+	end
+    local DebuffName,expTime
+    for i=1,40 do
+        DebuffName,_,_,_,_,expTime = UnitAura(unit, i, "PLAYER|HARMFUL")
+        if DebuffName then 
+            allDeBuff[DebuffName]=expTime-GetTime()
+        else break end
+    end
+	IROVar.temp_allDeBuffByMe[2][unitGUID]=allDeBuff
+    return allDeBuff
+end
 
+--Temp Val of allBuffByMe
+IROVar.temp_allBuffByMe ={[1]=0,[2]={}}
+--[1]=timer , [2]= [GUID] = result
+function IROVar.allBuffByMe(unit,needLowerCaseName)
+    --*********return table of [Buff name] = Buff time remaining
+	local allBuff={}
+	local unitGUID = UnitGUID(unit)
+	if not unitGUID then return allBuff end
+	local currentTimer = GetTime()
+	if (IROVar.temp_allBuffByMe[1]==currentTimer)and(IROVar.temp_allBuffByMe[2][unitGUID]) then
+		return IROVar.temp_allBuffByMe[2][unitGUID]
+	end
+	if IROVar.temp_allBuffByMe[1]<currentTimer then
+		IROVar.temp_allBuffByMe[1]=currentTimer
+		IROVar.temp_allBuffByMe[2]={}
+	end
+    local buffName,expTime
+	if needLowerCaseName then
+		for i=1,40 do
+			buffName,_,_,_,_,expTime = UnitAura(unit, i, "PLAYER|HELPFUL")
+			if buffName then
+				allBuff[string.lower(buffName)]=expTime-GetTime()
+			else break end
+		end
+	else
+		for i=1,400 do
+			buffName,_,_,_,_,expTime = UnitAura(unit, i, "PLAYER|HELPFUL")
+			if buffName then 
+				allBuff[buffName]=expTime-GetTime()
+			else break end
+		end
+	end
+	IROVar.temp_allBuffByMe[2][unitGUID]=allBuff
+    return allBuff
+end

@@ -11,7 +11,7 @@
 --function IROEnemyGroupVVHP(nMultipy) ; return (nMultipy*playerHealth*nG)<EnemyGroupHP
 
 --function GCDCDTime() ; return GCD length time, = 1.5*(100/(100+UnitSpellHaste("player")))
---function isMyInterruptSpellReady() ; true/false
+--function IsMyInterruptSpellReady() ; true/false
 --function TMW.CNDT.Env.CooldownDuration([spellName/Id, e.g. "execute"], [include GCD, true/false]); return CD remain (sec)
 --function IROVar.ERO_Old_Val.Check(functionName,input_val_string) ; return Old Val at Same GetTime() , or nil
 --function IROVar.ERO_Old_Val.Update(functionName,input_val_string,result_val) ; update Old_Val at same GetTime()

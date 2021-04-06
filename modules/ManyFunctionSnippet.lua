@@ -21,9 +21,9 @@
 --IROVar.CheckDPSRange = function(nUnit) ; return Can Dps Unit?
 
 if not IROVar then IROVar={} end
-_,IROVar.Talentname,_,IROVar.Talentselected=GetTalentInfo(3,1,1)
-IROVar.isMassacre = (IROVar.Talentname=="Massacre") and IROVar.Talentselected
-IROVar.isCondemn = GetSpellInfo("execute")=="Condemn"
+--_,IROVar.Talentname,_,IROVar.Talentselected=GetTalentInfo(3,1,1)
+--IROVar.isMassacre = (IROVar.Talentname=="Massacre") and IROVar.Talentselected
+--IROVar.isCondemn = GetSpellInfo("execute")=="Condemn"
 IROVar.DebugMode = false
 IROVar.iHaveInterruptSpell = false
 IROVar.SkillCheckDPSRange = nil
@@ -45,6 +45,7 @@ function IROVar:fspecOnEvent(event)
         IROVar.IsEquipShield=(ItemLink~=nil) and (select(7,GetItemInfo(ItemLink))=="Shields") or false
     end
 end
+
 if not IROSpecID then
     IROSpecID = GetSpecializationInfo(GetSpecialization())
 end

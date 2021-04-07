@@ -479,6 +479,7 @@ IROVar.BewareInterrupt = function(nUnit)
         return true
     end
     local MobName=UnitName(nUnit)
+    if not MobName then return true end
     if not IROVar.MobListForInterrupt[IROVar.InstanceName][MobName] then
         return true
     end
@@ -493,5 +494,6 @@ IROVar.IsUnitCanStun = function(nUnit)
         return true
     end
     local MobName=UnitName(nUnit)
+    if not MobName then return true end
     return not(IROVar.MobListForInterrupt[IROVar.InstanceName][MobName]==true)
 end

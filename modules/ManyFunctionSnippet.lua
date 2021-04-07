@@ -1,4 +1,4 @@
--- Many Function Version 9.0.5/31
+-- Many Function Version 9.0.5/32
 -- this file save many function for paste to TMW Snippet LUA
 
 --function IROEnemyCountIn8yd(Rlevel) ; return count
@@ -26,8 +26,6 @@
 --function IROVar.BewareInterrupt(Unit) ; return true/false
 --function IROVar.IsUnitCanStun(Unit) ; return true/false
 ---- check interrupt only important spell of this mob ... only Done Mist....
-
-
 
 
 if not IROVar then IROVar={} end
@@ -450,6 +448,36 @@ IROVar.MobListForInterrupt = {
             ["Stimulate Regeneration"] = true,
         }
     },
+    ["The Necrotic Wake"] ={
+        ["Amarth"] ={
+            ["Necrotic Bolt"] = true,
+        },
+        ["Skeletal Marauder"] ={
+            ["Rasping Scream"] = true,
+        },
+        ["Stitching Assistant"]={
+            ["Drain Fluids"] = true,
+        },
+        ["Corpse Harvester"] = {
+            ["Drain Fluids"] = true,
+        },
+        ["Corpse Collector"] = {
+            ["Drain Fluids"] = true,
+        },
+        ["Nar'zudah"] = {
+            ["Necrotic Bolt"] = true,
+        },
+        ["Zolramus Gatekeeper"] = {
+            ["Necrotic Bolt"] = true,
+        },
+        ["Zolramus Necromancer"] = {
+            ["Necrotic Bolt"] = true,
+        },
+        ["Zolramus Sorcerer"] = {
+            ["Necrotic Bolt"] = true,
+        },
+
+    }
 }
 
 IROVar.DontUseCD ={
@@ -470,7 +498,23 @@ IROVar.cannotStun ={
         ["Tred'ova"]= true,
         ["Mistveil Gorgegullet"]= true,
         ["Mistveil Matriarch"]= true,
-    }
+    },
+    ["The Necrotic Wake"] ={
+        ["Zolramus Gatekeeper"]= true,
+        ["Blightbone"]= true,
+        ["Skeletal Marauder"]= true,
+        ["Nar'zudah"]= true,
+        ["Skeletal Monstrosity"]= true,
+        ["Amarth"]= true,
+        ["Kyrian Stitchwerk"]= true,
+        ["Separation Assistant"]= true,
+        ["Stitching Assistant"]= true,
+        ["Goregrind"]= true,
+        ["Rotspew"]= true,
+        ["Stitchflesh's Creation"]= true,
+        ["Surgeon Stitchflesh"]= true,
+        ["Nalthor the Rimebinder"]= true,
+    },
 }
 
 IROVar.BewareInterrupt = function(nUnit)

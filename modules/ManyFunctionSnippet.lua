@@ -75,7 +75,8 @@ function IROVar.Debug()
 end
 function IROVar:fspecOnEvent(event)
     if IROVar.DebugMode then print("Event : "..((event~=nil) and event or "nil")) end
-    C_Timer.After(3,IROVar.UpdateVar)
+    IROVar.UpdateVar()
+    C_Timer.After(5,IROVar.UpdateVar)
 end
 
 if not IROSpecID then

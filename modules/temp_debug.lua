@@ -7,11 +7,12 @@ local nname
 
 local iS
 if IROInterruptTier then iS=IROInterruptTier[IROSpecID][2]else iS="" end
+Nm[8]=(Nm[8]or'')..'\n/targetenemy [nomod:ctrl,mod:alt]\n/cleartarget [nomod]'
 Nm[9]='/focus [@mouseover,exists,harm,nodead,mod:ctrlalt]'..
 '\n/cast [mod:ctrl,nomod:alt,@focus]'..iS..';[mod:alt,nomod:ctrl]'..iS..
 '\n/use [nomod]13'..
 '\n/use [nomod]14'
-IROISN=iS
+
 if InCombatLockdown() then
     print("cannot Bind Key while Incombat")
 end
@@ -24,4 +25,3 @@ if not(InCombatLockdown()) then
         CreateMacro(nname,460699,Nm[i] ,true)
     end
 end
-

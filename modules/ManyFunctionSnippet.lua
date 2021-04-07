@@ -81,7 +81,6 @@ function IROVar.Debug()
     print("IROVar.DebugMode : "..(IROVar.DebugMode and "On" or "Off"))
 end
 function IROVar:fspecOnEvent(event)
-    print(event)
     if IROVar.DebugMode then print("Event : "..((event~=nil) and event or "nil")) end
     IROVar.UpdateVar()
     C_Timer.After(5,IROVar.UpdateVar)

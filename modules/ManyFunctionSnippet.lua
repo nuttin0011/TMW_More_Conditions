@@ -489,10 +489,10 @@ IROVar.BewareInterrupt = function(nUnit)
 end
 
 IROVar.IsUnitCanStun = function(nUnit)
-    if not IROVar.MobListForInterrupt[IROVar.InstanceName] then
+    if not IROVar.cannotStun[IROVar.InstanceName] then
         return true
     end
     local MobName=UnitName(nUnit)
     if not MobName then return true end
-    return not(IROVar.MobListForInterrupt[IROVar.InstanceName][MobName]==true)
+    return not(IROVar.cannotStun[IROVar.InstanceName][MobName]==true)
 end

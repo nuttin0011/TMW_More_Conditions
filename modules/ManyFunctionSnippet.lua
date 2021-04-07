@@ -1,4 +1,4 @@
--- Many Function Version 9.0.5/30
+-- Many Function Version 9.0.5/31
 -- this file save many function for paste to TMW Snippet LUA
 
 --function IROEnemyCountIn8yd(Rlevel) ; return count
@@ -18,13 +18,57 @@
 --function IROVar.Debug() show some Debug val
 --function SumPartyHP() return party HP
 --var IROSpecID = GetSpecializationInfo(GetSpecialization()),e.g. 62="Mage arcane",63="Mage fire",64="Mage frost"
---IROVar.CheckDPSRange = function(nUnit) ; return Can Dps Unit?
+--function IROVar.CheckDPSRange(nUnit) ; return Can Dps Unit?
+--function IROVar.allDeBuffByMe(unit) ; return table of debuff
+--function IROVar.allBuffByMe(unit,needLowerCaseName)
+----*********return table of [Buff name] = Buff time remaining
 
 if not IROVar then IROVar={} end
 IROVar.DebugMode = false
 IROVar.InterruptSpell = nil
 IROVar.SkillCheckDPSRange = nil
 IROVar.IsEquipShield = false
+
+IROInterruptTier = {}
+--IROInterruptTier[specID]={interruptTier,interruptSpellName,DPSCheckSkill}
+IROInterruptTier[71] = {'B','Pummel','Pummel'} -- Arm
+IROInterruptTier[72] = {'B','Pummel','Pummel'} -- fury
+IROInterruptTier[73] = {'A','Pummel','Pummel'} -- Protection
+IROInterruptTier[265] = {'D','Command Demon','Corruption'} -- Aff [Spell Lock]
+IROInterruptTier[266] = {'D','Command Demon','Corruption'} -- Demo
+IROInterruptTier[267] = {'D','Command Demon','Corruption'} -- Dest
+IROInterruptTier[262] = {'C','Wind Shear','Lightning Bolt'} -- Element
+IROInterruptTier[263] = {'B','Wind Shear','primal strike'} -- Enha
+IROInterruptTier[264] = {'D','Wind Shear','Lightning Bolt'} -- Resto
+IROInterruptTier[259] = {'B','Kick','Kick'} -- Ass
+IROInterruptTier[260] = {'B','Kick','Kick'} -- Out
+IROInterruptTier[261] = {'B','Kick','Kick'} -- Sub
+IROInterruptTier[256] = {'N','','Smite'} -- Disc
+IROInterruptTier[257] = {'N','','Smite'} -- Holy
+IROInterruptTier[258] = {'D','Silence','Smite'} -- Shadow
+IROInterruptTier[65] = {'N','','Crusader Strike'} -- Holy
+IROInterruptTier[66] = {'A','Rebuke','Crusader Strike'} -- Port
+IROInterruptTier[70] = {'B','Rebuke','Crusader Strike'} -- Ret
+IROInterruptTier[268] = {'A','Spear Hand Strike','Tiger Palm'} -- Brewmaster
+IROInterruptTier[270] = {'N','','Tiger Palm'} -- Mistweaver
+IROInterruptTier[269] = {'B','Spear Hand Strike','Tiger Palm'} -- Windwalker
+IROInterruptTier[62] = {'C','Counterspell','Fire Blast'} -- arcane
+IROInterruptTier[63] = {'C','Counterspell','Fire Blast'} -- fire
+IROInterruptTier[64] = {'C','Counterspell','Fire Blast'} -- frost
+IROInterruptTier[253] = {'C','Counter Shot','Arcane Shot'} -- Beast Mastery
+IROInterruptTier[254] = {'C','Counter Shot','Arcane Shot'} -- Marksmanship
+IROInterruptTier[255] = {'C','Muzzle','Raptor Strike'} -- Survival
+IROInterruptTier[102] = {'C','Solar Beam','Moonfire'} -- Balance
+IROInterruptTier[103] = {'B','Skull Bash','Rake'} -- Feral
+IROInterruptTier[104] = {'A','Skull Bash','Mangle'} -- Guardian
+IROInterruptTier[105] = {'N','','Moonfire'} -- Restoration
+IROInterruptTier[577] = {'B','Disrupt','Chaos Strike'} -- Havoc
+IROInterruptTier[581] = {'A','Disrupt','Chaos Strike'} -- Vengeance
+IROInterruptTier[250] = {'A','Mind Freeze','Death Strike'} -- Blood
+IROInterruptTier[251] = {'B','Mind Freeze','Death Strike'} -- frost
+IROInterruptTier[252] = {'B','Mind Freeze','Death Strike'} -- unholy
+IROInterruptTier.CDEnd=0
+
 function IROVar.Debug()
     IROVar.DebugMode=not IROVar.DebugMode
     print("IROVar.DebugMode : "..(IROVar.DebugMode and "On" or "Off"))
@@ -60,6 +104,7 @@ function IROVar.UpdateVar()
     end
 end
 
+IROVar.UpdateVar() --update Now after login
 C_Timer.After(5,IROVar.UpdateVar) --update 5 sec after login
 
 local ItemRangeCheck = {
@@ -167,46 +212,6 @@ function IROEnemyCountInRange(nRange)
     IROVar.ERO_Old_Val.Update("IROEnemyCountInRange",nRange,count)
     return count
 end
-
-IROInterruptTier = {}
---IROInterruptTier[specID]={interruptTier,interruptSpellName,DPSCheckSkill}
-IROInterruptTier[71] = {'B','Pummel','Pummel'} -- Arm
-IROInterruptTier[72] = {'B','Pummel','Pummel'} -- fury
-IROInterruptTier[73] = {'A','Pummel','Pummel'} -- Protection
-IROInterruptTier[265] = {'D','Command Demon','Corruption'} -- Aff [Spell Lock]
-IROInterruptTier[266] = {'D','Command Demon','Corruption'} -- Demo
-IROInterruptTier[267] = {'D','Command Demon','Corruption'} -- Dest
-IROInterruptTier[262] = {'C','Wind Shear','Lightning Bolt'} -- Element
-IROInterruptTier[263] = {'B','Wind Shear','primal strike'} -- Enha
-IROInterruptTier[264] = {'D','Wind Shear','Lightning Bolt'} -- Resto
-IROInterruptTier[259] = {'B','Kick','Kick'} -- Ass
-IROInterruptTier[260] = {'B','Kick','Kick'} -- Out
-IROInterruptTier[261] = {'B','Kick','Kick'} -- Sub
-IROInterruptTier[256] = {'N','','Smite'} -- Disc
-IROInterruptTier[257] = {'N','','Smite'} -- Holy
-IROInterruptTier[258] = {'D','Silence','Smite'} -- Shadow
-IROInterruptTier[65] = {'N','','Crusader Strike'} -- Holy
-IROInterruptTier[66] = {'A','Rebuke','Crusader Strike'} -- Port
-IROInterruptTier[70] = {'B','Rebuke','Crusader Strike'} -- Ret
-IROInterruptTier[268] = {'A','Spear Hand Strike','Tiger Palm'} -- Brewmaster
-IROInterruptTier[270] = {'N','','Tiger Palm'} -- Mistweaver
-IROInterruptTier[269] = {'B','Spear Hand Strike','Tiger Palm'} -- Windwalker
-IROInterruptTier[62] = {'C','Counterspell','Fire Blast'} -- arcane
-IROInterruptTier[63] = {'C','Counterspell','Fire Blast'} -- fire
-IROInterruptTier[64] = {'C','Counterspell','Fire Blast'} -- frost
-IROInterruptTier[253] = {'C','Counter Shot','Arcane Shot'} -- Beast Mastery
-IROInterruptTier[254] = {'C','Counter Shot','Arcane Shot'} -- Marksmanship
-IROInterruptTier[255] = {'C','Muzzle','Raptor Strike'} -- Survival
-IROInterruptTier[102] = {'C','Solar Beam','Moonfire'} -- Balance
-IROInterruptTier[103] = {'B','Skull Bash','Rake'} -- Feral
-IROInterruptTier[104] = {'A','Skull Bash','Mangle'} -- Guardian
-IROInterruptTier[105] = {'N','','Moonfire'} -- Restoration
-IROInterruptTier[577] = {'B','Disrupt','Chaos Strike'} -- Havoc
-IROInterruptTier[581] = {'A','Disrupt','Chaos Strike'} -- Vengeance
-IROInterruptTier[250] = {'A','Mind Freeze','Death Strike'} -- Blood
-IROInterruptTier[251] = {'B','Mind Freeze','Death Strike'} -- frost
-IROInterruptTier[252] = {'B','Mind Freeze','Death Strike'} -- unholy
-IROInterruptTier.CDEnd=0
 
 function IsMyInterruptSpellReady()
     if not IROVar.InterruptSpell then return false end
@@ -366,9 +371,9 @@ function IROVar.allDeBuffByMe(unit)
 		IROVar.temp_allDeBuffByMe[2]={}
 	end
     local DebuffName,expTime
-    for i=1,40 do
+    for i=1,400 do
         DebuffName,_,_,_,_,expTime = UnitAura(unit, i, "PLAYER|HARMFUL")
-        if DebuffName then 
+        if DebuffName then
             allDeBuff[DebuffName]=expTime-GetTime()
         else break end
     end
@@ -394,7 +399,7 @@ function IROVar.allBuffByMe(unit,needLowerCaseName)
 	end
     local buffName,expTime
 	if needLowerCaseName then
-		for i=1,40 do
+		for i=1,400 do
 			buffName,_,_,_,_,expTime = UnitAura(unit, i, "PLAYER|HELPFUL")
 			if buffName then
 				allBuff[string.lower(buffName)]=expTime-GetTime()
@@ -403,7 +408,7 @@ function IROVar.allBuffByMe(unit,needLowerCaseName)
 	else
 		for i=1,400 do
 			buffName,_,_,_,_,expTime = UnitAura(unit, i, "PLAYER|HELPFUL")
-			if buffName then 
+			if buffName then
 				allBuff[buffName]=expTime-GetTime()
 			else break end
 		end

@@ -21,14 +21,21 @@
 --function IROVar.CheckDPSRange(nUnit) ; return Can Dps Unit?
 --function IROVar.allDeBuffByMe(unit) ; return table of debuff
 --function IROVar.allBuffByMe(unit,needLowerCaseName)
+--function Env.AuraDur(unit, name, filter) ; return aura Duration
 ----*********return table of [Buff name] = Buff time remaining
+--function IROVar.BewareInterrupt(Unit) ; return true/false
+--function IROVar.IsUnitCanStun(Unit) ; return true/false
+---- check interrupt only important spell of this mob ... only Done Mist....
+
+
+
 
 if not IROVar then IROVar={} end
 IROVar.DebugMode = false
 IROVar.InterruptSpell = nil
 IROVar.SkillCheckDPSRange = nil
-IROVar.IsEquipShield = false
-
+IROVar.InstanceName = GetInstanceInfo()
+IROSpecID = GetSpecializationInfo(GetSpecialization())
 IROInterruptTier = {}
 --IROInterruptTier[specID]={interruptTier,interruptSpellName,DPSCheckSkill}
 IROInterruptTier[71] = {'B','Pummel','Pummel'} -- Arm
@@ -74,20 +81,19 @@ function IROVar.Debug()
     print("IROVar.DebugMode : "..(IROVar.DebugMode and "On" or "Off"))
 end
 function IROVar:fspecOnEvent(event)
+    print(event)
     if IROVar.DebugMode then print("Event : "..((event~=nil) and event or "nil")) end
     IROVar.UpdateVar()
     C_Timer.After(5,IROVar.UpdateVar)
 end
 
-if not IROSpecID then
-    IROSpecID = GetSpecializationInfo(GetSpecialization())
-end
-
 IROVar.fspec = CreateFrame("Frame")
 IROVar.fspec:RegisterEvent("PLAYER_SPECIALIZATION_CHANGED")
+IROVar.fspec:RegisterEvent("ZONE_CHANGED_NEW_AREA")
 IROVar.fspec:SetScript("OnEvent", IROVar.fspecOnEvent)
 
 function IROVar.UpdateVar()
+    IROVar.InstanceName = GetInstanceInfo()
     local newSpec = GetSpecializationInfo(GetSpecialization())
     if IROVar.DebugMode then
         if (IROSpecID~=newSpec) and (newSpec~=nil)  then
@@ -416,4 +422,76 @@ function IROVar.allBuffByMe(unit,needLowerCaseName)
 	end
 	IROVar.temp_allBuffByMe[2][unitGUID]=allBuff
     return allBuff
+end
+
+IROVar.MobListForInterrupt = {
+    ["Mists of Tirna Scithe"] = {
+        ["Ingra Maloch"] = {
+            ["Spirit Bolt"] = true,
+        },
+        ["Mistcaller"] = {
+            ["Patty Cake"] = true,
+        },
+        ["Tred'ova"] = {
+            ["Parasitic Pacification"] = true,
+            ["Parasitic Incapacitation"] = true,
+            ["Parasitic Domination"] = true,
+        },
+        ["Drust Harvester"] = {
+            ["Harvest Essence"] = true,
+        },
+        ["Mistveil Tender"] = {
+            ["Nourish the Forest"] = true,
+        },
+        ["Mistveil Shaper"] = {
+            ["Bramblethorn Coat"] = true,
+        },
+        ["Spinemaw Staghorn"] = {
+            ["Stimulate Resistance"] = true,
+            ["Stimulate Regeneration"] = true,
+        }
+    },
+}
+
+IROVar.DontUseCD ={
+    ["Mists of Tirna Scithe"] ={
+        ["Droman Oulfarran"]= true,
+    }
+}
+
+IROVar.cannotStun ={
+    ["Mists of Tirna Scithe"] ={
+        ["Drust Boughbreaker"]= true,
+        ["Tirnenn Villager"]= true,
+        ["Ingra Maloch"]= true,
+        ["Droman Oulfarran"]= true,
+        ["Mistveil Nightblossom"]= true,
+        ["Mistcaller"]= true,
+        ["Spinemaw Staghorn"]= true,
+        ["Tred'ova"]= true,
+        ["Mistveil Gorgegullet"]= true,
+        ["Mistveil Matriarch"]= true,
+    }
+}
+
+IROVar.BewareInterrupt = function(nUnit)
+    if not IROVar.MobListForInterrupt[IROVar.InstanceName] then
+        return true
+    end
+    local MobName=UnitName(nUnit)
+    if not IROVar.MobListForInterrupt[IROVar.InstanceName][MobName] then
+        return true
+    end
+    local SName = UnitCastingInfo(nUnit)
+    if not SName then SName = UnitChannelInfo(nUnit) end
+    if not SName then return false end
+    return IROVar.MobListForInterrupt[IROVar.InstanceName][MobName][SName]==true
+end
+
+IROVar.IsUnitCanStun = function(nUnit)
+    if not IROVar.MobListForInterrupt[IROVar.InstanceName] then
+        return true
+    end
+    local MobName=UnitName(nUnit)
+    return not(IROVar.MobListForInterrupt[IROVar.InstanceName][MobName]==true)
 end

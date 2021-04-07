@@ -36,7 +36,9 @@ end
 
 function IROVar.War.SetupEventCheck()
     IROVar.War.FOnEvent=function(_,event)
-        print("Event in Warrior On Event",event)
+        if IROVar.DebugMode then
+            print("Event in Warrior On Event",event)
+        end
         if event == "PLAYER_TALENT_UPDATE" then
             C_Timer.After(2,IROVar.War.CheckTalent)
         elseif event == "UNIT_INVENTORY_CHANGED" then

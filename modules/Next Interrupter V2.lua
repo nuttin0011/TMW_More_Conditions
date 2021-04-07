@@ -1,4 +1,4 @@
---Next Interrupter!!!! V 2.6
+--Next Interrupter!!!! V 2.7
 
 --WORK Only counter interruptCounterName=1
 
@@ -27,6 +27,7 @@ if (not NextInterrupter) or (not NextInterrupter.Setuped) then
     NextInterrupter.Name=nil
     NextInterrupter.PlayerName=nil
     NextInterrupter.isWarlock=nil
+    NextInterrupter.isWarrior=nil
     NextInterrupter.Enabled=false
     NextInterrupter.ITable={}
     NextInterrupter.AddonMessagePrefix = "IRODPSUN"
@@ -269,6 +270,7 @@ if (not NextInterrupter) or (not NextInterrupter.Setuped) then
         NextInterrupter.PlayerName=UnitName("player")..'-'..GetRealmName()
         NextInterrupter.Name=NextInterrupter.Tier..'-'..NextInterrupter.PlayerName
         NextInterrupter.isWarlock=(NextInterrupter.SpecID>=265)and(NextInterrupter.SpecID<=267)
+        NextInterrupter.isWarrior=(NextInterrupter.SpecID>=71)and(NextInterrupter.SpecID<=73)
     end
     NextInterrupter.IsMyTurn = function(nUnit)
         nUnit=nUnit or "target"
@@ -300,10 +302,14 @@ if (not NextInterrupter) or (not NextInterrupter.Setuped) then
         local nUnit = "target"
         local tGUID=(UnitGUID(nUnit) or "0")
         local canInterrupt= SReady and (IsSpellInRange(NextInterrupter.SpellName, nUnit)==1)
-        if  NextInterrupter.isWarlock then
+        if canInterrupt and NextInterrupter.isWarlock then
             local iSpell=GetSpellInfo(NextInterrupter.SpellName)
             if (iSpell~='Axe Toss')and(iSpell~='Spell Lock') then
             canInterrupt=false end
+        end
+        if canInterrupt and NextInterrupter.isWarrior then
+            local isBS = TMW.CNDT.Env.AuraDur("player", "bladestorm", "PLAYER HELPFUL")
+            if isBS>0.1 then canInterrupt=false end
         end
 
         local willSend = false
@@ -334,10 +340,14 @@ if (not NextInterrupter) or (not NextInterrupter.Setuped) then
             else
                 canInterrupt= (GetSpellCooldown(NextInterrupter.SpellName) == 0) and (IsSpellInRange(NextInterrupter.SpellName, nUnit)==1)
             end
-            if  NextInterrupter.isWarlock then
+            if canInterrupt and NextInterrupter.isWarlock then
                 local iSpell=GetSpellInfo(NextInterrupter.SpellName)
                 if (iSpell~='Axe Toss')and(iSpell~='Spell Lock') then
                 canInterrupt=false end
+            end
+            if canInterrupt and NextInterrupter.isWarrior then
+                local isBS = TMW.CNDT.Env.AuraDur("player", "bladestorm", "PLAYER HELPFUL")
+                if isBS>0.1 then canInterrupt=false end
             end
         end
         NextInterrupter.canInterrupt=canInterrupt

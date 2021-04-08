@@ -1,4 +1,4 @@
--- Many Function Version 9.0.5/33 beta
+-- Many Function Version 9.0.5/34
 -- this file save many function for paste to TMW Snippet LUA
 
 --function IROEnemyCountIn8yd(Rlevel) ; return count
@@ -460,15 +460,34 @@ IROVar.MobListForInterrupt = {
         ["Kryxis the Voracious"]={["Hungering Drain"] =true,},
         ["Wicked Oppressor"]={["Wrack Soul"] = true,},
         ["Chamber Sentinel"]={["Stoneskin"]=true,},
+    },
+    ["Halls of Atonement"]={
+        ["Depraved Houndmaster"]={["Loyal Beasts"]=true,},
+        ["Depraved Collector"]={["Collect Sins"]=true,},
+        ["Stoneborn Reaver"]={["Turn to Stone"]=true,},
+        ["High Adjudicator Aleez"]={["Volley of Power"]=true,},
+    },
+    ["Plaguefall"]={
+        ["Fungi Stormer"]={["Fungistorm"]=true},
+        ["Defender of Many Eyes"]={["Bulwark of Maldraxxus"]=true,},
+        ["Rotmarrow Slime"]={["Corrosive Gunk"]=true,},
+    },
+    ["Spires of Ascension"]={
+        ["Forsworn Mender"]={["Forsworn Doctrine"]=true,},
+        ["Forsworn Castigator"]={["Burden of Knowledge"]=true,},
+        ["Forsworn Goliath"]={["Rebellious Fist"]=true,},
+        ["Forsworn Champion"]={["Forsworn Doctrine"]=true,},
+        ["Forsworn Warden"]={["Greater Mending"]=true,},
+        ["Forsworn Justicar"]={["Forced Confession"]=true,},
+    },
+    ["Theater of Pain"]={
+        ["Blighted Sludge-Spewer"]={["Withering Discharge"]=true,},
+        ["Harugia the Bloodthirsty"]={["Battle Trance"]=true,},
+        ["Dokigg the Brutalizer"]={["Battle Trance"]=true,},
+        ["Ancient Captain"]={["Demoralizing Shout"]=true,},
+        ["Xav the Unfallen"]={["Deafening Crash"]=true,},
     }
 }
-
-IROVar.DontUseCD ={
-    ["Mists of Tirna Scithe"] ={
-        ["Droman Oulfarran"]= true,
-    }
-}
-
 IROVar.cannotStun ={
     ["Mists of Tirna Scithe"] ={
         ["Drust Boughbreaker"]= true,
@@ -525,6 +544,70 @@ IROVar.cannotStun ={
         ["Executor Tarvold"]=true,
         ["Grand Proctor Beryllia"]=true,
         ["General Kaal"]=true,
+    },
+    ["Halls of Atonement"]={
+        ["Loyal Stoneborn"]=true,
+        ["Shard of Halkias"]=true,
+        ["Halkias"]=true,
+        ["Stoneborn Reaver"]=true,
+        ["Stoneborn Slasher"]=true,
+        ["Echelon"]=true,
+        ["High Adjudicator Aleez"]=true,
+        ["Inquisitor Sigar"]=true,
+        ["Lord Chamberlain"]=true,
+    },
+    ["Plaguefall"]={
+        ["Plaguebound"]=true,
+        ["Plagueroc"]=true,
+        ["Decaying Flesh Giant"]=true,
+        ["Hatchling Nest"]=true,
+        ["Plaguebelcher"]=true,
+        ["Globgrog"]=true,
+        ["Unstable Canister"]=true,
+        ["Blighted Spinebreaker"]=true,
+        ["Virulax Blightweaver"]=true,
+        ["Doctor Ickus"]=true,
+        ["Domina Venomblade"]=true,
+        ["Ickor Bileflesh"]=true,
+        ["Margrave Stradama"]=true,
+    },
+    ["Spires of Ascension"]={
+        ["Forsworn Goliath"]=true,
+        ["Azules"]=true,
+        ["Kin-Tara"]=true,
+        ["Forsworn Squad-Leader"]=true,
+        ["Ventunax"]=true,
+        ["Forsworn Helion"]=true,
+        ["Oryphrion"]=true,
+        ["Klotos"]=true,
+        ["Lakesis"]=true,
+        ["Astronos"]=true,
+        ["Devos"]=true,
+    },
+    ["Theater of Pain"]={
+        ["Raging Bloodhorn"]=true,
+        ["Dessia the Decapitator"]=true,
+        ["Paceran the Virulent"]=true,
+        ["Sathel the Accursed"]=true,
+        ["Dokigg the Brutalizer"]=true,
+        ["Harugia the Bloodthirsty"]=true,
+        ["Advent Nevermore"]=true,
+        ["Xav the Unfallen"]=true,
+        ["Portal Guardian"]=true,
+        ["Soulforged Bonereaver"]=true,
+        ["Nefarious Darkspeaker"]=true,
+        ["Kul'tharok"]=true,
+        ["Rancid Gasbag"]=true,
+        ["Gorechop"]=true,
+        ["Mordretha, the Endless Empress"]=true,
+        ["Nekthara the Mangler"]=true,
+        ["Heavin the Breaker"]=true,
+        ["Rek the Hardened"]=true,
+    }
+}
+IROVar.DontUseCD ={
+    ["Mists of Tirna Scithe"] ={
+        ["Droman Oulfarran"]= true,
     }
 }
 

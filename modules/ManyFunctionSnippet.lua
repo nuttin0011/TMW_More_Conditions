@@ -1,4 +1,4 @@
--- Many Function Version 9.0.5/32
+-- Many Function Version 9.0.5/33 beta
 -- this file save many function for paste to TMW Snippet LUA
 
 --function IROEnemyCountIn8yd(Rlevel) ; return count
@@ -423,60 +423,43 @@ end
 
 IROVar.MobListForInterrupt = {
     ["Mists of Tirna Scithe"] = {
-        ["Ingra Maloch"] = {
-            ["Spirit Bolt"] = true,
-        },
-        ["Mistcaller"] = {
-            ["Patty Cake"] = true,
-        },
+        ["Ingra Maloch"] = {["Spirit Bolt"] = true,},
+        ["Mistcaller"] = {["Patty Cake"] = true,},
         ["Tred'ova"] = {
             ["Parasitic Pacification"] = true,
             ["Parasitic Incapacitation"] = true,
             ["Parasitic Domination"] = true,
         },
-        ["Drust Harvester"] = {
-            ["Harvest Essence"] = true,
-        },
-        ["Mistveil Tender"] = {
-            ["Nourish the Forest"] = true,
-        },
-        ["Mistveil Shaper"] = {
-            ["Bramblethorn Coat"] = true,
-        },
+        ["Drust Harvester"] = {["Harvest Essence"] = true,},
+        ["Mistveil Tender"] = {["Nourish the Forest"] = true,},
+        ["Mistveil Shaper"] = {["Bramblethorn Coat"] = true,},
         ["Spinemaw Staghorn"] = {
             ["Stimulate Resistance"] = true,
             ["Stimulate Regeneration"] = true,
         }
     },
     ["The Necrotic Wake"] ={
-        ["Amarth"] ={
-            ["Necrotic Bolt"] = true,
-        },
-        ["Skeletal Marauder"] ={
-            ["Rasping Scream"] = true,
-        },
-        ["Stitching Assistant"]={
-            ["Drain Fluids"] = true,
-        },
-        ["Corpse Harvester"] = {
-            ["Drain Fluids"] = true,
-        },
-        ["Corpse Collector"] = {
-            ["Drain Fluids"] = true,
-        },
-        ["Nar'zudah"] = {
-            ["Necrotic Bolt"] = true,
-        },
-        ["Zolramus Gatekeeper"] = {
-            ["Necrotic Bolt"] = true,
-        },
-        ["Zolramus Necromancer"] = {
-            ["Necrotic Bolt"] = true,
-        },
-        ["Zolramus Sorcerer"] = {
-            ["Necrotic Bolt"] = true,
-        },
-
+        ["Amarth"] ={["Necrotic Bolt"] = true,},
+        ["Skeletal Marauder"] ={["Rasping Scream"] = true,},
+        ["Stitching Assistant"]={["Drain Fluids"] = true,},
+        ["Corpse Harvester"] = {["Drain Fluids"] = true,},
+        ["Corpse Collector"] = {["Drain Fluids"] = true,},
+        ["Nar'zudah"] = {["Necrotic Bolt"] = true,},
+        ["Zolramus Gatekeeper"] = {["Necrotic Bolt"] = true,},
+        ["Zolramus Necromancer"] = {["Necrotic Bolt"] = true,},
+        ["Zolramus Sorcerer"] = {["Necrotic Bolt"] = true,},
+    },
+    ["De Other Side"] ={
+        ["Atal'ai Deathwalker"] ={["Bladestorm"] = true,},
+        ["Atal'ai Devoted"] ={["Devoted Sacrifice"] =true,},
+        ["Atal'ai High Priest"]={["Heal"] = true,},
+        ["Atal'ai Hoodoo Hexxer"]={["Healing Wave"]=true,},
+        ["Lubricator"]={["Self-Cleaning Cycle"]=true,},
+    },
+    ["Sanguine Depths"] ={
+        ["Kryxis the Voracious"]={["Hungering Drain"] =true,},
+        ["Wicked Oppressor"]={["Wrack Soul"] = true,},
+        ["Chamber Sentinel"]={["Stoneskin"]=true,},
     }
 }
 
@@ -515,6 +498,34 @@ IROVar.cannotStun ={
         ["Surgeon Stitchflesh"]= true,
         ["Nalthor the Rimebinder"]= true,
     },
+    ["De Other Side"] ={
+        ["Risen Warlord"]=true,
+        ["Death Speaker"]=true,
+        ["Enraged Spirit"]=true,
+        ["Defunct Dental Drill"]=true,
+        ["4.RF-4.RF"]=true,
+        ["Millhouse Manastorm"]=true,
+        ["Millificent Manastorm"]=true,
+        ["Atal'ai Hoodoo Hexxer"]=true,
+        ["Atal'ai Devoted"]=true,
+        ["Hakkar the Soulflayer"]=true,
+        ["Bladebeak Matriarch"]=true,
+        ["Mythresh, Sky's Talons"]=true,
+        ["Dealer Xy'exa"]=true,
+        ["Mueh'zala"]=true,
+    },
+    ["Sanguine Depths"]={
+        ["Regal Mistdancer"]=true,
+        ["Insatiable Brute"]=true,
+        ["Kryxis the Voracious"]=true,
+        ["Chamber Sentinel"]=true,
+        ["Grand Overseer"]=true,
+        ["Head Custodian Javlin"]=true,
+        ["Depths Warden"]=true,
+        ["Executor Tarvold"]=true,
+        ["Grand Proctor Beryllia"]=true,
+        ["General Kaal"]=true,
+    }
 }
 
 IROVar.BewareInterrupt = function(nUnit)

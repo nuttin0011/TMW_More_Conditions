@@ -41,7 +41,9 @@ function IROVar.War.SetupEventCheck()
         end
         if event == "PLAYER_TALENT_UPDATE" then
             C_Timer.After(2,IROVar.War.CheckTalent)
-        elseif event == "UNIT_INVENTORY_CHANGED" then
+        end
+        if event == "UNIT_INVENTORY_CHANGED" or
+        event == "BAG_UPDATE" then
             local ItemLink=GetInventoryItemLink("player", 17)--shield
             IROVar.War.isEquipShield=(ItemLink~=nil) and (select(7,GetItemInfo(ItemLink))=="Shields") or false
         end
@@ -49,6 +51,8 @@ function IROVar.War.SetupEventCheck()
     C_Timer.After(2,IROVar.War.CheckTalent)
     IROVar.War.FEvent = CreateFrame("Frame")
     IROVar.War.FEvent:RegisterEvent("PLAYER_TALENT_UPDATE")
+    IROVar.War.FEvent:RegisterEvent("BAG_UPDATE")
+    
     IROVar.War.FEvent:RegisterEvent("UNIT_INVENTORY_CHANGED")
     IROVar.War.FEvent:SetScript("OnEvent", IROVar.War.FOnEvent)
 end

@@ -34,12 +34,22 @@ if not IROVar.MobList then
             IROVar.MobList.fspec:SetScript("OnEvent", IROVar.MobList.OnEvent)
         end
     end
-    IROVar.MobList.OnEvent=function()
-        local iName = GetInstanceInfo()
-        local uName = UnitName("target") or ""
-        local sName = UnitCastingInfo("target")
-        if not sName then sName = UnitChannelInfo("target") or "" end
-        IROVar.MobList.DisableText(iName,uName,sName)
+    IROVar.MobList.OnEvent=function(_, event)
+        if event ~= "COMBAT_LOG_EVENT_UNFILTERED" then
+            local iName = IROVar.InstanceName
+            local uName = UnitName("target") or ""
+            local sName = UnitCastingInfo("target")
+            if not sName then sName = UnitChannelInfo("target") or "" end
+            IROVar.MobList.DisableText(iName,uName,sName)
+        else
+            local _, subEvent,_,_,sourceName,_,_,_,_,_,_,_, spellName = CombatLogGetCurrentEventInfo()
+            if subEvent == "SPELL_CAST_START" then
+                local iName=IROVar.InstanceName
+                local uName=sourceName
+                local sName = spellName
+                IROVar.MobList.DisableText(iName,uName,sName)
+            end
+        end
     end
     IROVar.MobList.CreateTree = function()
         IROVar.MobList.Tree = {}
@@ -152,10 +162,17 @@ if not IROVar.MobCannotStun then
         end
     end
 
-    IROVar.MobCannotStun.OnEvent=function()
-        local iName = GetInstanceInfo()
-        local uName = UnitName("target") or ""
-        IROVar.MobCannotStun.DisableText(iName,uName)
+    IROVar.MobCannotStun.OnEvent=function(_,event)
+        if event ~="COMBAT_LOG_EVENT_UNFILTERED" then
+            local iName = IROVar.InstanceName
+            local uName = UnitName("target") or ""
+            IROVar.MobCannotStun.DisableText(iName,uName)
+        else
+            local _,_,_,_,sourceName = CombatLogGetCurrentEventInfo()
+            local iName=IROVar.InstanceName
+            local uName=sourceName
+            IROVar.MobCannotStun.DisableText(iName,uName)
+        end
     end
 
     IROVar.MobCannotStun.CreateTree = function()

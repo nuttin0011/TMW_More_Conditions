@@ -144,8 +144,15 @@ IROVar.Lock.KeepLogText = function()
 	Code = IROcode1.." "..IROcode2.." "..IROcode3
 	local SSf = IROVar.Lock.PredictSS()
 	IROUsedSkillControl.OldTimeNumDotPress=currentTime
-	local LogText=(string.format("%.2f",currentTime).." :Pressed,dTime: "..((diffTimePress<=5) and string.format("%.2f",diffTimePress) or ">5").." : SS :"..string.format("%.1f",SSf/10).." : "..Code)
-	IROVar.Lock.LogSkillText=LogText..'\n'..IROVar.Lock.LogSkillText
+	local SS = UnitPower("player",7)
+	local t=string.format("%.2f :OK,dTime: ",currentTime)
+	if diffTimePress<=5 then
+		t=t..string.format("%.2f : (rSS)pSS: (%d)%.1f : ",diffTimePress,SS,SSf/10)
+	else
+		t=t..">>5"..string.format(" : (rSS)pSS: (%d)%.1f : ",SS,SSf/10)
+	end
+	t=t..Code
+	IROVar.Lock.LogSkillText=t..'\n'..IROVar.Lock.LogSkillText
 	if IROVar.Lock.LogFrameShow then
 		IROVar.Lock.UpdateLog()
 	end

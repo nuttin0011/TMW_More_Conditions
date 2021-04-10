@@ -1,4 +1,4 @@
--- ERO DPS Decoder 9.0.5/3
+-- ERO DPS Decoder 9.0.5/4
 -- can copy this to LUA Snippted
 
 --Setup UsedSkill System
@@ -8,6 +8,15 @@
 --show icon that block Rotation "IROUsedSkillControl.NotReadyToUseSkill()==true"
 --@Numdot
 --/run IROUsedSkillControl.NumDotPress()
+
+IROUsedSkillControl={}
+IROUsedSkillControl.IdleTimeAfterUseSkill=0.2
+-- recommend 0.2 for instance class e.g. warrior
+-- 0.5 for caster
+IROUsedSkillControl.pingadjust=0.25
+-- 0.25 for SEA?
+IROUsedSkillControl.PrintPressTime=false
+-- true for debug
 
 local GCDSpell=TMW.GCDSpell
 local GetSpellCooldown=GetSpellCooldown
@@ -148,12 +157,11 @@ end
 
 --Setup UsedSkill System
 
-IROUsedSkillControl={}
 IROUsedSkillControl.Stage=1
-IROUsedSkillControl.pingadjust=0.25
 IROUsedSkillControl.SkillHandle={}
 IROUsedSkillControl.PlayerGUID=UnitGUID("player")
 IROUsedSkillControl.NextForceReady=0
+IROUsedSkillControl.OldTimeNumDotPress=0
 function IROUsedSkillControl.OnEvent()
 	local _, subevent, _, sourceGUID = CombatLogGetCurrentEventInfo()
 	if (sourceGUID==IROUsedSkillControl.PlayerGUID)and(subevent=="SPELL_CAST_FAILED")
@@ -163,6 +171,12 @@ IROUsedSkillControl.f = CreateFrame("Frame")
 IROUsedSkillControl.f:RegisterEvent("COMBAT_LOG_EVENT_UNFILTERED")
 IROUsedSkillControl.f:SetScript("OnEvent", IROUsedSkillControl.OnEvent)
 IROUsedSkillControl.NumDotPress = function()
+	if IROUsedSkillControl.PrintPressTime then
+		local currentTime=GetTime()
+		local diffTimePress=currentTime-IROUsedSkillControl.OldTimeNumDotPress
+		IROUsedSkillControl.OldTimeNumDotPress=currentTime
+		print(currentTime.." : NumDotPress ,diff Time : "..((diffTimePress<=5) and string.format("%.2f",diffTimePress) or ">5"))
+	end
 	IROUsedSkillControl.Stage=2
 	IROUsedSkillControl.Stage2to4()
 end
@@ -181,7 +195,7 @@ IROUsedSkillControl.forceReady = function()
 end
 IROUsedSkillControl.Stage2to4 = function()
 	IROUsedSkillControl.Stage=3
-	table.insert(IROUsedSkillControl.SkillHandle,C_Timer.NewTimer(0.2,IROUsedSkillControl.CheckStageto4))
+	table.insert(IROUsedSkillControl.SkillHandle,C_Timer.NewTimer(IROUsedSkillControl.IdleTimeAfterUseSkill,IROUsedSkillControl.CheckStageto4))
 end
 IROUsedSkillControl.CheckStageto4 = function()
 	if IROUsedSkillControl.Stage~=1 then

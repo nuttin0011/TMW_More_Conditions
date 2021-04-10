@@ -5,6 +5,11 @@
 ----PetType 1=Felg 2=Succ 4=Felh 8=Voidw 16=Imp can use 3 for check felg+succ
 --function IROVar.Lock.PredictSS() return SSFragment / 10 SSFragment = 1 SS
 
+
+--[[ NOTE
+GetSpellCount("Implosion") ;Implosion Stack
+UnitPower("player",7) ; SoulShards
+]]
 if not IROVar then IROVar={} end
 IROVar.Lock={}
 IROVar.Lock.PetActive=nil
@@ -46,7 +51,7 @@ function IROVar.Lock.SetupPetEvent()
 end
 
 function IROVar.Lock.SS.OnEvent()
-    local _,subevent,_,sourceGUID,_,_,_,_,_,_,_,_,SpellName = CombatLogGetCurrentEventInfo()
+    local _,subevent,_,sourceGUID = CombatLogGetCurrentEventInfo()
         if (sourceGUID==IROVar.Lock.playerGUID)  and (subevent=="SPELL_CAST_FAILED") then
 			IROVar.Lock.SS.trust_segment_cast = true
        end

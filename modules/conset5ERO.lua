@@ -15,9 +15,6 @@ IROUsedSkillControl.IdleTimeAfterUseSkill=0.2
 -- 0.5 for caster
 IROUsedSkillControl.pingadjust=0.25
 -- 0.25 for SEA?
-IROUsedSkillControl.PrintPressTime=false
--- true for debug
-
 local GCDSpell=TMW.GCDSpell
 local GetSpellCooldown=GetSpellCooldown
 local UnitCastingInfo=UnitCastingInfo
@@ -171,16 +168,6 @@ IROUsedSkillControl.f = CreateFrame("Frame")
 IROUsedSkillControl.f:RegisterEvent("COMBAT_LOG_EVENT_UNFILTERED")
 IROUsedSkillControl.f:SetScript("OnEvent", IROUsedSkillControl.OnEvent)
 IROUsedSkillControl.NumDotPress = function()
-	if IROUsedSkillControl.PrintPressTime then
-		local currentTime=GetTime()
-		local diffTimePress=currentTime-IROUsedSkillControl.OldTimeNumDotPress
-		local IROcode1=getMetaIconColor(IROIcon1)
-		local IROcode2=getMetaIconColor(IROIcon2)
-		local IROcode3=getMetaIconColor(IROIcon3)
-		local Code = IROcode1.." "..IROcode2.." "..IROcode3
-		IROUsedSkillControl.OldTimeNumDotPress=currentTime
-		print(currentTime.." : NumDotPress ,diff Time : "..((diffTimePress<=5) and string.format("%.2f",diffTimePress) or ">5").." : "..Code)
-	end
 	IROUsedSkillControl.Stage=2
 	IROUsedSkillControl.Stage2to4()
 end

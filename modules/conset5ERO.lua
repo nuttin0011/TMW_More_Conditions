@@ -1,4 +1,4 @@
--- ERO DPS Decoder 9.0.5/5b
+-- ERO DPS Decoder 9.0.5/5d
 
 -- can copy this to LUA Snippted
 -- Set to Hiest Priority
@@ -14,9 +14,10 @@ if not IROUsedSkillControl then
 	IROUsedSkillControl={}
 end
 IROUsedSkillControl.IdleTimeAfterUseSkill=0.2
+IROUsedSkillControl.PlayerSpec=GetSpecializationInfo(GetSpecialization())
 IROUsedSkillControl.AdjustIdleTimeAfterUseSkill = function()
-	local spec=GetSpecializationInfo(GetSpecialization())
-	local CastType=IROUsedSkillControl.ClassType[spec][6]
+	IROUsedSkillControl.PlayerSpec=GetSpecializationInfo(GetSpecialization())
+	local CastType=IROUsedSkillControl.ClassType[IROUsedSkillControl.PlayerSpec][6]
 	if CastType=='Caster' then
 		IROUsedSkillControl.IdleTimeAfterUseSkill=0.4
 	else
@@ -223,6 +224,9 @@ IROUsedSkillControl.f = CreateFrame("Frame")
 IROUsedSkillControl.f:RegisterEvent("COMBAT_LOG_EVENT_UNFILTERED")
 IROUsedSkillControl.f:SetScript("OnEvent", IROUsedSkillControl.OnEvent)
 IROUsedSkillControl.NumDotPress = function()
+	if IROUsedSkillControl.KeepLogText then
+		IROUsedSkillControl.KeepLogText()
+	end
 	IROUsedSkillControl.Stage=2
 	IROUsedSkillControl.Stage2to4()
 end

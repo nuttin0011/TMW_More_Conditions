@@ -10,7 +10,9 @@
 --@Numdot
 --/run IROUsedSkillControl.NumDotPress()
 
-IROUsedSkillControl={}
+if not IROUsedSkillControl then
+	IROUsedSkillControl={}
+end
 IROUsedSkillControl.IdleTimeAfterUseSkill=0.2
 IROUsedSkillControl.AdjustIdleTimeAfterUseSkill = function()
 	local spec=GetSpecializationInfo(GetSpecialization())

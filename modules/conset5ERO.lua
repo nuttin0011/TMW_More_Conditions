@@ -1,6 +1,7 @@
--- ERO DPS Decoder 9.0.5/4
--- can copy this to LUA Snippted
+-- ERO DPS Decoder 9.0.5/5
 
+-- can copy this to LUA Snippted
+-- Set to Hiest Priority
 --Setup UsedSkill System
 
 --Wait For Use Skill Icon Control
@@ -11,10 +12,62 @@
 
 IROUsedSkillControl={}
 IROUsedSkillControl.IdleTimeAfterUseSkill=0.2
+IROUsedSkillControl.AdjustIdleTimeAfterUseSkill = function()
+	local spec=GetSpecializationInfo(GetSpecialization())
+	local CastType=IROUsedSkillControl.ClassType[spec][6]
+	if CastType=='Caster' then
+		IROUsedSkillControl.IdleTimeAfterUseSkill=0.4
+	else
+		IROUsedSkillControl.IdleTimeAfterUseSkill=0.2
+	end
+end
+C_Timer.After(5,IROUsedSkillControl.AdjustIdleTimeAfterUseSkill)
+IROUsedSkillControl.f2 = CreateFrame("Frame")
+IROUsedSkillControl.f2:RegisterEvent("PLAYER_SPECIALIZATION_CHANGED")
+IROUsedSkillControl.f2:SetScript("OnEvent", IROUsedSkillControl.AdjustIdleTimeAfterUseSkill)
 -- recommend 0.2 for instance class e.g. warrior
--- 0.5 for caster
+-- 0.4 for caster
 IROUsedSkillControl.pingadjust=0.25
 -- 0.25 for SEA?
+IROUsedSkillControl.ClassType={
+	--[specID]={interruptTier,interruptSpellName,DPSCheckSkill,Range,Role,CastType}
+	[71] = {'B','Pummel','Pummel','Melee','DPS','InstanceCast'} -- Arm
+	,[72] = {'B','Pummel','Pummel','Melee','DPS','InstanceCast'} -- fury
+	,[73] = {'A','Pummel','Pummel','Melee','Tank','InstanceCast'} -- Protection
+	,[265] = {'D','Command Demon','Corruption','Range','DPS','Caster'} -- Aff [Spell Lock]
+	,[266] = {'D','Command Demon','Corruption','Range','DPS','Caster'} -- Demo
+	,[267] = {'D','Command Demon','Corruption','Range','DPS','Caster'} -- Dest
+	,[262] = {'C','Wind Shear','Lightning Bolt','Range','DPS','Caster'} -- Element
+	,[263] = {'B','Wind Shear','primal strike','Melee','DPS','InstanceCast'} -- Enha
+	,[264] = {'D','Wind Shear','Lightning Bolt','Range','Healer','Caster'} -- Resto
+	,[259] = {'B','Kick','Kick','Melee','DPS','InstanceCast'} -- Ass
+	,[260] = {'B','Kick','Kick','Melee','DPS','InstanceCast'} -- Out
+	,[261] = {'B','Kick','Kick','Melee','DPS','InstanceCast'} -- Sub
+	,[256] = {'N','','Smite','Range','Healer','Caster'} -- Disc
+	,[257] = {'N','','Smite','Range','Healer','Caster'} -- Holy
+	,[258] = {'D','Silence','Smite','Range','DPS','Caster'} -- Shadow
+	,[65] = {'N','','Crusader Strike','Range','Healer','Caster'} -- Holy
+	,[66] = {'A','Rebuke','Crusader Strike','Melee','Tank','InstanceCast'} -- Port
+	,[70] = {'B','Rebuke','Crusader Strike','Melee','DPS','InstanceCast'} -- Ret
+	,[268] = {'A','Spear Hand Strike','Tiger Palm','Melee','Tank','InstanceCast'} -- Brewmaster
+	,[270] = {'N','','Tiger Palm','Range','Healer','Caster'} -- Mistweaver
+	,[269] = {'B','Spear Hand Strike','Tiger Palm','Melee','DPS','InstanceCast'} -- Windwalker
+	,[62] = {'C','Counterspell','Fire Blast','Range','DPS','Caster'} -- arcane
+	,[63] = {'C','Counterspell','Fire Blast','Range','DPS','Caster'} -- fire
+	,[64] = {'C','Counterspell','Fire Blast','Range','DPS','Caster'} -- frost
+	,[253] = {'C','Counter Shot','Arcane Shot','Range','DPS','InstanceCast'} -- Beast Mastery
+	,[254] = {'C','Counter Shot','Arcane Shot','Range','DPS','InstanceCast'} -- Marksmanship
+	,[255] = {'C','Muzzle','Raptor Strike','Melee','DPS','InstanceCast'} -- Survival
+	,[102] = {'C','Solar Beam','Moonfire','Range','DPS','Caster'} -- Balance
+	,[103] = {'B','Skull Bash','Rake','Melee','DPS','InstanceCast'} -- Feral
+	,[104] = {'A','Skull Bash','Mangle','Melee','Tank','Caster'} -- Guardian
+	,[105] = {'N','','Moonfire','Range','Healer','Caster'} -- Restoration
+	,[577] = {'B','Disrupt','Chaos Strike','Melee','DPS','InstanceCast'} -- Havoc
+	,[581] = {'A','Disrupt','Chaos Strike','Melee','Tank','InstanceCast'} -- Vengeance
+	,[250] = {'A','Mind Freeze','Death Strike','Melee','Tank','InstanceCast'} -- Blood
+	,[251] = {'B','Mind Freeze','Death Strike','Melee','DPS','InstanceCast'} -- frost
+	,[252] = {'B','Mind Freeze','Death Strike','Melee','DPS','InstanceCast'} -- unholy
+}
 local GCDSpell=TMW.GCDSpell
 local GetSpellCooldown=GetSpellCooldown
 local UnitCastingInfo=UnitCastingInfo
@@ -110,7 +163,7 @@ end
 
 local WorldPing={}
 WorldPing.now=0
-WorldPing.adjustTiming=3.14 -- check World Ping Every 3.14 sec
+WorldPing.adjustTiming=5.14 -- check World Ping Every 3.14 sec
 WorldPing.adjustWorldPing = function()
 	WorldPing.now=(select(4,GetNetStats())/1000)
 	C_Timer.After(WorldPing.adjustTiming,WorldPing.adjustWorldPing)

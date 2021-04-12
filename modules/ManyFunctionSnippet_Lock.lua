@@ -1,4 +1,4 @@
--- Many Function Version Warlock 9.0.5/1
+-- Many Function Version Warlock 9.0.5/2
 -- this file save many function for paste to TMW Snippet LUA
 
 --function IROVar.Lock.Pet(PetType) return true/false
@@ -15,11 +15,9 @@ UnitPower("player",7) ; SoulShards
 
 if not IROVar then IROVar={} end
 if not IROVar.Lock then IROVar.Lock={} end
-if not IROVar.Lock.ColorToSpell then IROVar.Lock.ColorToSpell=nil end
 IROVar.Lock.PetActive=nil
 IROVar.Lock.playerGUID=UnitGUID("player")
 IROVar.Lock.SS={}
-IROVar.Lock.LogSkillText=""
 IROVar.Lock.SS.LockSpellModSS = {
 	["Hand of Gul'dan266"]=-30, --266 = Demo
 	["Shadow Bolt266"]=10, 
@@ -127,63 +125,4 @@ function IROVar.Lock.PredictSS()
 	IROVar.Lock.SS.old_timer_check = currentTime
 	IROVar.Lock.SS.old_val = currentSS
 	return currentSS
-end
-
-IROVar.Lock.KeepLogText = function()
-	local currentTime=GetTime()
-	local diffTimePress=currentTime-IROUsedSkillControl.OldTimeNumDotPress
-	local IROcode1=getMetaIconColor(IROIcon1)
-	local IROcode2=getMetaIconColor(IROIcon2)
-	local IROcode3=getMetaIconColor(IROIcon3)
-	local Code=""
-	if IROVar.Lock.ColorToSpell then
-		IROcode1 = IROVar.Lock.ColorToSpell[IROcode1] or IROcode1
-		IROcode2 = IROVar.Lock.ColorToSpell[IROcode2] or IROcode2
-		IROcode3 = IROVar.Lock.ColorToSpell[IROcode3] or IROcode2
-	end
-	Code = IROcode1.." "..IROcode2.." "..IROcode3
-	local SSf = IROVar.Lock.PredictSS()
-	IROUsedSkillControl.OldTimeNumDotPress=currentTime
-	local SS = UnitPower("player",7)
-	local t=string.format("%.2f :OK,dTime: ",currentTime)
-	if diffTimePress<=5 then
-		t=t..string.format("%.2f : (rSS)pSS: (%d)%.1f : ",diffTimePress,SS,SSf/10)
-	else
-		t=t..">>5"..string.format(" : (rSS)pSS: (%d)%.1f : ",SS,SSf/10)
-	end
-	t=t..Code
-	IROVar.Lock.LogSkillText=t..'\n'..IROVar.Lock.LogSkillText
-	if IROVar.Lock.LogFrameShow then
-		IROVar.Lock.UpdateLog()
-	end
-end
-
-IROVar.Lock.ShowLog = function()
-	if IROVar.Lock.LogFrameShow then return end
-	if not AceGUI then AceGUI = LibStub("AceGUI-3.0") end
-	IROVar.Lock.LogFrameShow=true
-	IROVar.Lock.LogFrame=AceGUI:Create("Frame")
-	IROVar.Lock.LogFrame:SetTitle("Log Skill")
-	IROVar.Lock.LogFrame:SetLayout("Fill")
-	IROVar.Lock.LogFrame:SetWidth(500)
-	IROVar.Lock.LogFrame:SetHeight(400)
-	IROVar.Lock.LogFrame:SetPoint("TOPLEFT","UIParent","TOPLEFT",20,-50)
-	IROVar.Lock.LogFrame:SetCallback("OnClose", function(widget)
-		IROVar.Lock.LogFrameShow=false
-		AceGUI:Release(widget)
-	end)
-	IROVar.Lock.LogScrollFrame= AceGUI:Create("ScrollFrame")
-	IROVar.Lock.LogLabel=AceGUI:Create("Label")
-	local fontName, fontHeight, fontFlags = GameFontNormal:GetFont()
-	IROVar.Lock.LogLabel:SetFont(fontName,fontHeight*1.2,fontFlags)
-	IROVar.Lock.LogLabel:SetWidth(2048)
-	IROVar.Lock.LogScrollFrame:AddChild(IROVar.Lock.LogLabel)
-	IROVar.Lock.LogFrame:AddChild(IROVar.Lock.LogScrollFrame)
-	IROVar.Lock.LogLabel:SetText(IROVar.Lock.LogSkillText)
-end
-
-IROVar.Lock.UpdateLog = function()
-	if IROVar.Lock.LogLabel then
-		IROVar.Lock.LogLabel:SetText(IROVar.Lock.LogSkillText)
-	end
 end

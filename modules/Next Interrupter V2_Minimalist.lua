@@ -1,20 +1,14 @@
---Next Interrupter!!!! V 2.7 Minimalist version
+--Next Interrupter!!!! V 2.8 Minimalist version
 --, no Debug function
 --WORK Only counter interruptCounterName=1
 
 InterruptCounterName = "wantinterrupt"
 
---[[ check use
-(not NextInterrupter) or NextInterrupter.IsMyTurn()
-
-or use
-((not NextInterrupter)or(not NextInterrupter.Enabled)or(not NextInterrupter.ITable[UnitGUID("target")])or(next(NextInterrupter.ITable[UnitGUID("target")])==nil)or(NextInterrupter.ITable[UnitGUID("target")][1]==NextInterrupter.Name))
-
---]]
+--for check  -- (not NextInterrupter) or NextInterrupter.IsMyTurn(nUnit)
 --------CODE AERA-------------------
 TMW_ST:UpdateCounter(InterruptCounterName,1)
-if (not NextInterrupter) or (not NextInterrupter.Setuped) then
-    NextInterrupter={}
+if not NextInterrupter then NextInterrupter={} end
+if not NextInterrupter.Setuped then
     NextInterrupter.Setuped=false
     NextInterrupter.SpecID=nil
     NextInterrupter.Tier=nil

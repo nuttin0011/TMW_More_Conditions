@@ -1,18 +1,20 @@
--- ERO DPS Decoder 9.0.5/5d
+-- ERO DPS Decoder 9.0.5/6
 
 -- can copy this to LUA Snippted
--- Set to Hiest Priority
---Setup UsedSkill System
+-- Set to Hiest Priority!!!!!!!!!!!!!!
+-- Setup UsedSkill System
 
 --Wait For Use Skill Icon Control
 --can use skill when "IROUsedSkillControl.Stage=1"
 --show icon that block Rotation "IROUsedSkillControl.NotReadyToUseSkill()==true"
 --@Numdot
---/run IROUsedSkillControl.NumDotPress()
-
+--/run IROUsedSkillControl.NumDotPress() <-- keep log for in GCD skill
+--/run IROUsedSkillControl.KeepLogOffGCD() <-- keep log off GCD skill
+--log work only with EROTools Addon installed
 if not IROUsedSkillControl then
 	IROUsedSkillControl={}
 end
+
 IROUsedSkillControl.IdleTimeAfterUseSkill=0.2
 IROUsedSkillControl.PlayerSpec=GetSpecializationInfo(GetSpecialization())
 IROUsedSkillControl.AdjustIdleTimeAfterUseSkill = function()
@@ -223,10 +225,11 @@ end
 IROUsedSkillControl.f = CreateFrame("Frame")
 IROUsedSkillControl.f:RegisterEvent("COMBAT_LOG_EVENT_UNFILTERED")
 IROUsedSkillControl.f:SetScript("OnEvent", IROUsedSkillControl.OnEvent)
+IROUsedSkillControl.KeepLogOffGCD = function()
+	if IROUsedSkillControl.KeepLogText then IROUsedSkillControl.KeepLogText(true) end
+end
 IROUsedSkillControl.NumDotPress = function()
-	if IROUsedSkillControl.KeepLogText then
-		IROUsedSkillControl.KeepLogText()
-	end
+	if IROUsedSkillControl.KeepLogText then IROUsedSkillControl.KeepLogText() end
 	IROUsedSkillControl.Stage=2
 	IROUsedSkillControl.Stage2to4()
 end

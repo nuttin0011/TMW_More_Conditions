@@ -192,7 +192,7 @@ function NextTimeCheckLockUseSkill(PingAdjust)
 		if currentTime<CutPoint then
 			return CutPoint,false
 		else
-			return endTime+PingAdjust,true
+			return endTime+PingAdjust,true 
 		end
 	else -- Player Not Casting/Channel
 		if not GCDst then
@@ -205,10 +205,7 @@ function NextTimeCheckLockUseSkill(PingAdjust)
 				return CutPoint,false
 			else
 				return endTime+PingAdjust,true
-			end
-		end
-	end
-end
+end end end end
 
 --Setup UsedSkill System
 

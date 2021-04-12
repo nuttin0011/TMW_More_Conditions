@@ -1,4 +1,4 @@
--- ERO DPS Decoder 9.0.5/6
+-- ERO DPS Decoder 9.0.5/6b
 
 -- can copy this to LUA Snippted
 -- Set to Hiest Priority!!!!!!!!!!!!!!

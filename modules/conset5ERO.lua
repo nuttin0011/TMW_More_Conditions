@@ -23,7 +23,7 @@ IROUsedSkillControl.AdjustIdleTimeAfterUseSkill = function()
 	if CastType=='Caster' then
 		IROUsedSkillControl.IdleTimeAfterUseSkill=0.4
 	else
-		IROUsedSkillControl.IdleTimeAfterUseSkill=0.2
+		IROUsedSkillControl.IdleTimeAfterUseSkill=0.4
 	end
 end
 C_Timer.After(5,IROUsedSkillControl.AdjustIdleTimeAfterUseSkill)

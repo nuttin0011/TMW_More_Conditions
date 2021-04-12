@@ -11,11 +11,11 @@ Nm[2]=''
 --print((IROVar.InterruptSpell~=nil) and IROVar.InterruptSpell or "nil")
 --print((IROSpecID~=nil) and IROSpecID or "nil")
 local iS=IROVar.InterruptSpell or ""
-Nm[8]=(Nm[8]or'')..'\n/targetenemy [nomod:ctrl,mod:alt]\n/cleartarget [nomod]'
+Nm[8]='/use [mod:ctrl,nomod:alt]13\n/use [mod:ctrl,nomod:alt]14\n/targetenemy [nomod:ctrl,mod:alt]\n/cleartarget [nomod]'
 Nm[9]='/focus [@mouseover,exists,harm,nodead,mod:ctrlalt]'..
 '\n/cast [mod:ctrl,nomod:alt,@focus]'..iS..';[mod:alt,nomod:ctrl]'..iS..
-'\n/use [nomod]13'..
-'\n/use [nomod]14'
+'\n/stopmacro [mod]'..
+'\n/run IROUsedSkillControl.KeepLogOffGCD()'
 local function SetKey(IncombatStatus)
     if InCombatLockdown() then
         if IncombatStatus then print("cannot Bind Key while Incombat") end
@@ -30,3 +30,4 @@ local function SetKey(IncombatStatus)
             CreateMacro(nname,460699,Nm[i] ,true)
 end end end
 SetKey(true)
+

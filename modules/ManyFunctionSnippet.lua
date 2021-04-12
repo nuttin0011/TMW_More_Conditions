@@ -23,8 +23,6 @@
 ----*********return table of [Buff name] = Buff time remaining
 --function Env.AuraDur(unit, name, filter) ; return aura Duration
 
-
-
 if not IROVar then IROVar={} end
 IROVar.DebugMode = false
 IROVar.InterruptSpell = nil

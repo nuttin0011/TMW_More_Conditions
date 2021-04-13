@@ -1,4 +1,4 @@
--- Many Function Version Warlock 9.0.5/2
+-- Many Function Version Warlock 9.0.5/2b
 -- this file save many function for paste to TMW Snippet LUA
 
 --function IROVar.Lock.Pet(PetType) return true/false
@@ -34,7 +34,7 @@ IROVar.Lock.SS.LockSpellModSS = {
 
 function IROVar.Lock.Pet(PetType)
     PetType=PetType or 0
-    if IROVar.Lock.PetActive then return bit.band(IROVar.Lock.PetActivee,PetType)~=0 end
+    if IROVar.Lock.PetActive then return bit.band(IROVar.Lock.PetActive,PetType)~=0 end
     IROVar.Lock.SetupPetEvent()
     return IROVar.Lock.Pet(PetType)
 end
@@ -49,7 +49,10 @@ function IROVar.Lock.SetupPetEvent()
         end
     end
     IROVar.Lock.PetEvent:RegisterEvent("UNIT_PET")
-    IROVar.Lock.PetEvent:SetScript("OnEvent", IROVar.Lock.PetOnEvent)
+    IROVar.Lock.PetEvent:SetScript("OnEvent", function()
+		IROVar.Lock.PetOnEvent()
+		C_Timer.After(1,IROVar.Lock.PetOnEvent)
+	end)
     IROVar.Lock.PetOnEvent()
 end
 

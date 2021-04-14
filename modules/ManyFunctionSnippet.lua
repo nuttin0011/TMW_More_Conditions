@@ -1,4 +1,4 @@
--- Many Function Version 9.0.5/36
+-- Many Function Version 9.0.5/37
 -- this file save many function for paste to TMW Snippet LUA
 
 --function IROEnemyCountIn8yd(Rlevel) ; return count
@@ -65,7 +65,7 @@ function IROVar.UpdateVar()
     end
     IROSpecID = newSpec or IROSpecID
     if IROInterruptTier[IROSpecID] then
-        IROVar.InterruptSpell = GetSpellInfo(IROInterruptTier[IROSpecID][2])
+        IROVar.InterruptSpell = IROInterruptTier[IROSpecID][2]
         IROVar.SkillCheckDPSRange = IROInterruptTier[IROSpecID][3]
     else
         IROVar.InterruptSpell = nil

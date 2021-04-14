@@ -1,4 +1,4 @@
--- Many Function Version Warlock 9.0.5/2b
+-- Many Function Version Warlock 9.0.5/2c
 -- this file save many function for paste to TMW Snippet LUA
 
 --function IROVar.Lock.Pet(PetType) return true/false
@@ -32,28 +32,53 @@ IROVar.Lock.SS.LockSpellModSS = {
 	["Incinerate267"]=2
 }
 
+IROVar.Lock.PetCheckedTime=0
+IROVar.Lock.PetCheckTimer=6 --ll check 6 sec for sure
+IROVar.Lock.PetActiveOldVal=-1
+IROVar.Lock.JustRunPetCheck=0
 function IROVar.Lock.Pet(PetType)
     PetType=PetType or 0
-    if IROVar.Lock.PetActive then return bit.band(IROVar.Lock.PetActive,PetType)~=0 end
+    if IROVar.Lock.PetActive then
+		if IROVar.Lock.PetActive~=128 then
+			return bit.band(IROVar.Lock.PetActive,PetType)~=0
+		else
+			return UnitExists("pet") and (not UnitIsDead("pet"))
+		end
+	end
     IROVar.Lock.SetupPetEvent()
     return IROVar.Lock.Pet(PetType)
 end
-IROVar.Lock.PetTypeBit={["Axe Toss"]=1,["Seduction"]=2,["Spell Lock"]=4,["Shadow Bulwark"]=8,["Singe Magic"]=16}
+IROVar.Lock.PetTypeBit={
+	["Axe Toss"]=1,["Seduction"]=2,["Spell Lock"]=4,
+	["Shadow Bulwark"]=8,["Singe Magic"]=16,
+	["Command Demon"]=128,
+}
 function IROVar.Lock.SetupPetEvent()
+	function IROVar.Lock.CheckPet()
+		local currentTime=GetTime()
+		if (currentTime-IROVar.Lock.JustRunPetCheck)<0.05 then return end
+		IROVar.Lock.JustRunPetCheck=currentTime
+		if currentTime<IROVar.Lock.PetCheckedTime+IROVar.Lock.PetCheckTimer then
+			IROVar.Lock.PetActive=0
+			local spellName = GetSpellInfo("Command Demon")
+			if UnitExists("pet") and (not UnitIsDead("pet")) then
+				IROVar.Lock.PetActive=IROVar.Lock.PetTypeBit[spellName] or 0
+			end
+			if IROVar.Lock.PetActive~=IROVar.Lock.PetActiveOldVal then
+				IROVar.Lock.PetCheckedTime=currentTime
+				IROVar.Lock.PetActiveOldVal=IROVar.Lock.PetActive
+			end
+			C_Timer.After(0.2,IROVar.Lock.CheckPet)
+		end
+	end
     IROVar.Lock.PetEvent=CreateFrame("Frame")
-    IROVar.Lock.PetOnEvent=function()
-        IROVar.Lock.PetActive=0
-        local spellName = GetSpellInfo("Command Demon")
-        if UnitExists("pet") and (not UnitIsDead("pet")) then
-            IROVar.Lock.PetActive=IROVar.Lock.PetTypeBit[spellName] or 0
-        end
-    end
     IROVar.Lock.PetEvent:RegisterEvent("UNIT_PET")
     IROVar.Lock.PetEvent:SetScript("OnEvent", function()
-		IROVar.Lock.PetOnEvent()
-		C_Timer.After(1,IROVar.Lock.PetOnEvent)
+		IROVar.Lock.PetCheckedTime=GetTime()
+		IROVar.Lock.CheckPet()
 	end)
-    IROVar.Lock.PetOnEvent()
+	IROVar.Lock.PetCheckedTime=GetTime()
+	IROVar.Lock.CheckPet()
 end
 
 function IROVar.Lock.SS.OnEvent()

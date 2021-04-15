@@ -1,4 +1,4 @@
--- Many Function Version 9.0.5/37
+-- Many Function Version 9.0.5/38
 -- this file save many function for paste to TMW Snippet LUA
 
 --function IROEnemyCountIn8yd(Rlevel) ; return count
@@ -22,6 +22,7 @@
 --function IROVar.allBuffByMe(unit,needLowerCaseName)
 ----*********return table of [Buff name] = Buff time remaining
 --function Env.AuraDur(unit, name, filter) ; return aura Duration
+--function IROVar.IconSweepCompair(icon,max,min) ; return (max > SweepCD > min) (true/false)
 
 if not IROVar then IROVar={} end
 IROVar.DebugMode = false
@@ -392,3 +393,12 @@ IROVar.DontUseCD ={
     }
 }
 
+function IROVar.IconSweepCompair(icon,max,min)
+    --return max>SweepCD>min
+    if not icon then return true end
+    local stdu=icon.Modules.IconModule_CooldownSweep.start+icon.Modules.IconModule_CooldownSweep.duration
+    local mint=stdu-max
+    local maxt=stdu-min
+    local ct=GetTime()
+    return  (ct>mint) and (ct<maxt)
+end

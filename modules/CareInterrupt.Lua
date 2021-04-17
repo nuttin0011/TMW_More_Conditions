@@ -1,4 +1,4 @@
--- Care Interrupt V 1.0 ICON
+-- Care Interrupt V 1.2 ICON
 -- interrupt Only Important Spell at Specific Mob
 -- IROVar.CareInterrupt(unit e.g. "target") ; return true / false
 
@@ -8,7 +8,7 @@ if (not IROVar.fspec) and (not IROVar.finstanceName) then
     IROVar.finstanceName = CreateFrame("Frame")
     IROVar.finstanceName:RegisterEvent("ZONE_CHANGED_NEW_AREA")
     IROVar.finstanceName:SetScript("OnEvent", function()
-        IROVar.InstanceName = GetInstanceInfo()
+            IROVar.InstanceName = GetInstanceInfo()
     end)
 end
 if not IROVar.MobListForInterrupt then
@@ -72,11 +72,14 @@ if not IROVar.MobListForInterrupt then
             ["Forsworn Justicar"]={["Forced Confession"]=true,},
         },
         ["Theater of Pain"]={
-            ["Blighted Sludge-Spewer"]={["Withering Discharge"]=true,},
-            ["Harugia the Bloodthirsty"]={["Battle Trance"]=true,},
+            ["Battlefield Ritualist"]={["Unholy Fervor"]=true,},
             ["Dokigg the Brutalizer"]={["Battle Trance"]=true,},
+            ["Harugia the Bloodthirsty"]={["Battle Trance"]=true,},
             ["Ancient Captain"]={["Demoralizing Shout"]=true,},
             ["Xav the Unfallen"]={["Deafening Crash"]=true,},
+            ["Blighted Sludge-Spewer"]={["Withering Discharge"]=true,},
+            ["Bone Magus"]={["Bone Spear"]=true,},
+            ["Maniacal Soulbinder"]={["Necrotic Bolt Volley"]=true,},
         }
     }
     IROVar.CareInterrupt = function(nUnit)
@@ -94,3 +97,4 @@ if not IROVar.MobListForInterrupt then
         return IROVar.MobListForInterrupt[IROVar.InstanceName][MobName][SName]==true
     end
 end
+

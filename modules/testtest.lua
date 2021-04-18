@@ -1,47 +1,33 @@
--- testes is 2 testis
-local TMW = TMW
-local TMW_MC = TMW_More_Conditions
-local CNDT = TMW.CNDT
-local Env = CNDT.Env
+-- Key Setting...
+local Nm={}
 
+Nm[0]="/cast [mod:ctrlalt]Blackout Kick;[mod:ctrl]Crackling Jade Lightning;[mod:alt]Detox;[nomod]Expel Harm"
+Nm[1]="/cast [mod:ctrlalt]Fortifying Brew;[mod:ctrl]Leg Sweep;[mod:alt]Spinning Crane Kick;[nomod]Tiger Palm"
+Nm[2]="/cast [mod:ctrlalt]Touch of Death;[mod:ctrl]Vivify;[mod:alt]Breath of Fire;[nomod]Celestial Brew"
+Nm[3]="/cast [mod:ctrlalt]Keg Smash;[mod:ctrl]Purifying Brew;[mod:alt]Spear Hand Strike;[nomod]Chi Wave"
+Nm[4]="/cast [mod:ctrlalt]Zen Pilgrimage;[mod:ctrl]Black Ox Brew;[mod:alt]Healing Elixir;[nomod]Rushing Jade Wind"
+Nm[5]="/cast [mod:ctrlalt]Dampen Harm;[mod:ctrl]Invoke Niuzao, the Black Ox;[mod:alt]\n/petattack [nomod]"
 
-function Env.TMWMCTest(a,b,c,d)
-	print('====')
-	print(a)
-	print(b)
-	print(c)
-	print(d)	
-	return true
-end
-
-Env.printc = function(c)
-	print(c)
-	return true
-end
-
-local ConditionCategory = CNDT:GetCategory("ATTRIBUTES_TMWMC_Test", 32, "Test Condition", true, false)
-
-ConditionCategory:RegisterCondition(6,  "TMWMCTEST1111", {
-    text = "Nearest / Furthest Enemy",
-	tooltip = "Nearest / Furthest Enemy\nNote. Only ENEMY.",
-	unit=nil,
-	min =0,
-	max =1,
-	levelChecks = true,
-	step =1,
-	nooperator = true,
-	name=function(editbox) 
-		editbox:SetTexts("EnemyUnit Check",'e.g. "target; party1target; party2target"\ncannot use like "party 1-4"')
-	end,
-	texttable = {
-		[0] = "is Nearest",
-		[1] = "is Furthest",
-	},
-    icon = "interface\\icons\\achievement_raid_revendrethraid_siredenathrius",
-    tcoords = CNDT.COMMON.standardtcoords,
-	funcstr = function(c, parent)
-		return [[printc(c.Name)]]
-    end,	
-
-})
+--print((IROVar.InterruptSpell~=nil) and IROVar.InterruptSpell or "nil")
+--print((IROSpecID~=nil) and IROSpecID or "nil")
+local iS=IROVar.InterruptSpell or ""
+Nm[8]='/petattack [mod:ctrlalt]\n/use [mod:ctrl,nomod:alt]13\n/use [mod:ctrl,nomod:alt]14\n/targetenemy [nomod:ctrl,mod:alt]\n/cleartarget [nomod]'
+Nm[9]='/focus [@mouseover,exists,harm,nodead,mod:ctrlalt]'..
+'\n/cast [mod:ctrl,nomod:alt,@focus]'..iS..';[mod:alt,nomod:ctrl]'..iS..
+'\n/stopmacro [mod]'..
+'\n/run IROUsedSkillControl.KeepLogOffGCD()'
+local function SetKey(IncombatStatus)
+    if InCombatLockdown() then
+        if IncombatStatus then print("cannot Bind Key while Incombat") end
+        C_Timer.After(1,SetKey)
+    else
+        if not IncombatStatus then print("Out Combat Bind Key Done!") end
+        local nname
+        for i in pairs(Nm) do
+            nname='~!Num'..i
+            DeleteMacro(nname)
+            DeleteMacro(nname)
+            CreateMacro(nname,460699,Nm[i] ,true)
+end end end
+SetKey(true)
 

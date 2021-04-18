@@ -1,4 +1,4 @@
--- Care Interrupt V 1.2 ICON
+-- Care Interrupt V 1.5 ICON
 -- interrupt Only Important Spell at Specific Mob
 -- IROVar.CareInterrupt(unit e.g. "target") ; return true / false
 
@@ -24,18 +24,22 @@ if not IROVar.MobListForInterrupt then
             ["Drust Harvester"] = {["Harvest Essence"] = true,},
             ["Mistveil Tender"] = {["Nourish the Forest"] = true,},
             ["Mistveil Shaper"] = {["Bramblethorn Coat"] = true,},
+            ["Mistveil Guardian"] = {["Bucking Rampage"] = true,},
             ["Spinemaw Staghorn"] = {
                 ["Stimulate Resistance"] = true,
                 ["Stimulate Regeneration"] = true,
-            }
+            },
+            ["Spinemaw Acidgullet"] = {["Volatile Acid"] = true,},
+            ["Spinemaw Gorger"] = {["Acid Globule"] = true,},
         },
         ["The Necrotic Wake"] ={
+            ["Corpse Harvester"] = {["Drain Fluids"] = true,},
             ["Amarth"] ={["Necrotic Bolt"] = true,},
             ["Skeletal Marauder"] ={["Rasping Scream"] = true,},
-            ["Stitching Assistant"]={["Drain Fluids"] = true,},
-            ["Corpse Harvester"] = {["Drain Fluids"] = true,},
-            ["Corpse Collector"] = {["Drain Fluids"] = true,},
             ["Nar'zudah"] = {["Necrotic Bolt"] = true,},
+            ["Corpse Collector"] = {["Drain Fluids"] = true,},
+            ["Loyal Creation"] = {["Spine Crush"] = true,},
+            ["Stitching Assistant"]={["Drain Fluids"] = true,},
             ["Zolramus Gatekeeper"] = {["Necrotic Bolt"] = true,},
             ["Zolramus Necromancer"] = {["Necrotic Bolt"] = true,},
             ["Zolramus Sorcerer"] = {["Necrotic Bolt"] = true,},
@@ -51,9 +55,12 @@ if not IROVar.MobListForInterrupt then
             ["Kryxis the Voracious"]={["Hungering Drain"] =true,},
             ["Wicked Oppressor"]={["Wrack Soul"] = true,},
             ["Chamber Sentinel"]={["Stoneskin"]=true,},
+            ["Depths Warden"]={["Crushing Strike"]=true,},
+            ["Vestige of Doubt"]={["Growing Mistrust"]=true,},
         },
         ["Halls of Atonement"]={
             ["Depraved Houndmaster"]={["Loyal Beasts"]=true,},
+            ["Depraved Obliterator"]={["Curse of Obliteration"]=true,},
             ["Depraved Collector"]={["Collect Sins"]=true,},
             ["Stoneborn Reaver"]={["Turn to Stone"]=true,},
             ["High Adjudicator Aleez"]={["Volley of Power"]=true,},
@@ -61,6 +68,8 @@ if not IROVar.MobListForInterrupt then
         ["Plaguefall"]={
             ["Fungi Stormer"]={["Fungistorm"]=true},
             ["Defender of Many Eyes"]={["Bulwark of Maldraxxus"]=true,},
+            ["Brood Ambusher"]={["Stealthlings"]=true,},
+            ["Plaguebinder"]={["Gripping Infection"]=true,},
             ["Rotmarrow Slime"]={["Corrosive Gunk"]=true,},
         },
         ["Spires of Ascension"]={

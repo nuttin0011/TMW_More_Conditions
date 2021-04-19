@@ -1,6 +1,7 @@
 -- Care Interrupt V 1.5 ICON
 -- interrupt Only Important Spell at Specific Mob
 -- IROVar.CareInterrupt(unit e.g. "target") ; return true / false
+-- IROVar and IROVar.CareInterrupt and IROVar.CareInterrupt("target")
 
 if not IROVar then IROVar={} end
 if not IROVar.InstanceName then IROVar.InstanceName = GetInstanceInfo() end

@@ -1,4 +1,4 @@
--- OK Stuned V 1.1 ICON
+-- OK Stuned V 1.5 ICON
 -- interrupt Only Important Spell at Specific Mob
 -- IROVar.OKStuned(unit e.g. "target") ; return true / false
 
@@ -130,6 +130,10 @@ if not IROVar.cannotStun then
         }
     }
     IROVar.OKStuned = function(nUnit)
+        if CTT and CTT.immuneKnown then
+            local NPCID=CTT.GetNPCId(UnitGUID(nUnit) or "")
+            return not(NPCID and CTT.immuneFound[NPCID] or CTT.immuneKnown[NPCID])
+        end
         nUnit = nUnit or "target"
         local nL=UnitLevel(nUnit)
         if nL==-1 then return false end

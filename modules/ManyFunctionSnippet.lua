@@ -21,7 +21,7 @@
 --function IROVar.allDeBuffByMe(unit) ; return table of debuff
 --function IROVar.allBuffByMe(unit,needLowerCaseName)
 ----*********return table of [Buff name] = Buff time remaining
---function Env.AuraDur(unit, name, filter) ; return aura Duration
+--function TMW.CNDT.Env.AuraDur(unit, name, filter) ; return aura Duration
 --function IROVar.IconSweepCompair(icon,max,min) ; return (max > SweepCD > min) (true/false)
 
 if not IROVar then IROVar={} end

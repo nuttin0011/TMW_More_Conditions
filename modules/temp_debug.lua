@@ -27,6 +27,11 @@ local function SetKey(IncombatStatus)
             nname='~!Num'..i
             DeleteMacro(nname)
             DeleteMacro(nname)
+            if select(2,GetNumMacros()) >=18 then
+                print('ERROR------------"')
+                print('Cannot Create More Macro, Please Delete More "Specific Macro"')
+                print('and use "/reload"')
+            end
             CreateMacro(nname,460699,Nm[i] ,true)
 end end end
 SetKey(true)

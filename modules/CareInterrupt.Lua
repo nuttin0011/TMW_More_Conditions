@@ -3,6 +3,13 @@
 -- IROVar.CareInterrupt(unit e.g. "target") ; return true / false
 -- IROVar and IROVar.CareInterrupt and IROVar.CareInterrupt("target")
 
+-- Combo %Cast+Care Interrupt+Smart Interrupt
+--[[
+    PercentCastbar2 and IROVar and IROVar.CareInterrupt and 
+    PercentCastbar2()and IROVar.CareInterrupt("target")and
+    ((not NextInterrupter) or NextInterrupter.IsMyTurn())
+]]
+
 if not IROVar then IROVar={} end
 if not IROVar.InstanceName then IROVar.InstanceName = GetInstanceInfo() end
 if (not IROVar.fspec) and (not IROVar.finstanceName) then

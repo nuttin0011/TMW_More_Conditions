@@ -3,6 +3,14 @@
 -- IROVar.OKStuned(unit e.g. "target") ; return true / false
 -- IROVar and IROVar.OKStuned and IROVar.OKStuned("target")
 
+-- ComBO Set %Cast+OK Stun+Zero Smart Interrupt+VVCare Interrupt
+--[[
+    IROVar and IROVar.OKStuned and IROVar.VVCareInterrupt and 
+    PercentCastbar2 and NextInterrupter and NextInterrupter.ZeroSI and 
+    PercentCastbar2(0.3,false,"target",200,5000)and IROVar.OKStuned("target")and 
+    NextInterrupter.ZeroSI()and IROVar.VVCareInterrupt("target")
+    ]]
+
 if not IROVar then IROVar={} end
 if not IROVar.InstanceName then IROVar.InstanceName = GetInstanceInfo() end
 if (not IROVar.fspec) and (not IROVar.finstanceName) then

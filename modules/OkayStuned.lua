@@ -1,4 +1,4 @@
--- OK Stuned V 1.5 ICON
+-- OK Stuned V 1.5 ICON + ZeroSI + VVCare
 -- interrupt Only Important Spell at Specific Mob
 -- IROVar.OKStuned(unit e.g. "target") ; return true / false
 -- IROVar and IROVar.OKStuned and IROVar.OKStuned("target")
@@ -147,3 +147,39 @@ if not IROVar.cannotStun then
         return not(IROVar.cannotStun[IROVar.InstanceName][MobName]==true)
     end
 end
+
+-- NextInterrupter and NextInterrupter.ZeroSI and NextInterrupter.ZeroSI()
+if not NextInterrupter then NextInterrupter={} end
+if not NextInterrupter.ZeroSI then
+    NextInterrupter.ZeroSI = function(nUnit)
+        --ZeroSI=Zero-Smart-Interrupt
+        nUnit=nUnit or "target"
+        local CanNotInterrupt = select(8,UnitCastingInfo(nUnit))
+        if CanNotInterrupt == nil then CanNotInterrupt = select(7,UnitChannelInfo(nUnit)) end
+        if CanNotInterrupt == true then return true end
+        local uGUID=UnitGUID(nUnit)
+        return (not NextInterrupter.Enabled)
+        or (not NextInterrupter.ITable[uGUID])
+        or (next(NextInterrupter.ITable[uGUID])==nil)
+    end
+end
+
+-- IROVar and IROVar.VVCareInterrupt and IROVar.VVCareInterrupt("target")
+--if not IROVar then IROVar={} end
+IROVar.VVCareInterrupt = function(nUnit)
+    if UnitIsUnit(nUnit.."target","player") then return true end
+    if not IROVar.MobListForInterrupt then return false end
+    if not IROVar.MobListForInterrupt[IROVar.InstanceName] then
+        return false
+    end
+    local MobName=UnitName(nUnit)
+    if not MobName then return false end
+    if not IROVar.MobListForInterrupt[IROVar.InstanceName][MobName] then
+        return false
+    end
+    local SName = UnitCastingInfo(nUnit)
+    if not SName then SName = UnitChannelInfo(nUnit) end
+    if not SName then return false end
+    return IROVar.MobListForInterrupt[IROVar.InstanceName][MobName][SName]==true
+end
+

@@ -71,7 +71,9 @@ function IROVar.War.CheckBagForOffHandAndUpdateMacro()
         for bag = 0,4 do
             for slot = 1,GetContainerNumSlots(bag) do
                 local IL = GetContainerItemLink(bag,slot)
-                if IL and (select(9,GetItemInfo(IL))==itemEquipLoc) then
+                if IL and (select(9,GetItemInfo(IL))==itemEquipLoc) and
+                C_Item.IsBound(ItemLocation:CreateFromBagAndSlot(bag,slot))
+                then
                     local ilvl=select(4,GetItemInfo(IL))
                     if ilvl>ilvltempShieldLink then
                         tempShieldLink=IL
@@ -89,13 +91,11 @@ function IROVar.War.CheckBagForOffHandAndUpdateMacro()
     if (mainHandWeaponLink==IROVar.War.MainHandWeaponLink) and
     (offHandWeaponLink==IROVar.War.OffHandWeaponLink) and
     (shieldLink==IROVar.War.ShieldLink) then return end
-    print("Chenge Set Of Weapon")
     IROVar.War.MainHandWeaponLink=mainHandWeaponLink
     IROVar.War.OffHandWeaponLink=offHandWeaponLink
     IROVar.War.ShieldLink=shieldLink
 
     IROVar.War.CanUseSwapWeapon=((mainHandWeaponLink~=nil) and (offHandWeaponLink~=nil) and (shieldLink~=nil)) or false
-    print("can use Swap Weapon Feature")
     --Create Marcro
     if not IROVar.War.CanUseSwapWeapon then return end
 
@@ -117,15 +117,17 @@ end
 function IROVar.War.CheckWeapon()
     if IROVar.War.WeaponChecking then return end
     IROVar.War.WeaponChecking = true
+    local ItemLink=GetInventoryItemLink("player", 17)--shield
+    IROVar.War.isEquipShield=(ItemLink~=nil) and (select(7,GetItemInfo(ItemLink))=="Shields") or false
     local function checkWeapon()
         if InCombatLockdown() then
-            C_Timer.After(2,checkWeapon)
+            C_Timer.After(0.6,checkWeapon)
         else
             IROVar.War.WeaponChecking = false
             IROVar.War.CheckBagForOffHandAndUpdateMacro()
         end
     end
-    C_Timer.After(0.5,checkWeapon)
+    C_Timer.After(0.3,checkWeapon)
 end
 
 function IROVar.War.SetupEventCheck()
@@ -138,8 +140,6 @@ function IROVar.War.SetupEventCheck()
         end
         if event == "UNIT_INVENTORY_CHANGED" or
         event == "BAG_UPDATE" then
-            local ItemLink=GetInventoryItemLink("player", 17)--shield
-            IROVar.War.isEquipShield=(ItemLink~=nil) and (select(7,GetItemInfo(ItemLink))=="Shields") or false
             IROVar.War.CheckWeapon()
         end
     end

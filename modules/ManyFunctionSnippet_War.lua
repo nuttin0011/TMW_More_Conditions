@@ -1,4 +1,4 @@
--- Many Function Version War 9.0.5/1
+-- Many Function Version War 9.0.5/2
 -- this file save many function for paste to TMW Snippet LUA
 
 --function IROVar.War.CanExx(Unit or blank = "target") ; return true/false
@@ -10,6 +10,11 @@ IROVar.War.it2Yd = "item:37727"
 IROVar.War.isMass = false
 IROVar.War.isCondemn = false
 IROVar.War.isEquipShield = false
+IROVar.War.MainHandWeaponLink = nil
+IROVar.War.OffHandWeaponLink = nil
+IROVar.War.ShieldLink = nil
+IROVar.War.CanUseSwapWeapon = false
+IROVar.War.WeaponChecking=false
 
 function IROVar.War.CanExx(U)
     U=U or "target"
@@ -34,6 +39,95 @@ function IROVar.War.CheckTalent()
     IROVar.War.isCondemn = GetSpellInfo("execute")=="Condemn"
 end
 
+function IROVar.War.CheckBagForOffHandAndUpdateMacro()
+    -- incombat
+    if InCombatLockdown() then return end
+    -- main hand Empty
+    ------IROVar.War.MainHandWeaponLink=GetInventoryItemLink("player", 16)
+    local mainHandWeaponLink=GetInventoryItemLink("player", 16)
+    local offHandWeaponLink = nil
+    local shieldLink = nil
+    if not mainHandWeaponLink then return end
+    -- Hold Fishing Poles
+    if select(7,GetItemInfo(GetInventoryItemLink("player", 16)))=="Fishing Poles" then return end
+
+    --check off hand
+    local ItemLink=GetInventoryItemLink("player", 17)
+    local ItemEquipLoc
+    local mainHandItemEquipLoc=select(9,GetItemInfo(mainHandWeaponLink))
+    if ItemLink~=nil then
+        ItemEquipLoc=select(9,GetItemInfo(ItemLink))
+        if ItemEquipLoc=="INVTYPE_SHIELD" then
+            shieldLink=ItemLink
+        end
+        if ItemEquipLoc == mainHandItemEquipLoc then
+            offHandWeaponLink=ItemLink
+        end
+    end
+
+    local function CheckItemInBag(itemEquipLoc)
+        local tempShieldLink=nil
+        local ilvltempShieldLink=0
+        for bag = 0,4 do
+            for slot = 1,GetContainerNumSlots(bag) do
+                local IL = GetContainerItemLink(bag,slot)
+                if IL and (select(9,GetItemInfo(IL))==itemEquipLoc) then
+                    local ilvl=select(4,GetItemInfo(IL))
+                    if ilvl>ilvltempShieldLink then
+                        tempShieldLink=IL
+                        ilvltempShieldLink=ilvl
+        end end end end
+        return tempShieldLink
+    end
+
+    --check Shield In bag
+    shieldLink=shieldLink or CheckItemInBag("INVTYPE_SHIELD")
+     --check Weapon In bag
+    offHandWeaponLink=offHandWeaponLink or CheckItemInBag(mainHandItemEquipLoc)
+
+    --Check Same Set of Weapon?
+    if (mainHandWeaponLink==IROVar.War.MainHandWeaponLink) and
+    (offHandWeaponLink==IROVar.War.OffHandWeaponLink) and
+    (shieldLink==IROVar.War.ShieldLink) then return end
+    print("Chenge Set Of Weapon")
+    IROVar.War.MainHandWeaponLink=mainHandWeaponLink
+    IROVar.War.OffHandWeaponLink=offHandWeaponLink
+    IROVar.War.ShieldLink=shieldLink
+
+    IROVar.War.CanUseSwapWeapon=((mainHandWeaponLink~=nil) and (offHandWeaponLink~=nil) and (shieldLink~=nil)) or false
+    print("can use Swap Weapon Feature")
+    --Create Marcro
+    if not IROVar.War.CanUseSwapWeapon then return end
+
+    local SetKeyBindToKeyNum = 7
+    local macroName="~!Num"..SetKeyBindToKeyNum
+    local MacroBody = GetMacroBody(macroName) or ""
+    DeleteMacro(macroName)
+    DeleteMacro(macroName)
+    local sFind = MacroBody:find("/equipslot")
+    if sFind then
+        MacroBody=string.sub(MacroBody,1,sFind-2)
+    end
+    local offHanaName=GetItemInfo(offHandWeaponLink)
+    local shieldName=GetItemInfo(shieldLink)
+    MacroBody=MacroBody.."\n/equipslot [mod:alt,nomod:ctrl] 17 "..offHanaName.."\n/equipslot [nomod] 17 "..shieldName
+    CreateMacro(macroName,460699,MacroBody ,true)
+end
+
+function IROVar.War.CheckWeapon()
+    if IROVar.War.WeaponChecking then return end
+    IROVar.War.WeaponChecking = true
+    local function checkWeapon()
+        if InCombatLockdown() then
+            C_Timer.After(2,checkWeapon)
+        else
+            IROVar.War.WeaponChecking = false
+            IROVar.War.CheckBagForOffHandAndUpdateMacro()
+        end
+    end
+    C_Timer.After(0.5,checkWeapon)
+end
+
 function IROVar.War.SetupEventCheck()
     IROVar.War.FOnEvent=function(_,event)
         if IROVar.DebugMode then
@@ -46,13 +140,14 @@ function IROVar.War.SetupEventCheck()
         event == "BAG_UPDATE" then
             local ItemLink=GetInventoryItemLink("player", 17)--shield
             IROVar.War.isEquipShield=(ItemLink~=nil) and (select(7,GetItemInfo(ItemLink))=="Shields") or false
+            IROVar.War.CheckWeapon()
         end
     end
     C_Timer.After(2,IROVar.War.CheckTalent)
+    IROVar.War.CheckWeapon()
     IROVar.War.FEvent = CreateFrame("Frame")
     IROVar.War.FEvent:RegisterEvent("PLAYER_TALENT_UPDATE")
     IROVar.War.FEvent:RegisterEvent("BAG_UPDATE")
-    
     IROVar.War.FEvent:RegisterEvent("UNIT_INVENTORY_CHANGED")
     IROVar.War.FEvent:SetScript("OnEvent", IROVar.War.FOnEvent)
 end

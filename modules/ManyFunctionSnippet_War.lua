@@ -1,4 +1,4 @@
--- Many Function Version War 9.0.5/2
+-- Many Function Version War 9.0.5/2b
 -- this file save many function for paste to TMW Snippet LUA
 
 --function IROVar.War.CanExx(Unit or blank = "target") ; return true/false
@@ -40,16 +40,20 @@ function IROVar.War.CheckTalent()
 end
 
 function IROVar.War.CheckBagForOffHandAndUpdateMacro()
+    -- not Fury spec
+    if (IROSpecID or GetSpecializationInfo(GetSpecialization())) ~=72 then
+        IROVar.War.CanUseSwapWeapon=false
+        return
+    end
     -- incombat
     if InCombatLockdown() then return end
     -- main hand Empty
-    ------IROVar.War.MainHandWeaponLink=GetInventoryItemLink("player", 16)
     local mainHandWeaponLink=GetInventoryItemLink("player", 16)
-    local offHandWeaponLink = nil
-    local shieldLink = nil
     if not mainHandWeaponLink then return end
     -- Hold Fishing Poles
     if select(7,GetItemInfo(GetInventoryItemLink("player", 16)))=="Fishing Poles" then return end
+    local offHandWeaponLink = nil
+    local shieldLink = nil
 
     --check off hand
     local ItemLink=GetInventoryItemLink("player", 17)
@@ -137,6 +141,7 @@ function IROVar.War.SetupEventCheck()
         end
         if event == "PLAYER_TALENT_UPDATE" then
             C_Timer.After(2,IROVar.War.CheckTalent)
+            IROVar.War.CheckWeapon()
         end
         if event == "UNIT_INVENTORY_CHANGED" or
         event == "BAG_UPDATE" then

@@ -174,20 +174,22 @@ end
 
 -- IROVar and IROVar.VVCareInterrupt and IROVar.VVCareInterrupt("target")
 --if not IROVar then IROVar={} end
-IROVar.VVCareInterrupt = function(nUnit)
-    if UnitIsUnit(nUnit.."target","player") then return true end
-    if not IROVar.MobListForInterrupt then return false end
-    if not IROVar.MobListForInterrupt[IROVar.InstanceName] then
-        return false
+if not IROVar.VVCareInterrupt then
+    IROVar.VVCareInterrupt = function(nUnit)
+        if not IROVar.MobListForInterrupt then return false end
+        if not IROVar.MobListForInterrupt[IROVar.InstanceName] then
+            return false
+        end
+        local MobName=UnitName(nUnit)
+        if not MobName then return false end
+        if not IROVar.MobListForInterrupt[IROVar.InstanceName][MobName] then
+            return false
+        end
+        local SName = UnitCastingInfo(nUnit)
+        if not SName then SName = UnitChannelInfo(nUnit) end
+        if not SName then return false end
+        return IROVar.MobListForInterrupt[IROVar.InstanceName][MobName][SName]==true
     end
-    local MobName=UnitName(nUnit)
-    if not MobName then return false end
-    if not IROVar.MobListForInterrupt[IROVar.InstanceName][MobName] then
-        return false
-    end
-    local SName = UnitCastingInfo(nUnit)
-    if not SName then SName = UnitChannelInfo(nUnit) end
-    if not SName then return false end
-    return IROVar.MobListForInterrupt[IROVar.InstanceName][MobName][SName]==true
 end
+
 

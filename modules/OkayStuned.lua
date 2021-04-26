@@ -188,7 +188,9 @@ if not IROVar.VVCareInterrupt then
         local SName = UnitCastingInfo(nUnit)
         if not SName then SName = UnitChannelInfo(nUnit) end
         if not SName then return false end
-        return IROVar.MobListForInterrupt[IROVar.InstanceName][MobName][SName]==true
+        if not IROVar.MobListForInterrupt[IROVar.InstanceName][MobName][SName] then return false end
+        return (IROVar.MobListForInterrupt[IROVar.InstanceName][MobName][SName]==true) and true or
+            loadstring(IROVar.MobListForInterrupt[IROVar.InstanceName][MobName][SName])()
     end
 end
 

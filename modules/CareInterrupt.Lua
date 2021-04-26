@@ -20,6 +20,10 @@ if (not IROVar.fspec) and (not IROVar.finstanceName) then
     end)
 end
 if not IROVar.MobListForInterrupt then
+    --[[
+        [instance name]={[mob name]={[spell name] = true / lua scrip}} interrupt ONLY Spell in list on this mob
+        [instance name]={[mob name]=false} NEVER interrupt all spell on this mob
+    ]]
     IROVar.MobListForInterrupt = {
         ["Mists of Tirna Scithe"] = {
             ["Ingra Maloch"] = {["Spirit Bolt"] = true,},
@@ -99,9 +103,10 @@ if not IROVar.MobListForInterrupt then
             ["Blighted Sludge-Spewer"]={["Withering Discharge"]=true,},
             ["Bone Magus"]={["Bone Spear"]=true,},
             ["Maniacal Soulbinder"]={["Necrotic Bolt Volley"]=true,},
+            ["Sathel the Accursed"]={["Necromantic Bolt"]=[[return TMW.CNDT.Env.AuraDur("target", "one with death", "HELPFUL")==0]]},
         },
         ["Castle Nathria"]={
-
+            ["Stoneborn Maitre D'"]={["Dinner Bell"]=true}
         },
     }
     IROVar.CareInterrupt = function(nUnit)
@@ -110,9 +115,8 @@ if not IROVar.MobListForInterrupt then
         end
         local MobName=UnitName(nUnit)
         if not MobName then return true end
-        if not IROVar.MobListForInterrupt[IROVar.InstanceName][MobName] then
-            return true
-        end
+        if IROVar.MobListForInterrupt[IROVar.InstanceName][MobName]==nil then return true end
+        if IROVar.MobListForInterrupt[IROVar.InstanceName][MobName]==false then return false end
         local SName = UnitCastingInfo(nUnit)
         if not SName then SName = UnitChannelInfo(nUnit) end
         if not SName then return false end

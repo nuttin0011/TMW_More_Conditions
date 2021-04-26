@@ -1,4 +1,4 @@
--- Many Function Version War 9.0.5/2b
+-- Many Function Version War 9.0.5/2c
 -- this file save many function for paste to TMW Snippet LUA
 
 --function IROVar.War.CanExx(Unit or blank = "target") ; return true/false
@@ -15,7 +15,7 @@ IROVar.War.OffHandWeaponLink = nil
 IROVar.War.ShieldLink = nil
 IROVar.War.CanUseSwapWeapon = false
 IROVar.War.WeaponChecking=false
-
+IROVar.War.JustCheckShield=0
 function IROVar.War.CanExx(U)
     U=U or "target"
     if not IROVar.War.FOnEvent then IROVar.War.SetupEventCheck() end
@@ -119,10 +119,17 @@ function IROVar.War.CheckBagForOffHandAndUpdateMacro()
 end
 
 function IROVar.War.CheckWeapon()
+    local currentTime=GetTime()
+    if (currentTime-IROVar.War.JustCheckShield)>0.1 then
+        IROVar.War.ShieldChecking=true
+        local ItemLink=GetInventoryItemLink("player", 17)--shield
+        IROVar.War.isEquipShield=(ItemLink~=nil) and (select(7,GetItemInfo(ItemLink))=="Shields") or false
+        C_Timer.After(0.1,function() IROVar.War.ShieldChecking=false end)
+        IROVar.War.JustCheckShield=currentTime
+    end
+
     if IROVar.War.WeaponChecking then return end
     IROVar.War.WeaponChecking = true
-    local ItemLink=GetInventoryItemLink("player", 17)--shield
-    IROVar.War.isEquipShield=(ItemLink~=nil) and (select(7,GetItemInfo(ItemLink))=="Shields") or false
     local function checkWeapon()
         if InCombatLockdown() then
             C_Timer.After(0.6,checkWeapon)

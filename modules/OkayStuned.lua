@@ -182,9 +182,7 @@ if not IROVar.VVCareInterrupt then
         end
         local MobName=UnitName(nUnit)
         if not MobName then return false end
-        if not IROVar.MobListForInterrupt[IROVar.InstanceName][MobName] then
-            return false
-        end
+        if not IROVar.MobListForInterrupt[IROVar.InstanceName][MobName] then return false end
         local SName = UnitCastingInfo(nUnit)
         if not SName then SName = UnitChannelInfo(nUnit) end
         if not SName then return false end

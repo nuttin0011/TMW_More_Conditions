@@ -1,4 +1,4 @@
--- Care Interrupt V 1.5 ICON
+-- Care Interrupt V 1.6 ICON
 -- interrupt Only Important Spell at Specific Mob
 -- IROVar.CareInterrupt(unit e.g. "target") ; return true / false
 -- IROVar and IROVar.CareInterrupt and IROVar.CareInterrupt("target")
@@ -28,6 +28,7 @@ if not IROVar.MobListForInterrupt then
                 ["Parasitic Pacification"] = true,
                 ["Parasitic Incapacitation"] = true,
                 ["Parasitic Domination"] = true,
+                ["Consumption"] = [[return TMW.CNDT.Env.AuraDur("target", "gorging shield", "HELPFUL")==0]],
             },
             ["Drust Harvester"] = {["Harvest Essence"] = true,},
             ["Mistveil Tender"] = {["Nourish the Forest"] = true,},
@@ -111,7 +112,9 @@ if not IROVar.MobListForInterrupt then
         local SName = UnitCastingInfo(nUnit)
         if not SName then SName = UnitChannelInfo(nUnit) end
         if not SName then return false end
-        return IROVar.MobListForInterrupt[IROVar.InstanceName][MobName][SName]==true
+        if not IROVar.MobListForInterrupt[IROVar.InstanceName][MobName][SName] then return false end
+        return (IROVar.MobListForInterrupt[IROVar.InstanceName][MobName][SName]==true) and true or
+            loadstring(IROVar.MobListForInterrupt[IROVar.InstanceName][MobName][SName])()
     end
 end
 

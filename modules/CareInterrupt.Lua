@@ -52,6 +52,7 @@ if not IROVar.MobListForInterrupt then
             ["Zolramus Gatekeeper"] = {["Necrotic Bolt"] = true,},
             ["Zolramus Necromancer"] = {["Necrotic Bolt"] = true,},
             ["Zolramus Sorcerer"] = {["Necrotic Bolt"] = true,},
+            ["Reanimated Mage"] = {["Frostbolt Volley"] = true,},
         },
         ["De Other Side"] ={
             ["Atal'ai Deathwalker"] ={["Bladestorm"] = true,},
@@ -98,7 +99,10 @@ if not IROVar.MobListForInterrupt then
             ["Blighted Sludge-Spewer"]={["Withering Discharge"]=true,},
             ["Bone Magus"]={["Bone Spear"]=true,},
             ["Maniacal Soulbinder"]={["Necrotic Bolt Volley"]=true,},
-        }
+        },
+        ["Castle Nathria"]={
+
+        },
     }
     IROVar.CareInterrupt = function(nUnit)
         if not IROVar.MobListForInterrupt[IROVar.InstanceName] then

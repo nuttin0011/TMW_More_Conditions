@@ -1,4 +1,4 @@
--- OK Stuned V 1.5 ICON + ZeroSI + VVCare
+-- OK Stuned V 1.6 ICON + ZeroSI + VVCare
 -- interrupt Only Important Spell at Specific Mob
 -- IROVar.OKStuned(unit e.g. "target") ; return true / false
 -- IROVar and IROVar.OKStuned and IROVar.OKStuned("target")

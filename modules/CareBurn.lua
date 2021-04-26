@@ -20,6 +20,13 @@ if not IROVar.MobListForBurn then
             ["Ingra Maloch"] = [[return TMW.CNDT.Env.AuraDur("target", "droman's wrath", "HARMFUL")>0]],
             ["Droman Oulfarran"]=false,
         },
+        ["De Other Side"] = {
+            ["Mueh'zala"] = [[return (UnitHealth("target")/UnitHealthMax("target"))>0.2]],
+            ["Shattered Visage"] = true,
+        },
+        ["Halls of Atonement"] ={
+
+        },
         ["Castle Nathria"]={
             ["Sludgefist"]=[[return TMW.CNDT.Env.AuraDur("target", "destructive impact", "HARMFUL")>0]],
         },

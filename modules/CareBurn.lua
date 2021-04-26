@@ -12,6 +12,9 @@ if (not IROVar.fspec) and (not IROVar.finstanceName) then
     end)
 end
 if not IROVar.MobListForBurn then
+    --[[
+        [instance name]={[mob name]=true / false / lua scrip}
+    ]]
     IROVar.MobListForBurn = {
         ["Mists of Tirna Scithe"] = {
             ["Ingra Maloch"] = [[return TMW.CNDT.Env.AuraDur("target", "droman's wrath", "HARMFUL")>0]],

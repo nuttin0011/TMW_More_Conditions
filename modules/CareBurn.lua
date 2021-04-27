@@ -1,4 +1,4 @@
--- Care Burn 1.0 Icon
+-- Care Burn 1.1 Icon
 -- Burst Only Condition met / no condition on this mob
 -- IROVar.CareBurn(unit e.g. "target") ; return true / false
 
@@ -21,11 +21,12 @@ if not IROVar.MobListForBurn then
             ["Droman Oulfarran"]=false,
         },
         ["De Other Side"] = {
-            ["Mueh'zala"] = [[return (UnitHealth("target")/UnitHealthMax("target"))>0.2]],
+            ["Mueh'zala"] = [[return (UnitHealth("target")/UnitHealthMax("target"))<0.2]],
             ["Shattered Visage"] = true,
         },
         ["Halls of Atonement"] ={
-
+            ["Echelon"] = [[return UnitCastingInfo("target")=="Stone Call"]],
+            ["Undying Stonefiend"] = [[return TMW.CNDT.Env.AuraDur("target", "stone form", "HELPFUL")==0]],
         },
         ["Castle Nathria"]={
             ["Sludgefist"]=[[return TMW.CNDT.Env.AuraDur("target", "destructive impact", "HARMFUL")>0]],

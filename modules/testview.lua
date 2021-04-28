@@ -1,70 +1,67 @@
-if not TMW then return end
-local TMW = TMW
+-- Care Burn 1.3 Icon
+-- Burst Only Condition met / no condition on this mob
+-- IROVar.CareBurn() ; return true / false ; can use only "target"
 
-local VIEW_IDENTIFIER = "test"
-local ICON_SIZE = 30
-
-local View = TMW.Classes.IconView:New(VIEW_IDENTIFIER)
-
-View.name = "Test View"
-View.desc = "An Icon View created to demonstrate the TMW IconView API"
-
-View:RegisterIconDefaults{
-	SettingsPerView = {
-		[VIEW_IDENTIFIER] = {
-			-- Icon defaults would go here
-		}
-	}
-}
-
-View:RegisterGroupDefaults{
-	SettingsPerView = {
-		[VIEW_IDENTIFIER] = {
-		
-			-- "icon1" is the default text layout for the "icon" IconView. We will use it since it will mostly suit our purposes.
-			TextLayout = "icon1",
-			
-			-- Default icon size
-			SizeX = ICON_SIZE,
-			SizeY = ICON_SIZE,
-		}
-	}
-}
-
-View:ImplementsModule("IconModule_Alpha", 10, true)
-View:ImplementsModule("IconModule_Texts", 60, true)
-View:ImplementsModule("IconModule_Texture_Colored", 30, function(Module, icon)
-	Module:Enable()
-	Module.texture:ClearAllPoints()
-	Module.texture:SetAllPoints(icon)
-end)
-
-View:ImplementsModule("GroupModule_Resizer_ScaleY_SizeX", 10, true)
-
-function View:Icon_Setup(icon)
-	local group = icon.group
-	local gspv = group:GetSettingsPerView()
-	
-	icon:SetSize(gspv.SizeX, gspv.SizeY)
+if not IROVar then IROVar={} end
+if not IROVar.InstanceName then IROVar.InstanceName = GetInstanceInfo() end
+if (not IROVar.fspec) and (not IROVar.finstanceName) then
+    IROVar.finstanceName = CreateFrame("Frame")
+    IROVar.finstanceName:RegisterEvent("ZONE_CHANGED_NEW_AREA")
+    IROVar.finstanceName:SetScript("OnEvent", function()
+            IROVar.InstanceName = GetInstanceInfo()
+    end)
+end
+if not IROVar.MobListForBurn then
+    --[[
+        [instance name]={[mob name]=true / false / lua scrip}
+    ]]
+    IROVar.MobListForBurn = {
+        ["Mists of Tirna Scithe"] = {
+            ["Ingra Maloch"] = [[return TMW.CNDT.Env.AuraDur("target", "droman's wrath", "HARMFUL")>0]],
+            ["Droman Oulfarran"]=false,
+        },
+        ["De Other Side"] = {
+            ["Mueh'zala"] = [[return (UnitHealth("target")/UnitHealthMax("target"))<0.2]],
+            ["Shattered Visage"] = true,
+            ["Millhouse"]=false,
+        },
+        ["Halls of Atonement"] ={
+            ["Echelon"] = [[return UnitCastingInfo("target")=="Stone Call"]],
+            ["Undying Stonefiend"] = [[return TMW.CNDT.Env.AuraDur("target", "stone form", "HELPFUL")==0]],
+        },
+        ["The Necrotic Wake"] ={
+            ["Stitchflesh's Creation"]=false,
+            ["Zolramus Siphoner"]=false,
+        },
+        ["Castle Nathria"]={
+            ["Sludgefist"]=[[return TMW.CNDT.Env.AuraDur("target", "destructive impact", "HARMFUL")>0]],
+        },
+    }
+    IROVar.CareBurn = function()
+        local nUnit="target"
+        if not IROVar.MobListForBurn[IROVar.InstanceName] then
+            return true
+        end
+        local MobName=UnitName(nUnit)
+        if not MobName then return true end
+        if IROVar.MobListForBurn[IROVar.InstanceName][MobName]==nil then
+            return true
+        end
+        if IROVar.MobListForBurn[IROVar.InstanceName][MobName]==false then return false end
+        return (IROVar.MobListForBurn[IROVar.InstanceName][MobName]==true) and true or
+            loadstring(IROVar.MobListForBurn[IROVar.InstanceName][MobName])()
+    end
 end
 
-function View:Group_Setup(group)
-	local gs = group:GetSettings()
-	local gspv = group:GetSettingsPerView()
-	
-	group:SetSize(gs.Columns * (gspv.SizeX + gspv.SpacingX) - gspv.SpacingX,
-				  gs.Rows * (gspv.SizeY + gspv.SpacingY) - gspv.SpacingY)
-end
 
-function View:Icon_GetSize(icon)
-	local group = icon.group
-	local gspv = group:GetSettingsPerView()
-	
-	return gspv.SizeX, gspv.SizeY
-end
 
-function View:Group_OnCreate(gs)
-	gs.Rows, gs.Columns = 2, 2
-end
 
-View:Register(20)
+
+
+
+
+
+
+
+
+

@@ -1,6 +1,6 @@
--- Care Burn 1.1 Icon
+-- Care Burn 1.3 Icon
 -- Burst Only Condition met / no condition on this mob
--- IROVar.CareBurn(unit e.g. "target") ; return true / false
+-- IROVar.CareBurn() ; return true / false ; can use only "target"
 
 if not IROVar then IROVar={} end
 if not IROVar.InstanceName then IROVar.InstanceName = GetInstanceInfo() end
@@ -23,16 +23,22 @@ if not IROVar.MobListForBurn then
         ["De Other Side"] = {
             ["Mueh'zala"] = [[return (UnitHealth("target")/UnitHealthMax("target"))<0.2]],
             ["Shattered Visage"] = true,
+            ["Millhouse"]=false,
         },
         ["Halls of Atonement"] ={
             ["Echelon"] = [[return UnitCastingInfo("target")=="Stone Call"]],
             ["Undying Stonefiend"] = [[return TMW.CNDT.Env.AuraDur("target", "stone form", "HELPFUL")==0]],
         },
+        ["The Necrotic Wake"] ={
+            ["Stitchflesh's Creation"]=false,
+            ["Zolramus Siphoner"]=false,
+        },
         ["Castle Nathria"]={
             ["Sludgefist"]=[[return TMW.CNDT.Env.AuraDur("target", "destructive impact", "HARMFUL")>0]],
         },
     }
-    IROVar.CareBurn = function(nUnit)
+    IROVar.CareBurn = function()
+        local nUnit="target"
         if not IROVar.MobListForBurn[IROVar.InstanceName] then
             return true
         end

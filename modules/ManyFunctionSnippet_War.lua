@@ -1,11 +1,31 @@
--- Many Function Version War 9.0.5/2c
+-- Many Function Version War 9.0.5/3
 -- this file save many function for paste to TMW Snippet LUA
 
 --function IROVar.War.CanExx(Unit or blank = "target") ; return true/false
 --function IROVar.War.IsEquipShield() ; return true/false
 
 if not IROVar then IROVar={} end
+if not IROVar.InstanceName then IROVar.InstanceName = GetInstanceInfo() end
+if (not IROVar.fspec) and (not IROVar.finstanceName) then
+    IROVar.finstanceName = CreateFrame("Frame")
+    IROVar.finstanceName:RegisterEvent("ZONE_CHANGED_NEW_AREA")
+    IROVar.finstanceName:SetScript("OnEvent", function()
+            IROVar.InstanceName = GetInstanceInfo()
+    end)
+end
 IROVar.War={}
+-- [Skill Name] ={lowercase = "lower case skill",[instance name]={[Mob Name]= true / false / Lua Scrip}}
+IROVar.War.SpellThatCare = {
+    ["Shattering Throw"] = {
+        lowercase = "shattering throw",
+        ["The Necrotic Wake"] ={
+            ["Nalthor the Rimebinder"]=[[return TMW.CNDT.Env.AuraDur("target", "icebound aegis", "HELPFUL")>0]],
+        },
+        ["Theater of Pain"]={
+            ["Sathel the Accursed"]=[[return TMW.CNDT.Env.AuraDur("target", "one with death", "HELPFUL")>0]],
+        }
+    }
+}
 IROVar.War.it2Yd = "item:37727"
 IROVar.War.isMass = false
 IROVar.War.isCondemn = false
@@ -169,5 +189,21 @@ function IROVar.War.IsEquipShield()
     return IROVar.War.isEquipShield
 end
 
+function IROVar.War.VVCareSpell(nSpell) --Use Only Target
+    if not IROVar.War.SpellThatCare[nSpell][IROVar.InstanceName] then return false end
+    local mName=UnitName("target")
+    if not mName then return false end
+    if not IROVar.War.SpellThatCare[nSpell][IROVar.InstanceName][mName] then return false end
+    return (IROVar.War.SpellThatCare[nSpell][IROVar.InstanceName][mName]==true) and true or
+            loadstring(IROVar.War.SpellThatCare[nSpell][IROVar.InstanceName][mName])()
+end
 
-
+function IROVar.War.CareSpell(nSpell) --Use Only Target
+    if not IROVar.War.SpellThatCare[nSpell][IROVar.InstanceName] then return true end
+    local mName=UnitName("target")
+    if not mName then return true end
+    if IROVar.War.SpellThatCare[nSpell][IROVar.InstanceName][mName]==false then return false end
+    if IROVar.War.SpellThatCare[nSpell][IROVar.InstanceName][mName]==nil then return true end
+    return (IROVar.War.SpellThatCare[nSpell][IROVar.InstanceName][mName]==true) and true or
+            loadstring(IROVar.War.SpellThatCare[nSpell][IROVar.InstanceName][mName])()
+end

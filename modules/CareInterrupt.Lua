@@ -1,11 +1,11 @@
--- Care Interrupt V 1.6 ICON
+-- Care Interrupt V 1.7 ICON
 -- interrupt Only Important Spell at Specific Mob
 -- IROVar.CareInterrupt(unit e.g. "target") ; return true / false
 -- IROVar and IROVar.CareInterrupt and IROVar.CareInterrupt("target")
 
 -- Combo %Cast+Care Interrupt+Smart Interrupt
 --[[
-    PercentCastbar2 and IROVar and IROVar.CareInterrupt and 
+    PercentCastbar2 and IROVar and IROVar.CareInterrupt and
     PercentCastbar2()and IROVar.CareInterrupt("target")and
     ((not NextInterrupter) or NextInterrupter.IsMyTurn())
 ]]
@@ -93,6 +93,7 @@ if not IROVar.MobListForInterrupt then
             ["Forsworn Champion"]={["Forsworn Doctrine"]=true,},
             ["Forsworn Warden"]={["Greater Mending"]=true,},
             ["Forsworn Justicar"]={["Forced Confession"]=true,},
+            ["Forsworn Inquisitor"]={["Internal Strife"]=true,},
         },
         ["Theater of Pain"]={
             ["Battlefield Ritualist"]={["Unholy Fervor"]=true,},

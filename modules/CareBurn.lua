@@ -36,6 +36,9 @@ if not IROVar.MobListForBurn then
         ["Castle Nathria"]={
             ["Sludgefist"]=[[return TMW.CNDT.Env.AuraDur("target", "destructive impact", "HARMFUL")>0]],
         },
+        ["The Shadowlands"]={
+            ["Training Dummy"]=false,
+        },
     }
     IROVar.CareBurn = function()
         local nUnit="target"

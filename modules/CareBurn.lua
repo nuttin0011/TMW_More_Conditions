@@ -1,4 +1,4 @@
--- Care Burn 1.3 Icon
+-- Care Burn 1.4 Icon
 -- Burst Only Condition met / no condition on this mob
 -- IROVar.CareBurn() ; return true / false ; can use only "target"
 
@@ -23,7 +23,7 @@ if not IROVar.MobListForBurn then
         ["De Other Side"] = {
             ["Mueh'zala"] = [[return (UnitHealth("target")/UnitHealthMax("target"))<0.2]],
             ["Shattered Visage"] = true,
-            ["Millhouse"]=false,
+            ["Millhouse Manastorm"]=false,
         },
         ["Halls of Atonement"] ={
             ["Echelon"] = [[return UnitCastingInfo("target")=="Stone Call"]],
@@ -36,9 +36,7 @@ if not IROVar.MobListForBurn then
         ["Castle Nathria"]={
             ["Sludgefist"]=[[return TMW.CNDT.Env.AuraDur("target", "destructive impact", "HARMFUL")>0]],
         },
-        ["The Shadowlands"]={
-            ["Training Dummy"]=false,
-        },
+
     }
     IROVar.CareBurn = function()
         local nUnit="target"

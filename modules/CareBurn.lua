@@ -1,4 +1,4 @@
--- Care Burn 1.4 Icon
+-- Care Burn 1.4b Icon
 -- Burst Only Condition met / no condition on this mob
 -- IROVar.CareBurn() ; return true / false ; can use only "target"
 
@@ -34,7 +34,7 @@ if not IROVar.MobListForBurn then
             ["Zolramus Siphoner"]=false,
         },
         ["Castle Nathria"]={
-            ["Sludgefist"]=[[return TMW.CNDT.Env.AuraDur("target", "destructive impact", "HARMFUL")>0]],
+            ["Sludgefist"]=[[return TMW.CNDT.Env.AuraDur("target", "destructive impact")>0]],
         },
 
     }

@@ -1,6 +1,6 @@
--- Care Burn 1.4b Icon
+-- Care Burn 1.5 Icon
 -- Burst Only Condition met / no condition on this mob
--- IROVar.CareBurn() ; return true / false ; can use only "target"
+-- IROVar.CareBurn(spec) ; return true / false ; can use only "target"
 
 if not IROVar then IROVar={} end
 if not IROVar.InstanceName then IROVar.InstanceName = GetInstanceInfo() end
@@ -34,11 +34,15 @@ if not IROVar.MobListForBurn then
             ["Zolramus Siphoner"]=false,
         },
         ["Castle Nathria"]={
-            ["Sludgefist"]=[[return TMW.CNDT.Env.AuraDur("target", "destructive impact")>0]],
+            --burn after impact
+            ["Sludgefist"]=[[return TMW.CNDT.Env.AuraDur("target", "destructive impact", "HELPFUL")>0]],
+            --burn 2 sec befor run impact , 253 is Hunter BM
+            ["Sludgefist253"]=[[local tHG=TMW.CNDT.Env.AuraDur("targettarget", "hateful gaze", "HARMFUL");return ((t>0)and(t<2))or(TMW.CNDT.Env.AuraDur("target", "destructive impact", "HELPFUL")>0)]]
         },
 
     }
-    IROVar.CareBurn = function()
+    IROVar.CareBurn = function(spec)
+        spec=spec or ""
         local nUnit="target"
         if not IROVar.MobListForBurn[IROVar.InstanceName] then
             return true
@@ -47,6 +51,10 @@ if not IROVar.MobListForBurn then
         if not MobName then return true end
         if IROVar.MobListForBurn[IROVar.InstanceName][MobName]==nil then
             return true
+        end
+        local MobNameWithSpec=MobName..spec
+        if IROVar.MobListForBurn[IROVar.InstanceName][MobNameWithSpec]~=nil then
+            MobName=MobNameWithSpec
         end
         if IROVar.MobListForBurn[IROVar.InstanceName][MobName]==false then return false end
         return (IROVar.MobListForBurn[IROVar.InstanceName][MobName]==true) and true or

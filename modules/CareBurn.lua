@@ -1,4 +1,4 @@
--- Care Burn 1.5 Icon
+-- Care Burn 1.5 edit Icon
 -- Burst Only Condition met / no condition on this mob
 -- IROVar.CareBurn(spec) ; return true / false ; can use only "target"
 
@@ -37,7 +37,11 @@ if not IROVar.MobListForBurn then
             --burn after impact
             ["Sludgefist"]=[[return TMW.CNDT.Env.AuraDur("target", "destructive impact", "HELPFUL")>0]],
             --burn 2 sec befor run impact , 253 is Hunter BM
-            ["Sludgefist253"]=[[local tHG=TMW.CNDT.Env.AuraDur("targettarget", "hateful gaze", "HARMFUL");return ((t>0)and(t<2))or(TMW.CNDT.Env.AuraDur("target", "destructive impact", "HELPFUL")>0)]]
+            ["Sludgefist253"]=[[local tHG=TMW.CNDT.Env.AuraDur("targettarget", "hateful gaze", "HARMFUL");return ((t>0)and(t<2))or(TMW.CNDT.Env.AuraDur("target", "destructive impact", "HELPFUL")>0)]],
+            --not has Shield
+            ["General Kaal"]=[[return TMW.CNDT.Env.AuraDur("target", "hardened stone form", "HELPFUL")==0]],
+            ["General Grashaal"]=[[return TMW.CNDT.Env.AuraDur("target", "hardened stone form", "HELPFUL")==0]],
+
         },
 
     }

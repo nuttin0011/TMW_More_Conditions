@@ -13,7 +13,7 @@ if (not IROVar.fspec) and (not IROVar.finstanceName) then
 end
 if not IROVar.MobListForBurn then
     --[[
-        [instance name]={[mob name]=true / false / lua scrip}
+        [instance name]={[mob name/encounterID]=true / false / lua scrip}
     ]]
     IROVar.MobListForBurn = {
         ["Mists of Tirna Scithe"] = {
@@ -41,12 +41,53 @@ if not IROVar.MobListForBurn then
             --not has Shield
             ["General Kaal"]=[[return TMW.CNDT.Env.AuraDur("target", "hardened stone form", "HELPFUL")==0]],
             ["General Grashaal"]=[[return TMW.CNDT.Env.AuraDur("target", "hardened stone form", "HELPFUL")==0]],
-
+        },
+        --2383 Hungering Destroyer Castle Nathria
+        [2383]={ -- 0 = default
+            [0]=[[
+                local t1=GetTime()-IROVar.MobListForBurn.encounterStart-IROVar.MobListForBurn.enTimer1
+                local t2=GetTime()-IROVar.MobListForBurn.encounterStart-IROVar.MobListForBurn.enTimer2
+                if (UnitChannelInfo("boss1")=="Consume")and(t1>5) then IROVar.MobListForBurn.enTimer1=GetTime()-IROVar.MobListForBurn.encounterStart end
+                if (UnitCastInfo("boss1")=="Expunge")and(t2>6) thenIROVar.MobListForBurn.enTimer2=GetTime()-IROVar.MobListForBurn.encounterStart end
+                return (t1<75)and(t2<25)
+            ]],
         },
 
     }
+    if not IROVar.MobListForBurn.event then
+        IROVar.MobListForBurn.encounterStart=0
+        IROVar.MobListForBurn.eventFunc=function(_,event,encounterID, encounterName, difficultyID, groupSize,success)
+            if event=="ENCOUNTER_START" then
+                IROVar.MobListForBurn.encounterID=encounterID
+                IROVar.MobListForBurn.encounterStart=GetTime()
+                IROVar.MobListForBurn.enTimer1=0
+                IROVar.MobListForBurn.enTimer2=0
+                IROVar.MobListForBurn.enTimer3=0
+            elseif event=="ENCOUNTER_END" then
+                IROVar.MobListForBurn.encounterID=nil
+            end
+        end
+    end
+    if not IROVar.MobListForBurn.frame then
+        IROVar.MobListForBurn.frame=CreateFrame("Frame")
+        IROVar.MobListForBurn.frame:RegisterEvent("ENCOUNTER_START")
+        IROVar.MobListForBurn.frame:RegisterEvent("ENCOUNTER_END")
+        IROVar.MobListForBurn.frame:SetScript("OnEvent", IROVar.MobListForBurn.eventFunc)
+    end
     IROVar.CareBurn = function(spec)
         spec=spec or ""
+        local encounterID=IROVar.MobListForBurn.encounterID or 0
+        if IROVar.MobListForBurn[encounterID] then
+            if IROVar.MobListForBurn[encounterID][spec]~=nil then
+                if IROVar.MobListForBurn[encounterID][spec]==false then return false end
+                return (IROVar.MobListForBurn[encounterID][spec]==true) and true or
+                loadstring(IROVar.MobListForBurn[encounterID][spec])()
+            else
+                if IROVar.MobListForBurn[encounterID][0]==false then return false end
+                return (IROVar.MobListForBurn[encounterID][0]==true) and true or
+                loadstring(IROVar.MobListForBurn[encounterID][0])()
+            end
+        end
         local nUnit="target"
         if not IROVar.MobListForBurn[IROVar.InstanceName] then
             return true

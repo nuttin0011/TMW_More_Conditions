@@ -36,8 +36,9 @@ if not IROVar.MobListForBurn then
         ["Castle Nathria"]={
             --burn after impact
             ["Sludgefist"]=[[return TMW.CNDT.Env.AuraDur("target", "destructive impact", "HELPFUL")>0]],
-            --burn 2 sec befor run impact , 253 is Hunter BM
+            --burn 2 sec befor run impact , 253=Hunter BM ,72=war fury
             ["Sludgefist253"]=[[local tHG=TMW.CNDT.Env.AuraDur("targettarget", "hateful gaze", "HARMFUL");return ((t>0)and(t<2))or(TMW.CNDT.Env.AuraDur("target", "destructive impact", "HELPFUL")>0)]],
+            ["Sludgefist72"]=[[local tHG=TMW.CNDT.Env.AuraDur("targettarget", "hateful gaze", "HARMFUL");return ((t>0)and(t<2))or(TMW.CNDT.Env.AuraDur("target", "destructive impact", "HELPFUL")>0)]],
             --not has Shield
             ["General Kaal"]=[[return TMW.CNDT.Env.AuraDur("target", "hardened stone form", "HELPFUL")==0]],
             ["General Grashaal"]=[[return TMW.CNDT.Env.AuraDur("target", "hardened stone form", "HELPFUL")==0]],
@@ -48,12 +49,17 @@ if not IROVar.MobListForBurn then
                 local t1=GetTime()-IROVar.MobListForBurn.encounterStart-IROVar.MobListForBurn.enTimer1
                 local t2=GetTime()-IROVar.MobListForBurn.encounterStart-IROVar.MobListForBurn.enTimer2
                 if (UnitChannelInfo("boss1")=="Consume")and(t1>5) then IROVar.MobListForBurn.enTimer1=GetTime()-IROVar.MobListForBurn.encounterStart end
-                if (UnitCastInfo("boss1")=="Expunge")and(t2>6) thenIROVar.MobListForBurn.enTimer2=GetTime()-IROVar.MobListForBurn.encounterStart end
+                if (UnitCastInfo("boss1")=="Expunge")and(t2>6) then IROVar.MobListForBurn.enTimer2=GetTime()-IROVar.MobListForBurn.encounterStart end
                 return (t1<75)and(t2<25)
             ]],
         },
 
     }
+    IROVar.MobListForBurn.encounterID=nil
+    IROVar.MobListForBurn.encounterStart=GetTime()
+    IROVar.MobListForBurn.enTimer1=0
+    IROVar.MobListForBurn.enTimer2=0
+    IROVar.MobListForBurn.enTimer3=0
     if not IROVar.MobListForBurn.event then
         IROVar.MobListForBurn.encounterStart=0
         IROVar.MobListForBurn.eventFunc=function(_,event,encounterID, encounterName, difficultyID, groupSize,success)
@@ -75,6 +81,9 @@ if not IROVar.MobListForBurn then
         IROVar.MobListForBurn.frame:SetScript("OnEvent", IROVar.MobListForBurn.eventFunc)
     end
     IROVar.CareBurn = function(spec)
+        if IROVar.MobListForBurn.encounterID and (not UnitExists("boss1")) then
+            IROVar.MobListForBurn.encounterID=nil
+        end
         spec=spec or ""
         local encounterID=IROVar.MobListForBurn.encounterID or 0
         if IROVar.MobListForBurn[encounterID] then

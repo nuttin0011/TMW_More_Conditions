@@ -1,7 +1,6 @@
--- Many Function Version 9.0.5/38
+-- Many Function Version 9.0.5/39
 -- this file save many function for paste to TMW Snippet LUA
 
---function IROEnemyCountIn8yd(Rlevel) ; return count
 --function IROEnemyCountInRange(nRange) ; return count, nRange = yard e.g. 2 5 8 15 20 30 40 50 200
 --function PercentCastbar2(PercentCast, MustInterruptAble,unit, MinTMS,MaxTMS); return true/false
 --function GCDActiveLessThan(ttime) ; return true/false
@@ -77,16 +76,6 @@ end
 IROVar.UpdateVar() --update Now after login
 C_Timer.After(5,IROVar.UpdateVar) --update 5 sec after login
 
-local ItemRangeCheck = {
-    [1]=34368, -- Attuned Crystal Cores 8 yard
-    [2]=33069, -- Sturdy Rope 15 yard
-    [3]=10645, -- Gnomish Death Ray 20 yard
-    [4]=835, -- Large Rope Net 30 yard
-    [5]=28767, -- The Decapitator 40 yard
-    [6]=32321, -- Sparrowhawk Net 10 yard
-}
-IROVar.ItemNameToCheck8 = "item:"..ItemRangeCheck[1]
-
 IROVar.CheckDPSRange = function(nUnit)
     if IROVar.SkillCheckDPSRange == nil then return true end
     nUnit = nUnit or "target"
@@ -112,25 +101,6 @@ IROVar.ERO_Old_Val = {Timer=0,Old_Val={},
         IROVar.ERO_Old_Val.Old_Val[functionName][input_val_string]=result_val
     end
 }
-
-function IROEnemyCountIn8yd(Rlevel)
-    --return enemy count in Range Default 8 yard Max 8
-    Rlevel = Rlevel or 0
-    --Rlevel 0=8,1=15,2=20,3=30,4=40,5=10 yard
-    local ItemNameToCheck = "item:"..ItemRangeCheck[Rlevel+1]
-    local nn
-    local count=0
-    for i=1,30 do
-        nn='nameplate'..i
-        if UnitExists(nn) and UnitCanAttack("player", nn) then
-            if IsItemInRange(IROVar.ItemNameToCheck8, nn)or(UnitAffectingCombat(nn)and IsItemInRange(ItemNameToCheck, nn)) then
-                count=count+1
-            end
-        end
-        if count>=8 then break end
-    end
-    return count
-end
 
 local ItemRangeCheck2 = {
     [2] =37727, -- Ruby Acorn
@@ -158,6 +128,7 @@ local ItemRangeCheck2 = {
     [150] =46954, -- Flaming Spears
     [200] =75208, -- Rancher's Lariat
 }
+IROVar.ItemNameToCheck8 = "item:34368"
 
 function IROEnemyCountInRange(nRange)
     nRange = nRange or 8
@@ -173,7 +144,7 @@ function IROEnemyCountInRange(nRange)
     for i=1,30 do
         nn='nameplate'..i
         if UnitExists(nn) and UnitCanAttack("player", nn) then
-            if IsItemInRange(ItemNameToCheck, nn) then
+            if IsItemInRange(ItemNameToCheck,nn)and(UnitAffectingCombat(nn) or (nRange<=8) or IsItemInRange(IROVar.ItemNameToCheck8, nn)) then
                 count=count+1
             end
         end

@@ -118,7 +118,20 @@ end
 
 
 
+IROVar.MobListForBurnByEncounterID = {
+    [2383]={
+        timer_name ={"timer1","timer2","timer3"},
+        start_up = [[reset("timer1") reset("timer2")]],
+        register_event ={
+            ["SPELL_CAST_START 22354"]=[[reset("timer1") reset("timer2")]],
+            ["SPELL_AURA_APPLIED 55445"]=[[reset("timer3")]]
+        },
+        condition=[[return (TMW.CNDT.Env.AuraDur("player","debuff", "HARMFUL")==0)and (val("timer1")<25)]],
+        condition72=[[return true]],
+    }
 
+
+}
 
 
 

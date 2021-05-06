@@ -43,17 +43,6 @@ if not IROVar.MobListForBurn then
             ["General Kaal"]=[[return TMW.CNDT.Env.AuraDur("target", "hardened stone form", "HELPFUL")==0]],
             ["General Grashaal"]=[[return TMW.CNDT.Env.AuraDur("target", "hardened stone form", "HELPFUL")==0]],
         },
-        --2383 Hungering Destroyer Castle Nathria
-        [2383]={ -- 0 = default
-            [0]=[[
-                local t1=GetTime()-IROVar.MobListForBurn.encounterStart-IROVar.MobListForBurn.enTimer1
-                local t2=GetTime()-IROVar.MobListForBurn.encounterStart-IROVar.MobListForBurn.enTimer2
-                if (UnitChannelInfo("boss1")=="Consume")and(t1>5) then IROVar.MobListForBurn.enTimer1=GetTime()-IROVar.MobListForBurn.encounterStart end
-                if (UnitCastInfo("boss1")=="Expunge")and(t2>6) then IROVar.MobListForBurn.enTimer2=GetTime()-IROVar.MobListForBurn.encounterStart end
-                return (t1<75)and(t2<25)
-            ]],
-        },
-
     }
     IROVar.MobListForBurn.encounterID=nil
     IROVar.MobListForBurn.encounterStart=GetTime()
@@ -129,13 +118,7 @@ IROVar.MobListForBurnByEncounterID = {
         condition=[[return (TMW.CNDT.Env.AuraDur("player","debuff", "HARMFUL")==0)and (val("timer1")<25)]],
         condition72=[[return true]],
     }
-
-
 }
-
-
-
-
 
 
 

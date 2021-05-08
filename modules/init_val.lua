@@ -147,18 +147,15 @@ function Env.CheckDebuffAuraType(unit)
     local DDisease = false
     local DPoison = false
     local DCurse = false
-    local i
-    
     local buffName,debuffType
     for i = 1, 40 do
-        buffName, _, _, debuffType= _UnitAura(unit, i, "HARMFUL")
+        buffName, _, _, debuffType= UnitAura(unit, i, "HARMFUL")
         if not buffName then break end
         if debuffType=="Magic" then DMagic = true end
         if debuffType=="Disease"then DDisease = true end
         if debuffType=="Poison" then DPoison = true end
         if debuffType=="Curse" then DCurse = true end
     end
-    
     return  DMagic, DDisease, DPoison, DCurse
 end
 
@@ -183,26 +180,6 @@ end
 
 --********************** OLD FUNCTION **************************
 
-
-function TMW.CNDT.Env.IROEnemyCount()
-    -- return Enemy Count in 8 yd Max 5
-    if GetTime() == oldtimeIROEnemyCount then
-        return oldIROEnemyCount
-    end
-    oldtimeIROEnemyCount = GetTime()
-    local i,nn,count
-    count=0
-    for i=1,30 do
-        nn='nameplate'..i
-        if UnitExists(nn) and IsItemInRange("item:34368", nn) then
-            count=count+1
-        end
-        if count>=5 then break end
-    end
-    oldIROEnemyCount=count
-    return  count
-end
-
 function TMW.CNDT.Env.GroupHPPercent()
     if GroupHPPercentTimer == GetTime() then
         return GroupHPPercentOldVar
@@ -229,112 +206,6 @@ function TMW.CNDT.Env.GroupHPPercent()
     GroupHPPercentOldVar = (sumHP/sumHPMax)*100
     return GroupHPPercentOldVar
 end
-
-function TMW.CNDT.Env.GroupHPPercent()
-    if GroupHPPercentTimer == GetTime() then
-        return GroupHPPercentOldVar
-    end
-    local i,nn,sumHP,sumHPMax
-    if IsInRaid() then
-        sumHP=0
-        sumHPMax=0
-        for i=1,40 do
-            nn="raid"..i
-            if UnitExists(nn)and(not UnitIsDead(nn))and UnitInRange(nn) then
-                sumHP=sumHP+UnitHealth(nn)
-                sumHPMax=sumHPMax+UnitHealthMax(nn)
-    end end else
-        sumHP=UnitHealth("player")
-        sumHPMax=UnitHealthMax("player")
-        for i=1,4 do
-            nn="party"..i
-            if UnitExists(nn)and(not UnitIsDead(nn))and UnitInRange(nn) then
-                sumHP=sumHP+UnitHealth(nn)
-                sumHPMax=sumHPMax+UnitHealthMax(nn)
-    end end end
-    GroupHPPercentTimer = GetTime()
-    GroupHPPercentOldVar = (sumHP/sumHPMax)*100
-    return GroupHPPercentOldVar
-end
-
-function TMW.CNDT.Env.SumHPMobin8yd()
-    local sumhp =0
-    local ii,nn
-    for ii =1,30 do
-        nn='nameplate'..ii
-        if UnitExists(nn) and IsItemInRange("item:34368", nn) then
-            sumhp=sumhp+ UnitHealth(nn)
-        end
-    end
-    return sumhp
-end
-
-function TMW.CNDT.Env.PercentCastbar(PercentCast, MustInterruptAble,unit, MinTMS,MaxTMS)
-    
-    PercentCast = PercentCast or 0.6
-    if MustInterruptAble == nil then MustInterruptAble = true end
-    MaxTMS = MaxTMS or 2000
-    MinTMS = MinTMS or 800
-	unit = unit or "target"
-    
-    local castingName, _, _, startTimeMS, endTimeMS, _, _, notInterruptible= UnitCastingInfo(unit)
-    
-    local wantInterrupt = false
-	local totalcastTime
-    local currentcastTime
-	local percentcastTime
-	
-    if (castingName ~= nil) and(not(notInterruptible and MustInterruptAble)) then
-        totalcastTime = endTimeMS-startTimeMS
-        currentcastTime = (GetTime()*1000)-startTimeMS       
-        
-        if (totalcastTime-currentcastTime)>MaxTMS then
-            -- if cast time > MaxTMS ms dont interrupt
-            wantInterrupt = false
-        elseif (totalcastTime-currentcastTime)<MinTMS then 
-            -- if cast time < MinTMS ms dont interrupt
-            wantInterrupt = true
-        else
-            percentcastTime = currentcastTime/totalcastTime
-            wantInterrupt = percentcastTime >= PercentCast
-        end
-        return  wantInterrupt
-    end
-    
-    local channelName, _, _, CstartTimeMS, CendTimeMS,_, CnotInterruptible= UnitChannelInfo(unit) 
-    
-    if (channelName ~= nil) and (not (CnotInterruptible and MustInterruptAble)) then
-        PercentCast = 1-PercentCast
-        totalcastTime = CendTimeMS-CstartTimeMS
-        currentcastTime = (GetTime()*1000)-CstartTimeMS 
-        
-        if (currentcastTime>=MinTMS) and (currentcastTime<=(totalcastTime-MinTMS)) then
-			wantInterrupt = true
-        end
-        
-        
-    end 
-    
-    return  wantInterrupt
-end
-
---[[  this function already exists at "conset1.lua"
-function TMW.CNDT.Env.allBuffByMe(unit)
-    -- return table of [buff name] = buff time remaining
-    
-    local buffName,expTime,i
-    local allBuff={}
-    for i=1,40 do
-        buffName,_,_,_,_,expTime = UnitAura(unit, i, "PLAYER|HELPFUL")
-        if buffName then 
-            allBuff[buffName]=expTime-GetTime()
-        else break  end
-    end
-    
-    return allBuff
-end
---]]
-
 
 
 -- THIS Function for Shaman Heal 8.3!!!!!

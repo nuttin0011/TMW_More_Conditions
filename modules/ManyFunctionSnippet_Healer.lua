@@ -88,3 +88,66 @@ function IROVar.Healer.CheckDebuffAuraType(unit)
     return  DMagic, DDisease, DPoison, DCurse
 end
 
+function IROVar.Healer.predictHPremain(unit,DMagic,DDisease,DPoison,DCurse)
+    -- return percent HP remain
+    -- =currentHP + Shield + IncommingHeal/2
+    -- -HealAbsorb + ifHP>80%constant
+    -- -WantCleanConstant (Magic,Disease,Poison,Curse)
+    local M,D,P,C = IROVar.Healer.CheckDebuffAuraType(unit)
+    DMagic = (DMagic or 0)*(M and 1 or 0)
+    -- check Unit Has MagicDEBUFF? and if has use as penalty %HP
+    DDisease = (DDisease or 0)*(D and 1 or 0)
+    DPoison = (DPoison or 0)*(P and 1 or 0)
+    DCurse = (DCurse or 0)*(C and 1 or 0)
+
+    local uMHP= UnitHealthMax(unit)/100
+
+    -- if unit not exists return 50000
+    if uMHP==0 then return 50000 end
+
+    local iCH = (UnitGetIncomingHeals(unit)or 0) /(uMHP*2)
+    local abs = UnitGetTotalAbsorbs(unit)/uMHP
+    local Habs= UnitGetTotalHealAbsorbs(unit)/uMHP
+    local uHP = UnitHealth(unit)/uMHP
+    local HPMod=0 --TMW.CNDT.Env.CheckBuffMustHaveByMe(unit)
+
+    -- debuff penaltry chose only Max one
+    local DBP = math.max(DMagic,DDisease,DPoison,DCurse)
+
+    uHP=uHP+abs
+
+    if uHP>60 then uHP=uHP+20 end -- HP > 60% less chance to chose
+    if uHP>80 then uHP=uHP+20 end -- if HP > 80% more less chance
+
+    -- Tank -1%hp for 1st pick
+    if UnitGroupRolesAssigned(unit) =="TANK" then
+        return (uHP+iCH-Habs-DBP-HPMod)-1
+    else
+        return (uHP+iCH-Habs-DBP-HPMod)
+    end
+end
+
+function IROVar.Healer.FindLowestHP()
+    if UnitIsDead("player") then return "player" end
+    local unit="player"
+    local HP=IROVar.Healer.predictHPremain(unit)
+    local function cHP(Unit)
+        if UnitExists(Unit) and (not UnitIsDead(Unit))and UnitInRange(Unit) then
+            local tHP=IROVar.Healer.predictHPremain(Unit)
+            if tHP<HP then
+                HP=tHP
+                unit=Unit
+            end
+        end
+    end
+    if IsInRaid() then
+        for i=1,30 do
+            cHP("raid"..i)
+        end
+    elseif IsInGroup() then
+        for i=1,4 do
+            cHP("party"..i)
+        end
+    end
+    return unit,HP
+end

@@ -1,4 +1,4 @@
--- Care Interrupt V 1.7 ICON
+-- Care Interrupt V 1.8 ICON
 -- interrupt Only Important Spell at Specific Mob
 -- IROVar.CareInterrupt(unit e.g. "target") ; return true / false
 -- IROVar and IROVar.CareInterrupt and IROVar.CareInterrupt("target")
@@ -109,6 +109,10 @@ if not IROVar.MobListForInterrupt then
         ["Castle Nathria"]={
             ["Stoneborn Maitre D'"]={["Dinner Bell"]=true}
         },
+        ["The Shadowlands"]={
+            ["Mawsworn Myrmidon"]={["Horrifying Shout"]=true}
+        },
+
     }
     IROVar.CareInterrupt = function(nUnit)
         if not IROVar.MobListForInterrupt[IROVar.InstanceName] then

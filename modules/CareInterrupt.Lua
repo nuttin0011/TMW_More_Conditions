@@ -1,4 +1,4 @@
--- Care Interrupt V 1.8 ICON
+-- Care Interrupt V 1.85 ICON
 -- interrupt Only Important Spell at Specific Mob
 -- IROVar.CareInterrupt(unit e.g. "target") ; return true / false
 -- IROVar and IROVar.CareInterrupt and IROVar.CareInterrupt("target")
@@ -69,7 +69,6 @@ if not IROVar.MobListForInterrupt then
             ["Kryxis the Voracious"]={["Hungering Drain"] =true,},
             ["Wicked Oppressor"]={["Wrack Soul"] = true,},
             ["Chamber Sentinel"]={["Stoneskin"]=true,},
-            ["Depths Warden"]={["Crushing Strike"]=true,},
             ["Vestige of Doubt"]={["Growing Mistrust"]=true,},
         },
         ["Halls of Atonement"]={

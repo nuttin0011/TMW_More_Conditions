@@ -1,37 +1,23 @@
+playerGUID = UnitGUID("player")
 
 
-if not IROVar then IROVar={} end
-if not IROVar.Healer then IROVar.Healer={} end
-IROVar.Healer.UnitToIRO={
-	['player']='ff073b07',
-	['party1']='ff033b03',
-	['party2']='ff053b05',
-	['party3']='ff063b06',
-	['party4']='ff013b01',
-	['raid1']='ff023b02',
-	['raid2']='ff043b04',
-	['raid3']='ff003b00',
-	['raid4']='ff073c07',
-	['raid5']='ff033c03',
-	['raid6']='ff053c05',
-	['raid7']='ff063c06',
-	['raid8']='ff013c01',
-	['raid9']='ff023c02',
-	['raid10']='ff043c04',
-	['raid11']='ff003c00',
-	['raid12']='ff033d03',
-	['raid13']='ff053d05',
-	['raid14']='ff063d06',
-	['raid15']='ff013d01',
-	['raid16']='ff023d02',
-	['raid17']='ff043d04',
-	['raid18']='ff003d00',
-	['raid19']='ff073e07',
-	['raid20']='ff033e03',
-	['raid21']='ff053e05',
-	['raid22']='ff063e06',
-	['raid23']='ff013e01',
-	['raid24']='ff023e02',
-	['raid25']='ff043e04',
-	['raid26']='ff003e00',
-}
+f = CreateFrame("Frame")
+f:RegisterEvent("COMBAT_LOG_EVENT_UNFILTERED")
+f:SetScript("OnEvent", function(self, event)
+	self:COMBAT_LOG_EVENT_UNFILTERED(CombatLogGetCurrentEventInfo())
+end)
+
+function f:COMBAT_LOG_EVENT_UNFILTERED(...)
+	local timestamp, subevent, _, sourceGUID, sourceName, sourceFlags, sourceRaidFlags, destGUID, destName, destFlags, destRaidFlags = ...
+	local spellId, spellName, spellSchool
+	local amount, overkill, school, resisted, blocked, absorbed, critical, glancing, crushing, isOffHand
+
+	if subevent == "SPELL_HEAL" then
+		spellId, spellName, spellSchool, amount, overkill, school, resisted, blocked, absorbed, critical, glancing, crushing, isOffHand = select(12, ...)
+	end
+
+	if (sourceGUID == playerGUID) and (spellName=="Rising Mist") then
+		print("Rising Mist Heal : "..(amount+overkill))
+
+	end
+end

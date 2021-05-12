@@ -1,7 +1,13 @@
 -- Many Function Version Warlock 9.0.5/1
 -- this file save many function for paste to TMW Snippet LUA
 
+--function IROVar.Healer.UnitToIROCode(unit) ; use in ERO_DPS
 --function IROVar.Healer.GetMyCleanType() ;  return Magic,Disease,Poison,Curse penalty, spell name
+--function IROVar.Healer.percentHP(unit)
+--function IROVar.Healer.nPlayerHP(LessHP) ; return number of player HP%<=LessHP%
+--function IROVar.Healer.nPlayerRole(role)--TANK, HEALER, DAMAGER, NONE
+--IROVar.Healer.NumHealer ; number healer in group update every start combat
+--function IROVar.Healer.GroupHPPercent()
 
 if not IROVar then IROVar={} end
 if not IROVar.Healer then IROVar.Healer={} end
@@ -43,6 +49,13 @@ IROVar.Healer.CleanType[581] = {0,0,0,0,''} -- Vengeance
 IROVar.Healer.CleanType[250] = {0,0,0,0,''} -- Blood
 IROVar.Healer.CleanType[251] = {0,0,0,0,''} -- frost
 IROVar.Healer.CleanType[252] = {0,0,0,0,''} -- unholy
+
+function IROVar.Healer.UnitToIROCode(unit)
+    if not unit then return "ff000000" end
+    local c=IROVar.Healer.UnitToIRO[unit]
+    if not c then return "ff000000" end
+    return c
+end
 
 function IROVar.Healer.GetMyCleanType()
     if not IROSpecID then
@@ -127,6 +140,82 @@ function IROVar.Healer.predictHPremain(unit,DMagic,DDisease,DPoison,DCurse)
     end
 end
 
+function IROVar.Healer.percentHP(unit)
+    return UnitHealth(unit)/UnitHealthMax(unit)*100
+end
+
+function IROVar.Healer.nPlayerRole(role)
+    --TANK, HEALER, DAMAGER, NONE
+    local nUnit
+    local n
+    if IsInRaid() then
+        n=0
+        for i=1,30 do
+            nUnit="raid"..i
+            if UnitExists(nUnit) then
+                n=n+((UnitGroupRolesAssigned(nUnit)==role) and 1 or 0)
+            else
+                break
+            end
+        end
+    elseif IsInGroup() then
+        n=(UnitGroupRolesAssigned("player")==role) and 1 or 0
+        for i=1,4 do
+            nUnit="party"..i
+            if UnitExists(nUnit) then
+                n=n+((UnitGroupRolesAssigned(nUnit)==role) and 1 or 0)
+            else
+                break
+            end
+        end
+    else
+        return (UnitGroupRolesAssigned("player")==role) and 1 or 0
+    end
+    return (n>=1) and n or 1
+end
+
+--check Role when start combat
+IROVar.Healer.NumHealer=IROVar.Healer.nPlayerRole("HEALER") or 1
+function IROVar.Healer.OnEvent()
+	IROVar.Healer.NumHealer=IROVar.Healer.nPlayerRole("HEALER")
+end
+IROVar.Healer.f = CreateFrame("Frame")
+IROVar.Healer.f:RegisterEvent("PLAYER_REGEN_DISABLED")
+IROVar.Healer.f:SetScript("OnEvent", IROVar.Healer.OnEvent)
+
+function IROVar.Healer.nPlayerHP(LessHP)
+    local nUnit
+    local n
+    if IsInRaid() then
+        n=0
+        for i=1,30 do
+            nUnit="raid"..i
+            if UnitExists(nUnit) then
+                if (not UnitIsDead(nUnit)) then
+                    n=n+((IROVar.Healer.percentHP(nUnit)<=LessHP) and 1 or 0)
+                end
+            else
+                break
+            end
+        end
+    elseif IsInGroup() then
+        n=(IROVar.Healer.percentHP("player")<=LessHP) and 1 or 0
+        for i=1,4 do
+            nUnit="party"..i
+            if UnitExists(nUnit) then
+                if (not UnitIsDead(nUnit)) then
+                    n=n+((IROVar.Healer.percentHP(nUnit)<=LessHP) and 1 or 0)
+                end
+            else
+                break
+            end
+        end
+    else
+        return (IROVar.Healer.percentHP("player")<=LessHP) and 1 or 0
+    end
+    return n
+end
+
 function IROVar.Healer.FindLowestHP()
     if UnitIsDead("player") then return "player" end
     local unit="player"
@@ -150,4 +239,32 @@ function IROVar.Healer.FindLowestHP()
         end
     end
     return unit,HP
+end
+
+function IROVar.Healer.GroupHPPercent()
+    local nn,sumHP,sumHPMax
+    if IsInRaid() then
+        sumHP=0
+        sumHPMax=0
+        for i=1,40 do
+            nn="raid"..i
+            if UnitExists(nn) then
+                if (not UnitIsDead(nn))and UnitInRange(nn) then
+                    sumHP=sumHP+UnitHealth(nn)
+                    sumHPMax=sumHPMax+UnitHealthMax(nn)
+                end
+            else
+                break
+            end
+        end
+    else
+        sumHP=UnitHealth("player")
+        sumHPMax=UnitHealthMax("player")
+        for i=1,4 do
+            nn="party"..i
+            if UnitExists(nn)and(not UnitIsDead(nn))and UnitInRange(nn) then
+                sumHP=sumHP+UnitHealth(nn)
+                sumHPMax=sumHPMax+UnitHealthMax(nn)
+    end end end
+    return (sumHP/sumHPMax)*100
 end

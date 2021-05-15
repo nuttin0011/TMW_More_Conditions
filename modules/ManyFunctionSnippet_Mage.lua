@@ -2,11 +2,19 @@
 -- this file save many function for paste to TMW Snippet LUA
 
 --function IROVar.Mage.registerCheckSpellSequence(sequence,timeout,timeout_after1stSpell|nil,callback,run_callback_when_timeout)
+--function IROVar.Mage.UseFlurry(n) ; check condition use Flurry when brain freeze proc
+--function IROVar.Mage.UseILFrostFinger(n) ; as above
+
 if not IROVar then IROVar={} end
 if not IROVar.Mage then IROVar.Mage={} end
 
 IROVar.Mage.playerGUID=UnitGUID("player")
 IROVar.Mage.CastSequenceCheck={}
+IROVar.Mage.currentFlurry=1
+IROVar.Mage.BrainFreezeStatus=0
+IROVar.Mage.currentIL=1
+IROVar.Mage.FoFStatus=0
+
 --[[
     CastSequenceCheck = {
         [1] = {
@@ -53,13 +61,22 @@ function IROVar.Mage.CombatEvent()
                 IROVar.Mage.CastSequenceCheck[k]=nil
             end
         end
-    elseif (subevent=="SPELL_AURA_APPLIED") and (spellName=="Brain Freeze") then
-        IROVar.Mage.BrainFreezeStatus=IROVar.Mage.BrainFreezeStatus+1
-        local flurryFunc=function()
-            IROVar.Mage.BrainFreezeStatus=IROVar.Mage.BrainFreezeStatus-1
-            IROVar.Mage.currentFlurry=(IROVar.Mage.currentFlurry==1) and 2 or 1
+    elseif (subevent=="SPELL_AURA_APPLIED") then
+        if (spellName=="Brain Freeze") then
+            IROVar.Mage.BrainFreezeStatus=IROVar.Mage.BrainFreezeStatus+1
+            local flurryFunc=function()
+                IROVar.Mage.BrainFreezeStatus=IROVar.Mage.BrainFreezeStatus-1
+                IROVar.Mage.currentFlurry=IROVar.Mage.currentFlurry+1
+            end
+            IROVar.Mage.registerCheckSpellSequence("Flurry|Ice Lance|Ice Lance",14,5,flurryFunc,true)
+        elseif (spellName=="Fingers of Frost") then
+            IROVar.Mage.FoFStatus=IROVar.Mage.FoFStatus+1
+            local ILFunc=function()
+                IROVar.Mage.FoFStatus=IROVar.Mage.FoFStatus-1
+                IROVar.Mage.currentIL=IROVar.Mage.currentIL+1
+            end
+            IROVar.Mage.registerCheckSpellSequence("Ice Lance",14,5,ILFunc,true)
         end
-        IROVar.Mage.registerCheckSpellSequence("Flurry|Ice Lance|Ice Lance",12,5,flurryFunc,true)
     end
 end
 IROVar.Mage.frame =CreateFrame("Frame")
@@ -96,12 +113,19 @@ function IROVar.Mage.registerCheckSpellSequence(sequence,timeout,timeout_after1s
     })
     C_Timer.After(timeout,IROVar.Mage.checkSequenceTimeOut)
 end
-IROVar.Mage.currentFlurry=1
-IROVar.Mage.BrainFreezeStatus=0
+
 function IROVar.Mage.UseFlurry(n)
-    -- seperate flurry IL combo to 2 macro
+    -- seperate flurry IL combo to n macro
+    -- e.g. 2 macro
     -- 1 /cast reset=3 flurry, Ice Lance, Ice Lance
     -- 2 /cast reset=3.1 flurry, Ice Lance, Ice Lance
-    -- this function return true/false of macro n use?
-    return (IROVar.Mage.currentFlurry==n) and (IROVar.Mage.BrainFreezeStatus>=1)
+    -- syntax "Use1stMacro=IROVar.Mage.UseFlurry(2)==1" ; it's return 1 when macro 1 should use
+    -- syntax "Use2ndMacro=IROVar.Mage.UseFlurry(2)==2" ; it's return 2 when macro 2 should use
+    -- it' return 0 if IROVar.Mage.BrainFreezeStatus==0
+    return (IROVar.Mage.BrainFreezeStatus>=1) and ((IROVar.Mage.currentFlurry % n)+1) or 0
+end
+
+function IROVar.Mage.UseILFrostFinger(n)
+    --use same as function IROVar.Mage.UseFlurry(n)
+    return (IROVar.Mage.FoFStatus>=1) and ((IROVar.Mage.currentIL % n)+1) or 0
 end

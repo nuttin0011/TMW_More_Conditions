@@ -54,7 +54,6 @@ function IROVar.Mage.CombatEvent()
             end
         end
     elseif (subevent=="SPELL_AURA_APPLIED") and (spellName=="Brain Freeze") then
-        print("Brain freezeeeeee")
         IROVar.Mage.BrainFreezeStatus=IROVar.Mage.BrainFreezeStatus+1
         local flurryFunc=function()
             IROVar.Mage.BrainFreezeStatus=IROVar.Mage.BrainFreezeStatus-1
@@ -101,8 +100,8 @@ IROVar.Mage.currentFlurry=1
 IROVar.Mage.BrainFreezeStatus=0
 function IROVar.Mage.UseFlurry(n)
     -- seperate flurry IL combo to 2 macro
-    -- 1 /cast reset=1.5 flurry, Ice Lance, Ice Lance
-    -- 2 /cast reset=1.6 flurry, Ice Lance, Ice Lance
+    -- 1 /cast reset=3 flurry, Ice Lance, Ice Lance
+    -- 2 /cast reset=3.1 flurry, Ice Lance, Ice Lance
     -- this function return true/false of macro n use?
     return (IROVar.Mage.currentFlurry==n) and (IROVar.Mage.BrainFreezeStatus>=1)
 end

@@ -61,7 +61,7 @@ function IROVar.Mage.CombatEvent()
                 IROVar.Mage.CastSequenceCheck[k]=nil
             end
         end
-    elseif (subevent=="SPELL_AURA_APPLIED") then
+    elseif (subevent=="SPELL_AURA_APPLIED") or (subevent=="SPELL_AURA_APPLIED_DOSE") then
         if (spellName=="Brain Freeze") then
             IROVar.Mage.BrainFreezeStatus=IROVar.Mage.BrainFreezeStatus+1
             local flurryFunc=function()
@@ -70,12 +70,13 @@ function IROVar.Mage.CombatEvent()
             end
             IROVar.Mage.registerCheckSpellSequence("Flurry|Ice Lance|Ice Lance",14,5,flurryFunc,true)
         elseif (spellName=="Fingers of Frost") then
+            local stringIL="Ice Lance"..string.rep("|Ice Lance",IROVar.Mage.FoFStatus)
             IROVar.Mage.FoFStatus=IROVar.Mage.FoFStatus+1
             local ILFunc=function()
                 IROVar.Mage.FoFStatus=IROVar.Mage.FoFStatus-1
                 IROVar.Mage.currentIL=IROVar.Mage.currentIL+1
             end
-            IROVar.Mage.registerCheckSpellSequence("Ice Lance",14,5,ILFunc,true)
+            IROVar.Mage.registerCheckSpellSequence(stringIL,14,5,ILFunc,true)
         end
     end
 end

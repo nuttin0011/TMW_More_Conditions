@@ -14,6 +14,9 @@ IROVar.Mage.currentFlurry=1
 IROVar.Mage.BrainFreezeStatus=0
 IROVar.Mage.currentIL=1
 IROVar.Mage.FoFStatus=0
+IROVar.Mage.usingFlurryRotation=false
+--use "/run IROVar.Mage.usingFlurryRotation=true" in macro button
+--and it ll reset to false when end of Flurry Rotation
 
 --[[
     CastSequenceCheck = {
@@ -67,6 +70,7 @@ function IROVar.Mage.CombatEvent()
             local flurryFunc=function()
                 IROVar.Mage.BrainFreezeStatus=IROVar.Mage.BrainFreezeStatus-1
                 IROVar.Mage.currentFlurry=IROVar.Mage.currentFlurry+1
+                IROVar.Mage.usingFlurryRotation=false
             end
             IROVar.Mage.registerCheckSpellSequence("Flurry|Ice Lance|Ice Lance",14,5,flurryFunc,true)
         elseif (spellName=="Fingers of Frost") then
@@ -76,7 +80,7 @@ function IROVar.Mage.CombatEvent()
                 IROVar.Mage.FoFStatus=IROVar.Mage.FoFStatus-1
                 IROVar.Mage.currentIL=IROVar.Mage.currentIL+1
             end
-            IROVar.Mage.registerCheckSpellSequence(stringIL,14,5,ILFunc,true)
+            IROVar.Mage.registerCheckSpellSequence(stringIL,14,nil,ILFunc,true)
         end
     end
 end

@@ -17,6 +17,16 @@ IROVar.Mage.FoFStatus=0
 IROVar.Mage.usingFlurryRotation=false
 --use "/run IROVar.Mage.usingFlurryRotation=true" in macro button
 --and it ll reset to false when end of Flurry Rotation
+IROVar.Mage.BlizardList={}
+--
+--[[ IROVar.Mage.BlizardList={
+    blizzard
+    [1]=GUID
+
+
+
+}]]
+
 
 --[[
     CastSequenceCheck = {

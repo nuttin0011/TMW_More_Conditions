@@ -1,4 +1,4 @@
--- Many Function Version Warlock 9.0.5/1
+-- Many Function Version Healer 9.0.5/1
 -- this file save many function for paste to TMW Snippet LUA
 
 --function IROVar.Healer.UnitToIROCode(unit) ; use in ERO_DPS

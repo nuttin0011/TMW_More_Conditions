@@ -1,5 +1,6 @@
 -- Many Function Monk 9.0.5/1
 
+--function IROVar.Monk.CanUseCombo(skillName) ; check for ComboStrinkeSkill skillName Case Sensitive
 if not IROVar then IROVar={} end
 if not IROVar.Monk then IROVar.Monk={} end
 IROVar.Monk.playerGUID=UnitGUID("player")

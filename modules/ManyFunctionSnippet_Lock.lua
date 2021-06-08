@@ -1,4 +1,4 @@
--- Many Function Version Warlock 9.0.5/3
+-- Many Function Version Warlock 9.0.5/4
 -- this file save many function for paste to TMW Snippet LUA
 
 --function IROVar.Lock.Pet(PetType) return true/false
@@ -7,6 +7,7 @@
 --function IROVar.Lock.KeepLogText();
 ---- place befor /run IROUsedSkillControl.NumDotPress() for debug
 --function IROVar.Lock.ShowLog()
+--function IROVar.Lock.GetWildImpCount(FelFireboltRemainAtLeast) ; return wild imp
 --[[ NOTE
 GetSpellCount("Implosion") ;Implosion Stack
 UnitPower("player",7) ; SoulShards
@@ -31,6 +32,31 @@ IROVar.Lock.SS.LockSpellModSS = {
 	["Chaos Bolt267"]=-20, -- 267 = des
 	["Incinerate267"]=2
 }
+
+IROVar.Lock.Imp={}
+IROVar.Lock.Imp.FreezEn=false
+IROVar.Lock.Imp.count=0
+IROVar.Lock.Imp.spawn={}
+--[[
+	IROVar.Lock.Imp.spawn = {
+		["Creature-0-3766-blablabla"]={
+			FelFireboltCount=6
+			SpawnTime=2993.546
+		}
+	}
+	****Imp Despawn when cass FelFirebolt 6 times or 21 sec pass
+	Event Spawn = COMBAT_LOG_EVENT_UNFILTERED
+	Sub event = SPELL_SUMMON
+	GUID = playerGUID
+	targetGUID = ImpGUID
+	spell name = Wild Imp
+
+	Event Shoot FF = COMBAT_LOG_EVENT_UNFILTERED
+	Sub event = SPELL_CAST_SUCCESS
+	GUID = Imp GUID
+	spell name = Fel Firebolt
+]]
+
 
 IROVar.Lock.PetCheckedTime=0
 IROVar.Lock.PetCheckTimer=6 --ll check 6 sec for sure
@@ -82,16 +108,81 @@ function IROVar.Lock.SetupPetEvent()
 	IROVar.Lock.CheckPet()
 end
 
-function IROVar.Lock.SS.OnEvent()
-    local _,subevent,_,sourceGUID = CombatLogGetCurrentEventInfo()
-        if (sourceGUID==IROVar.Lock.playerGUID)  and (subevent=="SPELL_CAST_FAILED") then
-			IROVar.Lock.SS.trust_segment_cast = true
-       end
+function IROVar.Lock.CheckImpExpire()
+	local currentTime=GetTime()
+	for k,v in pairs(IROVar.Lock.Imp.spawn) do
+		if (currentTime-v.SpawnTime)>21 then
+			IROVar.Lock.Imp.spawn[k]=nil
+			IROVar.Lock.Imp.count=IROVar.Lock.Imp.count-1
+		end
+	end
 end
+
+function IROVar.Lock.COMBAT_LOG_EVENT_UNFILTERED_OnEvent()
+    local _,subevent,_,sourceGUID,_,_,_,DesGUID,DesName,_,_,spellID,spellName = CombatLogGetCurrentEventInfo()
+    if (sourceGUID==IROVar.Lock.playerGUID)  and (subevent=="SPELL_CAST_FAILED") then
+		IROVar.Lock.SS.trust_segment_cast = true
+	end
+	if IROSpecID==266 then -- Demo Sepc
+		if (sourceGUID==IROVar.Lock.playerGUID) then
+			if (subevent=="SPELL_SUMMON") then
+				if (DesName=="Wild Imp") then
+					IROVar.Lock.Imp.spawn[DesGUID]={
+						FelFireboltCount=6,
+						SpawnTime=GetTime(),
+						ExpireTimeHandel=C_Timer.NewTimer(21,IROVar.Lock.CheckImpExpire),
+					}
+					IROVar.Lock.Imp.count=IROVar.Lock.Imp.count+1
+				elseif (DesName=="Demonic Tyrant") then
+					--IROVar.Lock.Imp.FreezEn=true
+					--C_Timer.After(16,function() IROVar.Lock.Imp.FreezEn=false end)
+				end
+			elseif (subevent=="SPELL_CAST_SUCCESS") and (spellID==196277) then --Implosion
+				for _,v in pairs(IROVar.Lock.Imp.spawn) do
+					v.ExpireTimeHandel:Cancel()
+				end
+				IROVar.Lock.Imp.spawn={}
+				IROVar.Lock.Imp.count=0
+			elseif (subevent=="SPELL_AURA_APPLIED") and (spellID==265273) then --buff Demonic Power
+				IROVar.Lock.Imp.FreezEn=true
+				for _,v in pairs(IROVar.Lock.Imp.spawn) do
+					v.SpawnTime=v.SpawnTime+15
+				end
+			elseif (subevent=="SPELL_AURA_REMOVED") and (spellID==265273) then --buff Demonic Power
+				IROVar.Lock.Imp.FreezEn=false
+				--C_Timer.After(1,function() IROVar.Lock.Imp.FreezEn=false end)
+			end
+		end
+		if (not IROVar.Lock.Imp.FreezEn) and IROVar.Lock.Imp.spawn[sourceGUID] and (subevent=="SPELL_CAST_SUCCESS") and (spellID==104318) then --Fel Firebolt
+			IROVar.Lock.Imp.spawn[sourceGUID].FelFireboltCount=IROVar.Lock.Imp.spawn[sourceGUID].FelFireboltCount-1
+			if IROVar.Lock.Imp.spawn[sourceGUID].FelFireboltCount==0 then
+				IROVar.Lock.Imp.spawn[sourceGUID].ExpireTimeHandel:Cancel()
+				IROVar.Lock.Imp.spawn[sourceGUID]=nil
+				IROVar.Lock.Imp.count=IROVar.Lock.Imp.count-1
+			end
+		end
+	end
+end
+
+function IROVar.Lock.GetWildImpCount(FelFireboltRemainAtLeast)
+	if IROVar.Lock.Imp.count==0 then return 0 end
+	FelFireboltRemainAtLeast=FelFireboltRemainAtLeast or 0
+	local ImpCount=IROVar.Lock.Imp.count
+	if FelFireboltRemainAtLeast>=2 then
+		for _,v in pairs(IROVar.Lock.Imp.spawn) do
+			if v.FelFireboltCount<FelFireboltRemainAtLeast then
+				ImpCount=ImpCount-1
+			end
+		end
+	end
+	return ImpCount
+end
+
+
 
 IROVar.Lock.SS.Frame = CreateFrame("Frame")
 IROVar.Lock.SS.Frame:RegisterEvent("COMBAT_LOG_EVENT_UNFILTERED")
-IROVar.Lock.SS.Frame:SetScript("OnEvent", IROVar.Lock.SS.OnEvent)
+IROVar.Lock.SS.Frame:SetScript("OnEvent", IROVar.Lock.COMBAT_LOG_EVENT_UNFILTERED_OnEvent)
 IROVar.Lock.SS.trust_segment_cast=true
 IROVar.Lock.SS.old_timer_check=0
 IROVar.Lock.SS.old_val=0

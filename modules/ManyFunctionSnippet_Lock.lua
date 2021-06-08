@@ -129,13 +129,10 @@ function IROVar.Lock.COMBAT_LOG_EVENT_UNFILTERED_OnEvent()
 				if (DesName=="Wild Imp") then
 					IROVar.Lock.Imp.spawn[DesGUID]={
 						FelFireboltCount=6,
-						SpawnTime=GetTime(),
+						SpawnTime=GetTime()+(IROVar.Lock.Imp.FreezEn and 15 or 0), -- FreezEN=buff Demonic Power
 						ExpireTimeHandel=C_Timer.NewTimer(21,IROVar.Lock.CheckImpExpire),
 					}
 					IROVar.Lock.Imp.count=IROVar.Lock.Imp.count+1
-				elseif (DesName=="Demonic Tyrant") then
-					--IROVar.Lock.Imp.FreezEn=true
-					--C_Timer.After(16,function() IROVar.Lock.Imp.FreezEn=false end)
 				end
 			elseif (subevent=="SPELL_CAST_SUCCESS") and (spellID==196277) then --Implosion
 				for _,v in pairs(IROVar.Lock.Imp.spawn) do

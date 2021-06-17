@@ -1,4 +1,4 @@
--- Many Function Version Hunter 9.0.5/1
+-- Many Function Version Hunter 9.0.5/1a
 -- this file save many function for paste to TMW Snippet LUA
 
 --function IROVar.Hun.TBreakDPSForBS() ; return Break Time for Shoot Barbed shot
@@ -11,7 +11,7 @@ IROVar.Hun.cdBDPS={}
 function IROVar.Hun.TBreakDPSForBS()
     local h=GetHaste()
     if IROVar.Hun.cdBDPS[h] then return IROVar.Hun.cdBDPS[h] end
-    IROVar.Hun.cdBDPS[h]=.2+select(4,GetSpellInfo("Scare Beast"))*.0014
+    IROVar.Hun.cdBDPS[h]=.4+select(4,GetSpellInfo("Scare Beast"))*.0014 -- 0.4+(GCD*1.4)
     return IROVar.Hun.cdBDPS[h]
 end
 

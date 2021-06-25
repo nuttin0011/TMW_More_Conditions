@@ -1,4 +1,4 @@
--- Many Function Version 9.0.5/39
+-- Many Function Version 9.0.5/40
 -- this file save many function for paste to TMW Snippet LUA
 
 --function IROEnemyCountInRange(nRange) ; return count, nRange = yard e.g. 2 5 8 15 20 30 40 50 200
@@ -22,12 +22,14 @@
 ----*********return table of [Buff name] = Buff time remaining
 --function TMW.CNDT.Env.AuraDur(unit, name, filter) ; return aura Duration
 --function IROVar.IconSweepCompair(icon,max,min) ; return (max > SweepCD > min) (true/false)
+--IROVar.activeConduits ; dump soulbind to table
 
 if not IROVar then IROVar={} end
 IROVar.DebugMode = false
 IROVar.InterruptSpell = nil
 IROVar.SkillCheckDPSRange = nil
 IROVar.InstanceName = GetInstanceInfo()
+IROVar.activeConduits = nil
 if not IROSpecID then
     IROSpecID = GetSpecializationInfo(GetSpecialization())
 end
@@ -373,3 +375,91 @@ function IROVar.IconSweepCompair(icon,max,min)
     local ct=GetTime()
     return  (ct>mint) and (ct<maxt)
 end
+
+function IROVar.DetermineActiveCovenantAndSoulbindAndConduits()
+    local covenantID = C_Covenants.GetActiveCovenantID();
+    if ( not covenantID or covenantID == 0 ) then
+      --No active covenants
+      return nil;
+    end
+    local covenantData = C_Covenants.GetCovenantData(covenantID);
+    if ( not covenantData ) then 
+      --No covenant found
+      return nil;
+    end
+    local covenantName = covenantData.name;
+    local soulbindID = C_Soulbinds.GetActiveSoulbindID();
+    if ( not soulbindID or soulbindID == 0 ) then 
+      --No active soulbinds
+      return nil;
+    end
+    local soulbindData = C_Soulbinds.GetSoulbindData(soulbindID);
+    if ( not soulbindData ) then
+      --No active soulbinds
+      return nil;
+    end
+    local id = soulbindData["ID"];
+    --local covenantID = soulbindData["covenantID"];
+    local soulbindName = soulbindData["name"];
+    local description = soulbindData["description"];
+    local tree = soulbindData["tree"];
+    local nodes = tree["nodes"];
+    local activeConduitsSpells = {};
+    activeConduitsSpells.covenantName = covenantName;
+    activeConduitsSpells.soulbindName = soulbindName;
+    activeConduitsSpells.conduits = {};
+    for _, ve in pairs(nodes) do
+      local node_id = ve["ID"];
+      local node_row = ve.row;
+      local node_column = ve.column;
+      local node_spellID = ve.spellID; -- this will be 0 for uninit spell, not nil
+      local node_conduitID = ve.conduitID; -- this will be 0 for uninit conduit, not nil
+      local node_conduitRank = ve.conduitRank;
+      local node_state = ve.state;
+      local node_conduitType = ve.conduitType; -- this can be nil
+      if ( node_state == 3 ) then
+        local node_spellName;
+        if ( node_spellID ~= 0 ) then
+          node_spellName = GetSpellInfo(node_spellID);
+        elseif ( node_conduitID ~= 0 ) then
+          local conduitSpellID = C_Soulbinds.GetConduitSpellID(node_conduitID,node_conduitRank);
+          node_spellID = conduitSpellID;
+          node_spellName = GetSpellInfo(conduitSpellID);
+        else
+          node_spellID = nil;
+          node_spellName = nil;
+        end
+        if ( node_spellID ) then
+          activeConduitsSpells.conduits[#activeConduitsSpells.conduits + 1] = { spellID = node_spellID, spellName = node_spellName };
+          activeConduitsSpells[node_spellID]=true
+          activeConduitsSpells[node_spellName]=true
+        end
+      end
+    end
+    return activeConduitsSpells;
+end
+
+IROVar.justCheckActiveConduits=0
+
+IROVar.fconduitOnEvent=function()
+    local now=GetTime()
+    if now <= IROVar.justCheckActiveConduits then return end
+    IROVar.justCheckActiveConduits=now+0.1
+    IROVar.activeConduits=IROVar.DetermineActiveCovenantAndSoulbindAndConduits()
+end
+
+-- patch 9.x.x Shadowlands SL
+-- listen to soulbinds/conduits changes
+IROVar.fconduit = CreateFrame("Frame")
+IROVar.fconduit:RegisterEvent("COVENANT_CALLINGS_UPDATED")
+IROVar.fconduit:RegisterEvent("COVENANT_CHOSEN")
+IROVar.fconduit:RegisterEvent("SOULBIND_ACTIVATED")
+IROVar.fconduit:RegisterEvent("SOULBIND_PATH_CHANGED")
+--IROVar.fconduit:RegisterEvent("SOULBIND_CONDUITS_RESET")
+IROVar.fconduit:RegisterEvent("SOULBIND_NODE_UPDATED")
+IROVar.fconduit:RegisterEvent("GARRISON_UPDATE")
+IROVar.fconduit:SetScript("OnEvent", IROVar.fconduitOnEvent)
+
+C_Timer.After(1,IROVar.fconduitOnEvent)
+
+

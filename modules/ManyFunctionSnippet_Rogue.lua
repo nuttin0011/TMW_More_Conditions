@@ -2,6 +2,8 @@
 
 --function IROVar.Rogue.UpdateRTBBuff() ; return count , update IROVar.Rogue.RTBBuff table
 --function IROVar.Rogue.NeedRTB() ; return true / false
+--function IROVar.Rogue.IsEnOverFlowNextGCD(n) ; return next n sec is En over flow?
+--function IROVar.Rogue.ComboSerratedBoneSpikeGen() ; return number
 
 if not IROVar then IROVar={} end
 if not IROVar.Rogue then IROVar.Rogue={} end
@@ -66,5 +68,71 @@ function IROVar.Rogue.NeedRTB()
 
     -- 1 buff + Broadside/True Bearing --> false
     return not(IROVar.Rogue.RTBBuff["Broadside"] or IROVar.Rogue.RTBBuff["True Bearing"])
+
+end
+
+function IROVar.Rogue.IsEnOverFlowNextGCD(n)
+    n=n or 1
+    local en=UnitPower("player", 3)
+    local enMax=UnitPowerMax("player",3)
+    local enRe=GetPowerRegen()
+    return ((enRe*n)+en)>enMax
+end
+
+function IROVar.Rogue.ComboSerratedBoneSpikeGen()
+    local combo=1
+    for i=1,30 do
+        local n="nameplate"..i
+        if UnitExists(n) and UnitCanAttack("player", n) then
+            if TMW.CNDT.Env.AuraDur(n, "serrated bone spike", "PLAYER HARMFUL")>0 then
+                combo=combo+1
+            end
+        end
+    end
+    if TMW.CNDT.Env.AuraDur("player", "Broadside", "PLAYER HELP_BUTTON")>0.5 then combo=combo+combo end
+    return combo
+end
+
+function IROVar.Rogue.NeedSerratedBoneSpike()
+    local comboBlank=UnitPowerMax("player", 4)-UnitPower("player", 4)
+
+    if comboBlank==0 then return false end
+
+    local targetHasSBS=TMW.CNDT.Env.AuraDur("target", "serrated bone spike", "PLAYER HARMFUL")>0
+
+    local comboGen=IROVar.Rogue.ComboSerratedBoneSpikeGen()
+
+    local en=UnitPower("player", 3)
+    --local enMax=UnitPowerMax("player",3)
+    --local enRe=GetPowerRegen()
+
+    local currentCharges, maxCharges, cooldownStart, cooldownDuration = GetSpellCharges("Serrated Bone Spike")
+    local SBSChargeMax = (currentCharges==maxCharges) or ((currentCharges==(maxCharges-1)) and (GetTime()>(cooldownStart+cooldownDuration-5)))
+
+    if targetHasSBS then
+        --if low en --> true
+        if (comboGen<=comboBlank) and (en<60) then
+            return true
+        end
+        if SBSChargeMax then
+            if comboGen<=comboBlank then
+                return true
+            end
+            if (comboGen>=3) and (comboBlank>=3) then
+                return true
+            end
+        end
+    else
+        --target not has SBS
+        --can use SBS not over flow Combo --> true
+        if comboGen<=comboBlank then
+            return true
+        end
+        --if SBS max charge and over flow 1 combo and Gen 3 Combo-->true
+        if SBSChargeMax and (comboGen>=3) and (comboBlank>=3) then
+            return true
+        end
+    end
+    return false
 
 end

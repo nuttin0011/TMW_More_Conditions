@@ -10,5 +10,8 @@
         "LE_PARTY_CATEGORY_INSTANCE",
         "GameFontNormal",
         "SPELL_CAST_SUCCESS_COMBATLOG_TOOLTIP"
+    ],
+    "Lua.diagnostics.disable": [
+        "deprecated"
     ]
 }

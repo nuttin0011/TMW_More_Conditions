@@ -9,7 +9,8 @@
         "LibStub",
         "LE_PARTY_CATEGORY_INSTANCE",
         "GameFontNormal",
-        "SPELL_CAST_SUCCESS_COMBATLOG_TOOLTIP"
+        "SPELL_CAST_SUCCESS_COMBATLOG_TOOLTIP",
+        "HELP_BUTTON"
     ],
     "Lua.diagnostics.disable": [
         "deprecated"

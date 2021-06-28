@@ -1,9 +1,12 @@
--- Many Function Rogue 9.0.5/1b
+-- Many Function Rogue 9.0.5/2
 
---function IROVar.Rogue.UpdateRTBBuff() ; return count , update IROVar.Rogue.RTBBuff table
+--function IROVar.Rogue.UpdateRTBBuff() ; update IROVar.Rogue.RTBBuff table ; return next update time,
+--function IROVar.Rogue.RTBBuff.count() ; return Buff RtB count
+--IROVar.Rogue.RTBBuff={} -- keep RTB status { buffname = expire_time }
 --function IROVar.Rogue.NeedRTB() ; return true / false
 --function IROVar.Rogue.IsEnOverFlowNextGCD(n) ; return next n sec is En over flow?
 --function IROVar.Rogue.ComboSerratedBoneSpikeGen() ; return number
+
 
 if not IROVar then IROVar={} end
 if not IROVar.Rogue then IROVar.Rogue={} end
@@ -17,71 +20,77 @@ IROVar.Rogue.RTBBuffName={
     ["Grand Melee"]=true,
 }
 
-IROVar.Rogue.RTBBuff={} -- keep RTB status
-IROVar.Rogue.RTBBuff.count=0
-IROVar.Rogue.RTBBuff.expireTime=0
+
+IROVar.Rogue.RTBBuff={} -- keep RTB status { buffname = expire_time }
+for k,_ in pairs(IROVar.Rogue.RTBBuffName) do
+    IROVar.Rogue.RTBBuff[k]=0
+end
 IROVar.Rogue.playerGUID=UnitGUID("player")
+IROVar.Rogue.LastTimeUseRtB=0
+IROVar.Rogue.TimeCheckRtB=0
 
 function IROVar.Rogue.UpdateRTBBuff()
+    IROVar.Rogue.RTBBuff.OldCount = -1
     local now=GetTime()
-    local count=0
-    IROVar.Rogue.RTBBuff={}
-    IROVar.Rogue.RTBBuff.expireTime=math.huge
-    local hasBuff30sec = false
+    local nextUpdate=math.huge
+    for k,_ in pairs(IROVar.Rogue.RTBBuffName) do
+        IROVar.Rogue.RTBBuff[k]=0
+    end
     for i=1,40 do
-        local name, _, _, _, duration, exTime=UnitBuff("player",i,"PLAYER")
+        local name, _, _, _, _, exTime=UnitBuff("player",i,"PLAYER")
         if not name then
             break
         else
-            if IROVar.Rogue.RTBBuffName[name] and ((exTime-now)>1) then
-                -- buff from RtB has 30 sec deration / from conduit is 5/15 sec
-                count=count+1
-                IROVar.Rogue.RTBBuff[name]=true
-                if exTime<IROVar.Rogue.RTBBuff.expireTime then
-                    IROVar.Rogue.RTBBuff.expireTime=exTime
-                end
-                if duration==30 then hasBuff30sec=true end
+            exTime=exTime-1
+            if IROVar.Rogue.RTBBuffName[name] and (exTime>now) then
+                IROVar.Rogue.RTBBuff[name]=exTime
+                if exTime<nextUpdate then nextUpdate=exTime end
             end
         end
     end
-    if not hasBuff30sec then
-        IROVar.Rogue.RTBBuff={}
-        IROVar.Rogue.RTBBuff.expireTime=math.huge
-        IROVar.Rogue.RTBBuff.count=0
-        return 0
+    return nextUpdate+0.3
+end
+
+IROVar.Rogue.RTBBuff.OldCount = -1
+-- -1 mean need to recount buff , mod by Change Buff
+function IROVar.Rogue.RTBBuff.count()
+
+    local now = GetTime()
+    if now>IROVar.Rogue.TimeCheckRtB then
+        IROVar.Rogue.TimeCheckRtB=IROVar.Rogue.UpdateRTBBuff()
+        IROVar.Rogue.RTBBuff.OldCount = -1
     end
-    IROVar.Rogue.RTBBuff.count=count
-    return count
+    if IROVar.Rogue.RTBBuff.OldCount >= 0 then return IROVar.Rogue.RTBBuff.OldCount end
+    local c =0
+    for k,_ in pairs(IROVar.Rogue.RTBBuffName) do
+        if IROVar.Rogue.RTBBuff[k]>now then c = c+1 end
+    end
+    IROVar.Rogue.RTBBuff.OldCount=c
+    return c
 end
 
 function IROVar.Rogue.CombatEvent()
     local _,subevent,_,sourceGUID,_,_,_,_,_,_,_,_,spellName=CombatLogGetCurrentEventInfo()
     if sourceGUID~=IROVar.Rogue.playerGUID then return end
+    local now=GetTime()
+
     if (subevent=="SPELL_CAST_SUCCESS") and (spellName=="Roll the Bones") then
-        print("casted RtB")
-        --[[ C_Timer.After(0.3,function()
-            for k,_ in pairs(IROVar.Rogue.RTBBuffName) do
-                local t=TMW.CNDT.Env.AuraDur("player", string.lower(k))
-                if t>0 then
-                    print("Aura :",k," duration :",t)
-                end
-            end
-        --end)]]
+        IROVar.Rogue.LastTimeUseRtB=now
+        IROVar.Rogue.TimeCheckRtB=now+0.2
+
     end
     if subevent=="SPELL_AURA_APPLIED" then
         if IROVar.Rogue.RTBBuffName[spellName] then
-            IROVar.Rogue.RTBBuff[spellName]=true
-            IROVar.Rogue.RTBBuff.count=IROVar.Rogue.RTBBuff.count+1
-            local t=TMW.CNDT.Env.AuraDur("player", string.lower(spellName))
-            print("Aura :",spellName," duration :",t)
+            IROVar.Rogue.TimeCheckRtB=now+0.2
         end
-    elseif subevent=="SPELL_AURA_REMOVED" then
+    end
+    if subevent=="SPELL_AURA_REMOVED" then
         if IROVar.Rogue.RTBBuffName[spellName] then
-            IROVar.Rogue.RTBBuff[spellName]=false
-            IROVar.Rogue.RTBBuff.count=IROVar.Rogue.RTBBuff.count-1
+            IROVar.Rogue.TimeCheckRtB=now+0.2
         end
     end
 end
+
 IROVar.Rogue.cframe =CreateFrame("Frame")
 IROVar.Rogue.cframe:RegisterEvent("COMBAT_LOG_EVENT_UNFILTERED")
 IROVar.Rogue.cframe:SetScript("OnEvent",IROVar.Rogue.CombatEvent)
@@ -90,24 +99,31 @@ function IROVar.Rogue.NeedRTB()
     -- CD Roll the Bones > 0 --> false
     if TMW.CNDT.Env.CooldownDuration("Roll the Bones") > 0 then return false end
 
-    if IROVar.Rogue.RTBBuff.count==0 then return true end
+    IROVar.Rogue.UpdateRTBBuff()
 
+    local now=GetTime()
+    --if used RtB > 30 sec ago --> true
+    if now-IROVar.Rogue.LastTimeUseRtB>30 then return true end
+    --UpdateRTBBuff
+    if now>IROVar.Rogue.TimeCheckRtB then
+        IROVar.Rogue.TimeCheckRtB=IROVar.Rogue.UpdateRTBBuff()
+        IROVar.Rogue.RTBBuff.OldCount = -1
+    end
+    local count=IROVar.Rogue.RTBBuff.count()
+    if count==0 then return true end
     -- >3 buff --> false
-    if (IROVar.Rogue.RTBBuff.count>=3) then
+    if (count>=3) then
         return false
     end
-
     -- 2 buff --> false
     -- 2 buff and buff is "Grand Melee+Buried Treasure" --> true
-    if IROVar.Rogue.RTBBuff.count==2 then
-        return IROVar.Rogue.RTBBuff["Grand Melee"] and IROVar.Rogue.RTBBuff["Buried Treasure"]
+    if count==2 then
+        return (IROVar.Rogue.RTBBuff["Grand Melee"]>now) and (IROVar.Rogue.RTBBuff["Buried Treasure"]>now)
     end
-
     -- SoHConduit + 1 buff --> true
     if IROVar.activeConduits["Sleight of Hand"] then return true end
-
     -- 1 buff + Broadside/True Bearing --> false
-    return not(IROVar.Rogue.RTBBuff["Broadside"] or IROVar.Rogue.RTBBuff["True Bearing"])
+    return not((IROVar.Rogue.RTBBuff["Broadside"]>now) or (IROVar.Rogue.RTBBuff["True Bearing"]>now))
 end
 
 function IROVar.Rogue.IsEnOverFlowNextGCD(n)
@@ -128,7 +144,7 @@ function IROVar.Rogue.ComboSerratedBoneSpikeGen()
             end
         end
     end
-    if TMW.CNDT.Env.AuraDur("player", "Broadside", "PLAYER HELP_BUTTON")>0.5 then combo=combo+combo end
+    if TMW.CNDT.Env.AuraDur("player", "Broadside", "PLAYER HELPFUL")>0.5 then combo=combo+combo end
     return combo
 end
 

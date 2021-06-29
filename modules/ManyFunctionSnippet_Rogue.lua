@@ -180,7 +180,7 @@ function IROVar.Rogue.NeedSerratedBoneSpike()
         if comboGen<=comboBlank then
             return true
         end
-        --if SBS max charge and over flow 1 combo and Gen 3 Combo-->true
+        --if SBS max charge and over flow 1 combo and Gen 3 Combo--> true
         if SBSChargeMax and (comboGen>=3) and (comboBlank>=3) then
             return true
         end

@@ -1,4 +1,4 @@
--- Many Function Version Warlock 9.0.5/4
+-- Many Function Version Warlock 9.0.5/5
 -- this file save many function for paste to TMW Snippet LUA
 
 --function IROVar.Lock.Pet(PetType) return true/false
@@ -87,7 +87,9 @@ function IROVar.Lock.SetupPetEvent()
 		if currentTime<IROVar.Lock.PetCheckedTime+IROVar.Lock.PetCheckTimer then
 			IROVar.Lock.PetActive=0
 			if UnitExists("pet") and (not UnitIsDead("pet")) then
-				IROVar.Lock.PetActive=IROVar.Lock.PetTypeBit[UnitCreatureFamily("pet")] or 0
+				local PetFamily = UnitCreatureFamily("pet")
+				if PetFamily=="Wrathguard" then PetFamily="Felguard" end
+				IROVar.Lock.PetActive=IROVar.Lock.PetTypeBit[PetFamily] or 0
 			else
 				IROVar.Lock.PetActive=128
 			end

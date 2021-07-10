@@ -4,18 +4,18 @@
 --function IROVar.Lock.Pet(PetType) return true/false
 ----PetType 1=Felg 2=Succ 4=Felh 8=Voidw 16=Imp can use 3 for check felg+succ
 --function IROVar.Lock.PredictSS() return SSFragment / 10 SSFragment = 1 SS
---function IROVar.Lock.KeepLogText();
----- place befor /run IROUsedSkillControl.NumDotPress() for debug
---function IROVar.Lock.ShowLog()
 --function IROVar.Lock.GetWildImpCount(FelFireboltRemainAtLeast) ; return wild imp
+
 --[[ NOTE
 GetSpellCount("Implosion") ;Implosion Stack
 UnitPower("player",7) ; SoulShards
+UnitPower("player",7,true) ; SSFragment
 ]]
 
 
 if not IROVar then IROVar={} end
 if not IROVar.Lock then IROVar.Lock={} end
+
 IROVar.Lock.PetActive=nil
 IROVar.Lock.playerGUID=UnitGUID("player")
 IROVar.Lock.SS={}
@@ -56,7 +56,6 @@ IROVar.Lock.Imp.spawn={}
 	GUID = Imp GUID
 	spell name = Fel Firebolt
 ]]
-
 
 IROVar.Lock.PetCheckedTime=0
 IROVar.Lock.PetCheckTimer=6 --ll check 6 sec for sure
@@ -178,8 +177,6 @@ function IROVar.Lock.GetWildImpCount(FelFireboltRemainAtLeast)
 	return ImpCount
 end
 
-
-
 IROVar.Lock.SS.Frame = CreateFrame("Frame")
 IROVar.Lock.SS.Frame:RegisterEvent("COMBAT_LOG_EVENT_UNFILTERED")
 IROVar.Lock.SS.Frame:SetScript("OnEvent", IROVar.Lock.COMBAT_LOG_EVENT_UNFILTERED_OnEvent)
@@ -191,7 +188,6 @@ function IROVar.Lock.PredictSS()
 	-- if (trust_segment_cast == Ture) Must Recalculate
 	-- if (trust_segment_cast == False) Must Use old_val
 	local currentTime = GetTime()
-
 	if IROVar.Lock.SS.old_timer_check == currentTime then
 		return IROVar.Lock.SS.old_val
 	end
@@ -246,4 +242,3 @@ function IROVar.Lock.PredictSS()
 	IROVar.Lock.SS.old_val = currentSS
 	return currentSS
 end
-

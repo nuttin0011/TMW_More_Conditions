@@ -1,11 +1,12 @@
--- Many Function Version Warlock 9.0.5/6
+-- Many Function Version Warlock 9.0.5/7
 -- this file save many function for paste to TMW Snippet LUA
 
 --function IROVar.Lock.Pet(PetType) return true/false
 ----PetType 1=Felg 2=Succ 4=Felh 8=Voidw 16=Imp can use 3 for check felg+succ
 --function IROVar.Lock.PredictSS() return SSFragment / 10 SSFragment = 1 SS
 --function IROVar.Lock.GetWildImpCount(FelFireboltRemainAtLeast) ; return wild imp
-
+-- var IROVar.Lock.GUIDImmolate ; Check not cast same GUID target
+-- 	use /run IROVar.Lock.GUIDImmolate=UnitGUID("target") after use macro cast immolate
 --[[ NOTE
 GetSpellCount("Implosion") ;Implosion Stack
 UnitPower("player",7) ; SoulShards
@@ -242,3 +243,25 @@ function IROVar.Lock.PredictSS()
 	IROVar.Lock.SS.old_val = currentSS
 	return currentSS
 end
+
+IROVar.Lock.GUIDImmolate = nil
+IROVar.Lock.GUIDImmolate_Old = nil
+function IROVar.Lock.GUIDImmolate_OnEvent(self,Event,Unit,CastID,SpellID)
+	if (Unit ~= "player") or
+	(SpellID ~= 348) or -- Immolate
+	(IROSpecID~=267) then -- Destruction
+		return
+	end
+	if Event == "UNIT_SPELLCAST_START" then
+		IROVar.Lock.GUIDImmolate_Old=IROVar.Lock.GUIDImmolate
+	elseif Event == "UNIT_SPELLCAST_STOP" then
+		if IROVar.Lock.GUIDImmolate_Old==IROVar.Lock.GUIDImmolate then
+			IROVar.Lock.GUIDImmolate=nil
+		end
+	end
+
+end
+IROVar.Lock.GUIDImmolate_Frame = CreateFrame("Frame")
+IROVar.Lock.GUIDImmolate_Frame:RegisterEvent("UNIT_SPELLCAST_START")
+IROVar.Lock.GUIDImmolate_Frame:RegisterEvent("UNIT_SPELLCAST_STOP")
+IROVar.Lock.GUIDImmolate_Frame:SetScript("OnEvent", IROVar.Lock.GUIDImmolate_OnEvent)

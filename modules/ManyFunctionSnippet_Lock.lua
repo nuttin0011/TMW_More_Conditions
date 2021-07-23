@@ -1,4 +1,4 @@
--- Many Function Version Warlock 9.0.5/7
+-- Many Function Version Warlock 9.0.5/8
 -- this file save many function for paste to TMW Snippet LUA
 
 --function IROVar.Lock.Pet(PetType) return true/false
@@ -6,6 +6,7 @@
 --function IROVar.Lock.PredictSS() return SSFragment / 10 SSFragment = 1 SS
 --function IROVar.Lock.GetWildImpCount(FelFireboltRemainAtLeast) ; return wild imp
 -- var IROVar.Lock.GUIDImmolate ; Check not cast same GUID target
+-- var IROVar.Lock.Infernal.Count ; = count infernal in Des spec
 -- 	use /run IROVar.Lock.GUIDImmolate=UnitGUID("target") after use macro cast immolate
 --[[ NOTE
 GetSpellCount("Implosion") ;Implosion Stack
@@ -57,6 +58,9 @@ IROVar.Lock.Imp.spawn={}
 	GUID = Imp GUID
 	spell name = Fel Firebolt
 ]]
+IROVar.Lock.Infernal={}
+IROVar.Lock.Infernal.NextInfernalIs30sec=false
+IROVar.Lock.Infernal.Count=0
 
 IROVar.Lock.PetCheckedTime=0
 IROVar.Lock.PetCheckTimer=6 --ll check 6 sec for sure
@@ -126,6 +130,20 @@ function IROVar.Lock.COMBAT_LOG_EVENT_UNFILTERED_OnEvent()
     if (sourceGUID==IROVar.Lock.playerGUID)  and (subevent=="SPELL_CAST_FAILED") then
 		IROVar.Lock.SS.trust_segment_cast = true
 	end
+	if IROSpecID==267 then -- Des spec
+		if (sourceGUID==IROVar.Lock.playerGUID) then
+			if (subevent=="SPELL_CAST_SUCCESS")and(spellName=="Summon Infernal") then
+				IROVar.Lock.Infernal.NextInfernalIs30sec=true
+			end
+			if (subevent=="SPELL_SUMMON")and(spellName=="Summon Infernal") then
+				IROVar.Lock.Infernal.Count=IROVar.Lock.Infernal.Count+1
+				local infernalTimer = IROVar.Lock.Infernal.NextInfernalIs30sec and 30 or 10
+				IROVar.Lock.Infernal.NextInfernalIs30sec=false
+				C_Timer.After(infernalTimer,function() IROVar.Lock.Infernal.Count=IROVar.Lock.Infernal.Count-1 end)
+			end
+		end
+	end
+
 	if IROSpecID==266 then -- Demo Sepc
 		if (sourceGUID==IROVar.Lock.playerGUID) then
 			if (subevent=="SPELL_SUMMON") then
@@ -204,11 +222,14 @@ function IROVar.Lock.PredictSS()
 	local spellName,_,_, startTimeMS, endTimeMS = UnitCastingInfo("player")
 	if spellName then
 		local endTime = endTimeMS/1000
+		local timeUnitlCastFinish = endTime-currentTime
 		-- if > 6/10 of spell cast bar ?
 		-- trust_segment_cast = 0.6>((currentTime*1000)-startTimeMS)/(endTimeMS-startTimeMS)
 		-- if spell < 0.3 sec befor finish casting
-		IROVar.Lock.SS.trust_segment_cast = (endTime-currentTime)>0.3
+		IROVar.Lock.SS.trust_segment_cast = (timeUnitlCastFinish)>0.3
 		if IROVar.Lock.SS.trust_segment_cast then
+			local extraSSfromInfernal = IROVar.Lock.Infernal.Count*floor(timeUnitlCastFinish/0.5)
+			currentSS=currentSS+extraSSfromInfernal
 			if spellName == "Incinerate" then
 				-- check Havoc for double SS generate
 				local nn
@@ -219,7 +240,7 @@ function IROVar.Lock.PredictSS()
 					if UnitExists(nn) and UnitCanAttack("player", nn) then
 						nnDebuff = IROVar.allDeBuffByMe(nn)
 						if nnDebuff["Havoc"] then
-							hasHavoc = (not UnitIsUnit("target",nn)) and (nnDebuff["Havoc"]>(0.1+endTime-currentTime))
+							hasHavoc = (not UnitIsUnit("target",nn)) and (nnDebuff["Havoc"]>(0.1+timeUnitlCastFinish))
 							break
 						end
 					end

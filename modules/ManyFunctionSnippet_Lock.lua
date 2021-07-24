@@ -1,4 +1,4 @@
--- Many Function Version Warlock 9.0.5/8
+-- Many Function Version Warlock 9.0.5/8b
 -- this file save many function for paste to TMW Snippet LUA
 
 --function IROVar.Lock.Pet(PetType) return true/false
@@ -286,3 +286,18 @@ IROVar.Lock.GUIDImmolate_Frame = CreateFrame("Frame")
 IROVar.Lock.GUIDImmolate_Frame:RegisterEvent("UNIT_SPELLCAST_START")
 IROVar.Lock.GUIDImmolate_Frame:RegisterEvent("UNIT_SPELLCAST_STOP")
 IROVar.Lock.GUIDImmolate_Frame:SetScript("OnEvent", IROVar.Lock.GUIDImmolate_OnEvent)
+
+function IROVar.Lock.IsHavocLongerThanCB()
+	local havocCD=TMW.CNDT.Env.CooldownDuration("havoc")
+	if (havocCD<=18) and (havocCD>0) then return false end
+	local havocDu
+	for i=1,40 do
+		local nn="nameplate"..i
+		if UnitExists(nn) and UnitCanAttack("player", nn) then
+			havocDu=TMW.CNDT.Env.AuraDur(nn,"havoc","PLAYER HARM")
+			if havocDu>0 then break end
+		end
+	end
+	local CBCastime=select(4,GetSpellInfo("chaos bolt"))/1000
+	return (havocDu-CBCastime)>0.3
+end

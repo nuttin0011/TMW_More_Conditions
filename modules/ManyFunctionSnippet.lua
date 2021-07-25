@@ -1,4 +1,4 @@
--- Many Function Version 9.0.5/40
+-- Many Function Version 9.0.5/41
 -- this file save many function for paste to TMW Snippet LUA
 
 --function IROEnemyCountInRange(nRange) ; return count, nRange = yard e.g. 2 5 8 15 20 30 40 50 200
@@ -22,14 +22,18 @@
 ----*********return table of [Buff name] = Buff time remaining
 --function TMW.CNDT.Env.AuraDur(unit, name, filter) ; return aura Duration
 --function IROVar.IconSweepCompair(icon,max,min) ; return (max > SweepCD > min) (true/false)
---IROVar.activeConduits ; dump soulbind to table
+--var IROVar.activeConduits ; dump soulbind to table
+--var IROVar.playerGUID ;
+--var IROVar.incombat ;
+--function IROVar.CanUnitProcFirstStrikeConduit(n) ; e.g. n = "target"
 
 if not IROVar then IROVar={} end
+IROVar.playerGUID = UnitGUID("player")
 IROVar.DebugMode = false
 IROVar.InterruptSpell = nil
 IROVar.SkillCheckDPSRange = nil
 IROVar.InstanceName = GetInstanceInfo()
-IROVar.activeConduits = nil
+IROVar.activeConduits = {}
 if not IROSpecID then
     IROSpecID = GetSpecializationInfo(GetSpecialization())
 end
@@ -446,6 +450,7 @@ IROVar.fconduitOnEvent=function()
     if now <= IROVar.justCheckActiveConduits then return end
     IROVar.justCheckActiveConduits=now+0.1
     IROVar.activeConduits=IROVar.DetermineActiveCovenantAndSoulbindAndConduits()
+    IROVar.activeConduits.IsKoraynAndFirstStrike=(IROVar.activeConduits.soulbindName=="Korayn")and(IROVar.activeConduits["First Strike"]==true)
 end
 
 -- patch 9.x.x Shadowlands SL
@@ -462,4 +467,50 @@ IROVar.fconduit:SetScript("OnEvent", IROVar.fconduitOnEvent)
 
 C_Timer.After(1,IROVar.fconduitOnEvent)
 
+IROVar.GUIDFirstStrike={}
+--[[
+    reset when Out Combat
+    {
+        [Mob_GUID1]=true,
+        [Mob_GUID2]=true,
+        [Mob_GUID3]=true,
+        ....
+    }
+]]
+IROVar.damageEvent = {
+    ["SPELL_DAMAGE"]=true,
+    ["RANGE_DAMAGE"]=true,
+    ["SWING_DAMAGE"]=true,
+}
+function IROVar.CombatEvent()
+    --check "first strike" conduit
+    if not IROVar.activeConduits.IsKoraynAndFirstStrike then return end
+    local _,subevent,_,sourceGUID,_,_,_,destGUID,_,_,_,_,spellName=CombatLogGetCurrentEventInfo()
+    if (sourceGUID==IROVar.playerGUID) and IROVar.damageEvent[subevent] then
+        IROVar.GUIDFirstStrike[destGUID]=true
+    end
+    if (destGUID==IROVar.playerGUID) and IROVar.damageEvent[subevent] then
+        IROVar.GUIDFirstStrike[sourceGUID]=true
+    end
 
+end
+IROVar.cframe =CreateFrame("Frame")
+IROVar.cframe:RegisterEvent("COMBAT_LOG_EVENT_UNFILTERED")
+IROVar.cframe:SetScript("OnEvent",IROVar.CombatEvent)
+
+IROVar.incombat = UnitAffectingCombat("player")
+IROVar.incombatFrame = CreateFrame("Frame")
+IROVar.incombatFrame:RegisterEvent("PLAYER_REGEN_ENABLED")
+IROVar.incombatFrame:RegisterEvent("PLAYER_REGEN_DISABLED")
+IROVar.incombatFrame:SetScript("OnEvent", function(self, event)
+    IROVar.incombat = (event=="PLAYER_REGEN_DISABLED")
+    if event=="PLAYER_REGEN_ENABLED" then IROVar.GUIDFirstStrike={} end
+end)
+
+function IROVar.CanUnitProcFirstStrikeConduit(n)
+    if not IROVar.activeConduits.IsKoraynAndFirstStrike then return false end
+    n=n or "target"
+    local nGUID=UnitGUID(n)
+    if not nGUID then return false end
+    return not IROVar.GUIDFirstStrike[nGUID]
+end

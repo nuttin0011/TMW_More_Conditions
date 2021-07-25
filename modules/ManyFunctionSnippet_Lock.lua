@@ -290,7 +290,7 @@ IROVar.Lock.GUIDImmolate_Frame:SetScript("OnEvent", IROVar.Lock.GUIDImmolate_OnE
 function IROVar.Lock.IsHavocLongerThanCB()
 	local havocCD=TMW.CNDT.Env.CooldownDuration("havoc")
 	if (havocCD<=18) and (havocCD>0) then return false end
-	local havocDu
+	local havocDu=0
 	for i=1,40 do
 		local nn="nameplate"..i
 		if UnitExists(nn) and UnitCanAttack("player", nn) then
@@ -298,6 +298,15 @@ function IROVar.Lock.IsHavocLongerThanCB()
 			if havocDu>0 then break end
 		end
 	end
-	local CBCastime=select(4,GetSpellInfo("chaos bolt"))/1000
+	local CBCastime=(select(4,GetSpellInfo("chaos bolt")) or 0)/1000
 	return (havocDu-CBCastime)>0.3
 end
+
+--[[
+function IROVar.Lock.IsNextSpellProcFirstStrike(nUnit)
+	if not IROVar.activeConduits.IsKoraynAndFirstStrike then return false end
+	nUnit=nUnit or "target"
+	local nGUID=UnitGUID(nUnit)
+	if not nGUID then return false end
+end
+]]

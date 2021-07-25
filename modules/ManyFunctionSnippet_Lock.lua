@@ -1,4 +1,4 @@
--- Many Function Version Warlock 9.0.5/8b
+-- Many Function Version Warlock 9.0.5/8d
 -- this file save many function for paste to TMW Snippet LUA
 
 --function IROVar.Lock.Pet(PetType) return true/false
@@ -8,6 +8,9 @@
 -- var IROVar.Lock.GUIDImmolate ; Check not cast same GUID target
 -- var IROVar.Lock.Infernal.Count ; = count infernal in Des spec
 -- 	use /run IROVar.Lock.GUIDImmolate=UnitGUID("target") after use macro cast immolate
+-- 	use /run IROVar.Lock.GUIDSpell=UnitGUID("target") after use macro cast spell
+-- var IROVar.Lock.HavocGUID ; keep HavocGUID
+-- function IROVar.Lock.HasHavoc() -- return unit token,duration,end e.g. "nameplate1" , or nil
 --[[ NOTE
 GetSpellCount("Implosion") ;Implosion Stack
 UnitPower("player",7) ; SoulShards
@@ -66,6 +69,24 @@ IROVar.Lock.PetCheckedTime=0
 IROVar.Lock.PetCheckTimer=6 --ll check 6 sec for sure
 IROVar.Lock.PetActiveOldVal=-1
 IROVar.Lock.JustRunPetCheck=0
+IROVar.Lock.HavocGUID = nil
+
+function IROVar.Lock.HasHavoc() -- return unit token,duration,end e.g. "nameplate1" , or nil
+	if not IROVar.Lock.HavocGUID then return nil end
+	local havocDu=0
+	local havocEnd=0
+	for i=1,40 do
+		local nn="nameplate"..i
+		if UnitExists(nn) and UnitCanAttack("player", nn) then
+			havocDu,_,havocEnd=TMW.CNDT.Env.AuraDur(nn,"havoc","PLAYER HARM")
+			if havocDu>0 then
+				return nn,havocDu,havocEnd
+			end
+		end
+	end
+	return nil
+end
+
 function IROVar.Lock.Pet(PetType)
     PetType=PetType or 0
     if IROVar.Lock.PetActive then
@@ -132,6 +153,13 @@ function IROVar.Lock.COMBAT_LOG_EVENT_UNFILTERED_OnEvent()
 	end
 	if IROSpecID==267 then -- Des spec
 		if (sourceGUID==IROVar.Lock.playerGUID) then
+			--keep Havoc GUID
+			if (subevent=="SPELL_CAST_SUCCESS")and(spellName=="Havoc") then
+				IROVar.Lock.HavocGUID=DesGUID
+				C_Timer.After(12,function() IROVar.Lock.HavocGUID=nil end)
+			end
+
+			--count infernal
 			if (subevent=="SPELL_CAST_SUCCESS")and(spellName=="Summon Infernal") then
 				IROVar.Lock.Infernal.NextInfernalIs30sec=true
 			end
@@ -232,20 +260,8 @@ function IROVar.Lock.PredictSS()
 			currentSS=currentSS+extraSSfromInfernal
 			if spellName == "Incinerate" then
 				-- check Havoc for double SS generate
-				local nn
-				local nnDebuff
-				local hasHavoc = false
-				for ii = 1,30 do
-					nn="nameplate"..ii
-					if UnitExists(nn) and UnitCanAttack("player", nn) then
-						nnDebuff = IROVar.allDeBuffByMe(nn)
-						if nnDebuff["Havoc"] then
-							hasHavoc = (not UnitIsUnit("target",nn)) and (nnDebuff["Havoc"]>(0.1+timeUnitlCastFinish))
-							break
-						end
-					end
-				end
-				if hasHavoc then
+				local unitHavoc,havocDu = IROVar.Lock.HasHavoc()
+				if unitHavoc and (havocDu>0.1+timeUnitlCastFinish) then
 					currentSS = currentSS + 4
 				else
 					currentSS = currentSS + 2
@@ -267,20 +283,30 @@ end
 
 IROVar.Lock.GUIDImmolate = nil
 IROVar.Lock.GUIDImmolate_Old = nil
+IROVar.Lock.GUIDSpell = nil
+IROVar.Lock.GUIDSpell_Old = nil
+
 function IROVar.Lock.GUIDImmolate_OnEvent(self,Event,Unit,CastID,SpellID)
-	if (Unit ~= "player") or
-	(SpellID ~= 348) or -- Immolate
-	(IROSpecID~=267) then -- Destruction
-		return
-	end
-	if Event == "UNIT_SPELLCAST_START" then
-		IROVar.Lock.GUIDImmolate_Old=IROVar.Lock.GUIDImmolate
-	elseif Event == "UNIT_SPELLCAST_STOP" then
-		if IROVar.Lock.GUIDImmolate_Old==IROVar.Lock.GUIDImmolate then
-			IROVar.Lock.GUIDImmolate=nil
+	if (Unit ~= "player") then return end -- if not player return
+	if (SpellID == 348) -- Immolate
+	--and (IROSpecID == 267) -- Destruction .... Immolate Should Des by default??
+	then
+		if Event == "UNIT_SPELLCAST_START" then
+			IROVar.Lock.GUIDImmolate_Old=IROVar.Lock.GUIDImmolate
+		elseif Event == "UNIT_SPELLCAST_STOP" then
+			if IROVar.Lock.GUIDImmolate_Old==IROVar.Lock.GUIDImmolate then
+				IROVar.Lock.GUIDImmolate=nil
+			end
 		end
 	end
-
+	-- other spell included Immolate
+	if Event == "UNIT_SPELLCAST_START" then
+		IROVar.Lock.GUIDSpell_Old=IROVar.Lock.GUIDSpell
+	elseif Event == "UNIT_SPELLCAST_STOP" then
+		if IROVar.Lock.GUIDSpell_Old==IROVar.Lock.GUIDSpell then
+			IROVar.Lock.GUIDSpell=nil
+		end
+	end
 end
 IROVar.Lock.GUIDImmolate_Frame = CreateFrame("Frame")
 IROVar.Lock.GUIDImmolate_Frame:RegisterEvent("UNIT_SPELLCAST_START")
@@ -288,25 +314,40 @@ IROVar.Lock.GUIDImmolate_Frame:RegisterEvent("UNIT_SPELLCAST_STOP")
 IROVar.Lock.GUIDImmolate_Frame:SetScript("OnEvent", IROVar.Lock.GUIDImmolate_OnEvent)
 
 function IROVar.Lock.IsHavocLongerThanCB()
-	local havocCD=TMW.CNDT.Env.CooldownDuration("havoc")
-	if (havocCD<=18) and (havocCD>0) then return false end
-	local havocDu=0
-	for i=1,40 do
-		local nn="nameplate"..i
-		if UnitExists(nn) and UnitCanAttack("player", nn) then
-			havocDu=TMW.CNDT.Env.AuraDur(nn,"havoc","PLAYER HARM")
-			if havocDu>0 then break end
-		end
-	end
-	local CBCastime=(select(4,GetSpellInfo("chaos bolt")) or 0)/1000
+	local unitHavoc,havocDu = IROVar.Lock.HasHavoc()
+	if not unitHavoc then return false end
+	local CBCastime=(select(4,GetSpellInfo("chaos bolt")) or math.huge)/1000
 	return (havocDu-CBCastime)>0.3
 end
 
---[[
-function IROVar.Lock.IsNextSpellProcFirstStrike(nUnit)
-	if not IROVar.activeConduits.IsKoraynAndFirstStrike then return false end
-	nUnit=nUnit or "target"
-	local nGUID=UnitGUID(nUnit)
-	if not nGUID then return false end
+function IROVar.Lock.IsThisSpellEffectFirstStrike(nSpell)
+	if not IROVar.activeConduits.IsKoraynAndFirstStrike or (not nSpell) then return false end
+	local _, _, _, nSpellcastTime, _, _, _ = GetSpellInfo(nSpell)
+	if not nSpellcastTime then return false end
+	local Sname, _, _, _, endTimeMS = UnitCastingInfo("player")
+	local _,_,FSEndTime=TMW.CNDT.Env.AuraDur("player","first strike")
+
+
+	local currentTime=GetTime()
+	local GCDSt,GCDDu = GetSpellCooldown(TMW.GCDSpell)
+	local GCDFinish = GCDSt+GCDDu
+	local playerCastFinish = currentTime
+	if Sname then
+		playerCastFinish=endTimeMS/1000
+	end
+
+	local preCastTime = math.max(GCDFinish,playerCastFinish)
+	local nSpellCastFinish = preCastTime+(nSpellcastTime/1000)
+
+	if FSEndTime>nSpellCastFinish then return true end
+
+	if IROVar.Lock.GUIDSpell then
+		if not IROVar.GUIDFirstStrike[IROVar.Lock.GUIDSpell] then return true end
+
+		local unitHavoc,_,havocEnd = IROVar.Lock.HasHavoc()
+		if unitHavoc and (havocEnd>playerCastFinish) and (not IROVar.GUIDFirstStrike[IROVar.Lock.HavocGUID])then
+			return true
+		end
+	end
+	return false
 end
-]]

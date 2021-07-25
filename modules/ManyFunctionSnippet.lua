@@ -1,4 +1,4 @@
--- Many Function Version 9.0.5/41
+-- Many Function Version 9.0.5/41b
 -- this file save many function for paste to TMW Snippet LUA
 
 --function IROEnemyCountInRange(nRange) ; return count, nRange = yard e.g. 2 5 8 15 20 30 40 50 200
@@ -265,7 +265,7 @@ end
 function IROTargetVVHP(nMultipy)
     nMultipy=nMultipy or 2
     local playerHealth=SumPartyHP()
-    local targetHealth=UnitHealthMax("target")
+    local targetHealth=UnitHealth("target")
     return (nMultipy*playerHealth)<targetHealth
 end
 

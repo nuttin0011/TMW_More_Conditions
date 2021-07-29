@@ -1,4 +1,4 @@
--- Many Function Version 9.0.5/41b
+-- Many Function Version 9.0.5/42
 -- this file save many function for paste to TMW Snippet LUA
 
 --function IROEnemyCountInRange(nRange) ; return count, nRange = yard e.g. 2 5 8 15 20 30 40 50 200
@@ -26,6 +26,7 @@
 --var IROVar.playerGUID ;
 --var IROVar.incombat ;
 --function IROVar.CanUnitProcFirstStrikeConduit(n) ; e.g. n = "target"
+--var IROVar.Haste ; player Haste
 
 if not IROVar then IROVar={} end
 IROVar.playerGUID = UnitGUID("player")
@@ -34,6 +35,8 @@ IROVar.InterruptSpell = nil
 IROVar.SkillCheckDPSRange = nil
 IROVar.InstanceName = GetInstanceInfo()
 IROVar.activeConduits = {}
+IROVar.Haste = UnitSpellHaste("player")
+C_Timer.After(2,function() IROVar.Haste = UnitSpellHaste("player") end)
 if not IROSpecID then
     IROSpecID = GetSpecializationInfo(GetSpecialization())
 end
@@ -44,6 +47,16 @@ for k,v in pairs(IROUsedSkillControl.ClassType) do
     IROInterruptTier[k]=v
 end
 IROInterruptTier.CDEnd=0
+
+function IROVar.UpdateHaste(self,event,unittoken)
+    if unittoken=="player" then
+        IROVar.Haste = UnitSpellHaste("player")
+    end
+end
+
+IROVar.fhaste = CreateFrame("Frame")
+IROVar.fhaste:RegisterEvent("UNIT_SPELL_HASTE")
+IROVar.fhaste:SetScript("OnEvent", IROVar.UpdateHaste)
 
 function IROVar.Debug()
     IROVar.DebugMode=not IROVar.DebugMode
@@ -284,6 +297,9 @@ local IROClassGCDOneSec = {
     [103]=true, -- druid feral
 }
 
+IROVar.GCDCDTimeOldHaste=0
+IROVar.GCDCDTimeOldGCD=0
+
 function GCDCDTime()
     --return GCD CD
     local OldVal=IROVar.ERO_Old_Val.Check("GCDCDTime","")
@@ -294,7 +310,13 @@ function GCDCDTime()
         if IROClassGCDOneSec[IROSpecID] then
             GCDCD = 1
         else
-            GCDCD = 1.5*(100/(100+UnitSpellHaste("player")))
+            if IROVar.GCDCDTimeOldHaste~=IROVar.Haste then
+                GCDCD = 1.5*(100/(100+IROVar.Haste))
+                IROVar.GCDCDTimeOldHaste=IROVar.Haste
+                IROVar.GCDCDTimeOldGCD=GCDCD
+            else
+                GCDCD=IROVar.GCDCDTimeOldGCD
+            end
         end
     end
     IROVar.ERO_Old_Val.Update("GCDCDTime","",GCDCD)

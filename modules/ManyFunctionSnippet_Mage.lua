@@ -16,7 +16,6 @@ IROVar.Mage.BrainFreezeStatus=0
 IROVar.Mage.currentIL=1
 IROVar.Mage.FoFStatus=0
 IROVar.Mage.usingFlurryRotation=false
---IROVar.Mage.ResetUsingFlurryRotationHandle=C_Timer.NewTimer(0, function() end)
 --use "/run IROVar.Mage.UsingFlurryRotation()" in macro button
 --and it ll reset to false when end of Flurry Rotation
 IROVar.Mage.BlizardList={}
@@ -77,7 +76,6 @@ end
 
 function IROVar.Mage.UsingFlurryRotation()
     if not IROVar.Mage.usingFlurryRotation then
-        --IROVar.Mage.ResetUsingFlurryRotationHandle:Cancel()
         if (IROVar.Mage.FlurryIcon1Show~=nil) and
         (IROVar.Mage.FlurryIcon2Show~=nil) then
             if IROVar.Mage.FlurryIcon1Show or IROVar.Mage.FlurryIcon2Show then
@@ -90,13 +88,6 @@ function IROVar.Mage.UsingFlurryRotation()
 end
 
 function IROVar.Mage.CastSequenceCheckEvent(spellName)
-    --[[if spellName=="Flurry" then -- "IROVar.Mage.usingFlurryRotation=false" fail save. use 4 GCD after cast flurry
-        IROVar.Mage.ResetUsingFlurryRotationHandle:Cancel()
-        IROVar.Mage.ResetUsingFlurryRotationHandle=C_Timer.NewTimer(GCDCDTime()*4,
-            function()
-                IROVar.Mage.usingFlurryRotation=false
-            end)
-    end]]
     local currentTime=GetTime()
     for k,v in pairs(IROVar.Mage.CastSequenceCheck) do
         if currentTime>v.timeOut then

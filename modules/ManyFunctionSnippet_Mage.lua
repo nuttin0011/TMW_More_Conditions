@@ -1,9 +1,10 @@
--- Many Function Version Mage 9.0.5/1
+-- Many Function Version Mage 9.0.5/2
 -- this file save many function for paste to TMW Snippet LUA
 
 --function IROVar.Mage.registerCheckSpellSequence(sequence,timeout,timeout_after1stSpell|nil,callback,run_callback_when_timeout)
 --function IROVar.Mage.UseFlurry(n) ; check condition use Flurry when brain freeze proc
 --function IROVar.Mage.UseILFrostFinger(n) ; as above
+--function IROVar.Mage.FixBrainFreezeStatus() ; fix when casting Flurry. (should not casting flurry)
 
 if not IROVar then IROVar={} end
 if not IROVar.Mage then IROVar.Mage={} end
@@ -15,7 +16,8 @@ IROVar.Mage.BrainFreezeStatus=0
 IROVar.Mage.currentIL=1
 IROVar.Mage.FoFStatus=0
 IROVar.Mage.usingFlurryRotation=false
---use "/run IROVar.Mage.usingFlurryRotation=true" in macro button
+--IROVar.Mage.ResetUsingFlurryRotationHandle=C_Timer.NewTimer(0, function() end)
+--use "/run IROVar.Mage.UsingFlurryRotation()" in macro button
 --and it ll reset to false when end of Flurry Rotation
 IROVar.Mage.BlizardList={}
 --
@@ -46,24 +48,24 @@ IROVar.Mage.BlizardList={}
     }
 ]]
 
-function IROVar.Mage.FlurryProcEvent()
+function IROVar.Mage.FlurryProcEvent(timeBuff)
     IROVar.Mage.BrainFreezeStatus=IROVar.Mage.BrainFreezeStatus+1
     local flurryFunc=function()
         IROVar.Mage.BrainFreezeStatus=IROVar.Mage.BrainFreezeStatus-1
         IROVar.Mage.currentFlurry=IROVar.Mage.currentFlurry+1
         IROVar.Mage.usingFlurryRotation=false
     end
-    IROVar.Mage.registerCheckSpellSequence("Flurry|Ice Lance|Ice Lance",14,5,flurryFunc,true)
+    IROVar.Mage.registerCheckSpellSequence("Flurry|Ice Lance|Ice Lance",timeBuff,5,flurryFunc,true)
 end
 
-function IROVar.Mage.FoFProcEvent()
+function IROVar.Mage.FoFProcEvent(timeBuff)
     local stringIL="Ice Lance"..string.rep("|Ice Lance",IROVar.Mage.FoFStatus)
     IROVar.Mage.FoFStatus=IROVar.Mage.FoFStatus+1
     local ILFunc=function()
         IROVar.Mage.FoFStatus=IROVar.Mage.FoFStatus-1
         IROVar.Mage.currentIL=IROVar.Mage.currentIL+1
     end
-    IROVar.Mage.registerCheckSpellSequence(stringIL,14,nil,ILFunc,true)
+    IROVar.Mage.registerCheckSpellSequence(stringIL,timeBuff,nil,ILFunc,true)
 end
 
 function IROVar.Mage.destroySequence(se,finishSequence)
@@ -73,7 +75,28 @@ function IROVar.Mage.destroySequence(se,finishSequence)
     end
 end
 
+function IROVar.Mage.UsingFlurryRotation()
+    if not IROVar.Mage.usingFlurryRotation then
+        --IROVar.Mage.ResetUsingFlurryRotationHandle:Cancel()
+        if (IROVar.Mage.FlurryIcon1Show~=nil) and
+        (IROVar.Mage.FlurryIcon2Show~=nil) then
+            if IROVar.Mage.FlurryIcon1Show or IROVar.Mage.FlurryIcon2Show then
+                IROVar.Mage.usingFlurryRotation=true
+            end
+        else
+            IROVar.Mage.usingFlurryRotation=true
+        end
+    end
+end
+
 function IROVar.Mage.CastSequenceCheckEvent(spellName)
+    --[[if spellName=="Flurry" then -- "IROVar.Mage.usingFlurryRotation=false" fail save. use 4 GCD after cast flurry
+        IROVar.Mage.ResetUsingFlurryRotationHandle:Cancel()
+        IROVar.Mage.ResetUsingFlurryRotationHandle=C_Timer.NewTimer(GCDCDTime()*4,
+            function()
+                IROVar.Mage.usingFlurryRotation=false
+            end)
+    end]]
     local currentTime=GetTime()
     for k,v in pairs(IROVar.Mage.CastSequenceCheck) do
         if currentTime>v.timeOut then
@@ -132,10 +155,13 @@ function IROVar.Mage.CombatEvent()
         IROVar.Mage.CastSequenceCheckEvent(spellName)
     elseif (subevent=="SPELL_AURA_APPLIED") or (subevent=="SPELL_AURA_APPLIED_DOSE") then
         if (spellName=="Brain Freeze") then
-            IROVar.Mage.FlurryProcEvent()
+            IROVar.Mage.FlurryProcEvent(14)
         elseif (spellName=="Fingers of Frost") then
-            IROVar.Mage.FoFProcEvent()
+            IROVar.Mage.FoFProcEvent(14)
         end
+    elseif (subevent=="SPELL_CAST_START") and (spellName=="Frostbolt") and IROVar.Mage.usingFlurryRotation then
+        IROVar.Mage.usingFlurryRotation=false
+        --Fail Save IROVar.Mage.usingFlurryRotation
     end
     --[[
     if (subevent=="SPELL_CAST_START") and(spellName=="Flurry")then

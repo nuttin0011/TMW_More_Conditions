@@ -46,54 +46,103 @@ IROVar.Mage.BlizardList={}
     }
 ]]
 
+function IROVar.Mage.FlurryProcEvent()
+    IROVar.Mage.BrainFreezeStatus=IROVar.Mage.BrainFreezeStatus+1
+    local flurryFunc=function()
+        IROVar.Mage.BrainFreezeStatus=IROVar.Mage.BrainFreezeStatus-1
+        IROVar.Mage.currentFlurry=IROVar.Mage.currentFlurry+1
+        IROVar.Mage.usingFlurryRotation=false
+    end
+    IROVar.Mage.registerCheckSpellSequence("Flurry|Ice Lance|Ice Lance",14,5,flurryFunc,true)
+end
+
+function IROVar.Mage.FoFProcEvent()
+    local stringIL="Ice Lance"..string.rep("|Ice Lance",IROVar.Mage.FoFStatus)
+    IROVar.Mage.FoFStatus=IROVar.Mage.FoFStatus+1
+    local ILFunc=function()
+        IROVar.Mage.FoFStatus=IROVar.Mage.FoFStatus-1
+        IROVar.Mage.currentIL=IROVar.Mage.currentIL+1
+    end
+    IROVar.Mage.registerCheckSpellSequence(stringIL,14,nil,ILFunc,true)
+end
+
+function IROVar.Mage.destroySequence(se,finishSequence)
+    se.canceled=true
+    if finishSequence or se.run_callback_when_timeout then
+        se.callBack()
+    end
+end
+
+function IROVar.Mage.CastSequenceCheckEvent(spellName)
+    local currentTime=GetTime()
+    for k,v in pairs(IROVar.Mage.CastSequenceCheck) do
+        if currentTime>v.timeOut then
+            IROVar.Mage.destroySequence(v,false)
+        end
+        if v.spellName[v.checkOrder]==spellName then
+            if (v.checkOrder==1)and v.timeout_after1stSpell then
+                C_Timer.After(v.timeout_after1stSpell,IROVar.Mage.checkSequenceTimeOut)
+                v.timeOut=currentTime+v.timeout_after1stSpell
+            end
+            v.checkOrder=v.checkOrder+1
+            if v.spellName[v.checkOrder]==nil then
+                IROVar.Mage.destroySequence(v,true)
+            end
+        end
+        if IROVar.Mage.CastSequenceCheck[k].canceled then
+            IROVar.Mage.CastSequenceCheck[k]=nil
+        end
+    end
+end
+
+function IROVar.Mage.destroyAllSequence()
+    IROVar.Mage.CastSequenceCheck={}
+    IROVar.Mage.BrainFreezeStatus=0
+    IROVar.Mage.usingFlurryRotation=false
+    IROVar.Mage.FoFStatus=0
+end
+
+function IROVar.Mage.FixBrainFreezeStatus()
+    IROVar.Mage.destroyAllSequence()
+    local BF,FoF,FoFCount
+    for i=1,40 do
+        local name, _, count = UnitBuff("player",i,"PLAYER")
+        if not name then
+            break
+        elseif name=="Brain Freeze" then
+            BF=true
+        elseif name=="Fingers of Frost" then
+            FoF=true
+            FoFCount=count
+        end
+    end
+    if BF then
+        IROVar.Mage.FlurryProcEvent()
+    end
+    if FoF then
+        IROVar.Mage.FoFStatus=FoFCount-1
+        IROVar.Mage.FoFProcEvent()
+    end
+end
+
 function IROVar.Mage.CombatEvent()
     local _,subevent,_,sourceGUID,_,_,_,_,_,_,_,_,spellName=CombatLogGetCurrentEventInfo()
     if (sourceGUID~=IROVar.Mage.playerGUID) then return end
     if (subevent=="SPELL_CAST_SUCCESS")then
-        local function destroySequence(se,finishSequence)
-            se.canceled=true
-            if finishSequence or se.run_callback_when_timeout then
-                se.callBack()
-            end
-        end
-        for k,v in pairs(IROVar.Mage.CastSequenceCheck) do
-            if GetTime()>v.timeOut then
-                destroySequence(v,false)
-            end
-            if v.spellName[v.checkOrder]==spellName then
-                if (v.checkOrder==1)and v.timeout_after1stSpell then
-                    C_Timer.After(v.timeout_after1stSpell,IROVar.Mage.checkSequenceTimeOut)
-                    v.timeOut=GetTime()+v.timeout_after1stSpell
-                end
-                v.checkOrder=v.checkOrder+1
-                if v.spellName[v.checkOrder]==nil then
-                    destroySequence(v,true)
-                end
-            end
-            if IROVar.Mage.CastSequenceCheck[k].canceled then
-                IROVar.Mage.CastSequenceCheck[k]=nil
-            end
-        end
+        IROVar.Mage.CastSequenceCheckEvent(spellName)
     elseif (subevent=="SPELL_AURA_APPLIED") or (subevent=="SPELL_AURA_APPLIED_DOSE") then
         if (spellName=="Brain Freeze") then
-            IROVar.Mage.BrainFreezeStatus=IROVar.Mage.BrainFreezeStatus+1
-            local flurryFunc=function()
-                IROVar.Mage.BrainFreezeStatus=IROVar.Mage.BrainFreezeStatus-1
-                IROVar.Mage.currentFlurry=IROVar.Mage.currentFlurry+1
-                IROVar.Mage.usingFlurryRotation=false
-            end
-            IROVar.Mage.registerCheckSpellSequence("Flurry|Ice Lance|Ice Lance",14,5,flurryFunc,true)
+            IROVar.Mage.FlurryProcEvent()
         elseif (spellName=="Fingers of Frost") then
-            local stringIL="Ice Lance"..string.rep("|Ice Lance",IROVar.Mage.FoFStatus)
-            IROVar.Mage.FoFStatus=IROVar.Mage.FoFStatus+1
-            local ILFunc=function()
-                IROVar.Mage.FoFStatus=IROVar.Mage.FoFStatus-1
-                IROVar.Mage.currentIL=IROVar.Mage.currentIL+1
-            end
-            IROVar.Mage.registerCheckSpellSequence(stringIL,14,nil,ILFunc,true)
+            IROVar.Mage.FoFProcEvent()
         end
     end
+    --[[
+    if (subevent=="SPELL_CAST_START") and(spellName=="Flurry")then
+    end
+    ]]
 end
+
 IROVar.Mage.frame =CreateFrame("Frame")
 IROVar.Mage.frame:RegisterEvent("COMBAT_LOG_EVENT_UNFILTERED")
 IROVar.Mage.frame:SetScript("OnEvent",IROVar.Mage.CombatEvent)
@@ -144,3 +193,5 @@ function IROVar.Mage.UseILFrostFinger(n)
     --use same as function IROVar.Mage.UseFlurry(n)
     return (IROVar.Mage.FoFStatus>=1) and ((IROVar.Mage.currentIL % n)+1) or 0
 end
+
+

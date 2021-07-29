@@ -35,6 +35,7 @@ IROVar.InterruptSpell = nil
 IROVar.SkillCheckDPSRange = nil
 IROVar.InstanceName = GetInstanceInfo()
 IROVar.activeConduits = {}
+IROVar.activeConduits.IsKoraynAndFirstStrike = false
 IROVar.Haste = UnitSpellHaste("player")
 C_Timer.After(2,function() IROVar.Haste = UnitSpellHaste("player") end)
 if not IROSpecID then
@@ -472,7 +473,7 @@ IROVar.fconduitOnEvent=function()
     if now <= IROVar.justCheckActiveConduits then return end
     IROVar.justCheckActiveConduits=now+0.1
     IROVar.activeConduits=IROVar.DetermineActiveCovenantAndSoulbindAndConduits()
-    IROVar.activeConduits.IsKoraynAndFirstStrike=(IROVar.activeConduits.soulbindName=="Korayn")and(IROVar.activeConduits["First Strike"]==true)
+    --IROVar.activeConduits.IsKoraynAndFirstStrike=(IROVar.activeConduits.soulbindName=="Korayn")and(IROVar.activeConduits["First Strike"]==true)
 end
 
 -- patch 9.x.x Shadowlands SL
@@ -504,6 +505,7 @@ IROVar.damageEvent = {
     ["RANGE_DAMAGE"]=true,
     ["SWING_DAMAGE"]=true,
 }
+--[[
 function IROVar.CombatEvent()
     --check "first strike" conduit
     if not IROVar.activeConduits.IsKoraynAndFirstStrike then return end
@@ -519,7 +521,7 @@ end
 IROVar.cframe =CreateFrame("Frame")
 IROVar.cframe:RegisterEvent("COMBAT_LOG_EVENT_UNFILTERED")
 IROVar.cframe:SetScript("OnEvent",IROVar.CombatEvent)
-
+]]
 IROVar.incombat = UnitAffectingCombat("player")
 IROVar.incombatFrame = CreateFrame("Frame")
 IROVar.incombatFrame:RegisterEvent("PLAYER_REGEN_ENABLED")

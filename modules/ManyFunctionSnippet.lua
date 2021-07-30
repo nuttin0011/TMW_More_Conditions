@@ -1,4 +1,4 @@
--- Many Function Version 9.0.5/42
+-- Many Function Version 9.0.5/43
 -- this file save many function for paste to TMW Snippet LUA
 
 --function IROEnemyCountInRange(nRange) ; return count, nRange = yard e.g. 2 5 8 15 20 30 40 50 200
@@ -473,7 +473,8 @@ IROVar.fconduitOnEvent=function()
     if now <= IROVar.justCheckActiveConduits then return end
     IROVar.justCheckActiveConduits=now+0.1
     IROVar.activeConduits=IROVar.DetermineActiveCovenantAndSoulbindAndConduits()
-    --IROVar.activeConduits.IsKoraynAndFirstStrike=(IROVar.activeConduits.soulbindName=="Korayn")and(IROVar.activeConduits["First Strike"]==true)
+    if not IROVar.activeConduits then IROVar.activeConduits={} end
+    IROVar.activeConduits.IsKoraynAndFirstStrike=(IROVar.activeConduits.soulbindName=="Korayn")and(IROVar.activeConduits["First Strike"]==true)
 end
 
 -- patch 9.x.x Shadowlands SL
@@ -505,7 +506,7 @@ IROVar.damageEvent = {
     ["RANGE_DAMAGE"]=true,
     ["SWING_DAMAGE"]=true,
 }
---[[
+
 function IROVar.CombatEvent()
     --check "first strike" conduit
     if not IROVar.activeConduits.IsKoraynAndFirstStrike then return end
@@ -521,7 +522,7 @@ end
 IROVar.cframe =CreateFrame("Frame")
 IROVar.cframe:RegisterEvent("COMBAT_LOG_EVENT_UNFILTERED")
 IROVar.cframe:SetScript("OnEvent",IROVar.CombatEvent)
-]]
+
 IROVar.incombat = UnitAffectingCombat("player")
 IROVar.incombatFrame = CreateFrame("Frame")
 IROVar.incombatFrame:RegisterEvent("PLAYER_REGEN_ENABLED")

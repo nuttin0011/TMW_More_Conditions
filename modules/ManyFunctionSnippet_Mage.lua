@@ -1,4 +1,4 @@
--- Many Function Version Mage 9.0.5/2
+-- Many Function Version Mage 9.0.5/2b
 -- this file save many function for paste to TMW Snippet LUA
 
 --function IROVar.Mage.registerCheckSpellSequence(sequence,timeout,timeout_after1stSpell|nil,callback,run_callback_when_timeout)
@@ -15,7 +15,7 @@ IROVar.Mage.currentFlurry=1
 IROVar.Mage.BrainFreezeStatus=0
 IROVar.Mage.currentIL=1
 IROVar.Mage.FoFStatus=0
-IROVar.Mage.usingFlurryRotation=false
+IROVar.Mage.usingFlurryRotation=0
 --use "/run IROVar.Mage.UsingFlurryRotation()" in macro button
 --and it ll reset to false when end of Flurry Rotation
 IROVar.Mage.BlizardList={}
@@ -52,7 +52,7 @@ function IROVar.Mage.FlurryProcEvent(timeBuff)
     local flurryFunc=function()
         IROVar.Mage.BrainFreezeStatus=IROVar.Mage.BrainFreezeStatus-1
         IROVar.Mage.currentFlurry=IROVar.Mage.currentFlurry+1
-        IROVar.Mage.usingFlurryRotation=false
+        IROVar.Mage.usingFlurryRotation=0
     end
     IROVar.Mage.registerCheckSpellSequence("Flurry|Ice Lance|Ice Lance",timeBuff,5,flurryFunc,true)
 end
@@ -75,15 +75,13 @@ function IROVar.Mage.destroySequence(se,finishSequence)
 end
 
 function IROVar.Mage.UsingFlurryRotation()
-    if not IROVar.Mage.usingFlurryRotation then
-        if (IROVar.Mage.FlurryIcon1Show~=nil) and
-        (IROVar.Mage.FlurryIcon2Show~=nil) then
-            if IROVar.Mage.FlurryIcon1Show or IROVar.Mage.FlurryIcon2Show then
-                IROVar.Mage.usingFlurryRotation=true
-            end
-        else
-            IROVar.Mage.usingFlurryRotation=true
+    if (IROVar.Mage.FlurryIcon1Show~=nil) and
+    (IROVar.Mage.FlurryIcon2Show~=nil) then
+        if IROVar.Mage.FlurryIcon1Show or IROVar.Mage.FlurryIcon2Show then
+            IROVar.Mage.usingFlurryRotation=IROVar.Mage.usingFlurryRotation+1
         end
+    else
+        IROVar.Mage.usingFlurryRotation=IROVar.Mage.usingFlurryRotation+1
     end
 end
 
@@ -112,7 +110,7 @@ end
 function IROVar.Mage.destroyAllSequence()
     IROVar.Mage.CastSequenceCheck={}
     IROVar.Mage.BrainFreezeStatus=0
-    IROVar.Mage.usingFlurryRotation=false
+    IROVar.Mage.usingFlurryRotation=0
     IROVar.Mage.FoFStatus=0
 end
 
@@ -151,7 +149,7 @@ function IROVar.Mage.CombatEvent()
             IROVar.Mage.FoFProcEvent(14)
         end
     elseif (subevent=="SPELL_CAST_START") and (spellName=="Frostbolt") and IROVar.Mage.usingFlurryRotation then
-        IROVar.Mage.usingFlurryRotation=false
+        IROVar.Mage.usingFlurryRotation=0
         --Fail Save IROVar.Mage.usingFlurryRotation
     end
     --[[
@@ -196,6 +194,7 @@ function IROVar.Mage.registerCheckSpellSequence(sequence,timeout,timeout_after1s
 end
 
 function IROVar.Mage.UseFlurry(n)
+
     -- seperate flurry IL combo to n macro
     -- e.g. 2 macro
     -- 1 /cast reset=3 flurry, Ice Lance, Ice Lance

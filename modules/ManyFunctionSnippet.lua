@@ -20,7 +20,7 @@
 --function IROVar.allDeBuffByMe(unit) ; return table of debuff
 --function IROVar.allBuffByMe(unit,needLowerCaseName)
 ----*********return table of [Buff name] = Buff time remaining
---function TMW.CNDT.Env.AuraDur(unit, name, filter) ; return aura Duration
+-- function TMW.CNDT.Env.AuraDur(unit, name, filter) ; return duration,MaxDuration,TimeEnd
 --function IROVar.IconSweepCompair(icon,max,min) ; return (max > SweepCD > min) (true/false)
 --var IROVar.activeConduits ; dump soulbind to table
 --var IROVar.playerGUID ;

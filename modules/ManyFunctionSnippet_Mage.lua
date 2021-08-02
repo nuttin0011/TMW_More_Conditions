@@ -79,7 +79,7 @@ end
 IROVar.Mage.UsingFlurryByPluseHandle = C_Timer.NewTimer(0.1,function() end)
 IROVar.Mage.ResetUsingFlurryByPluse = function()
     IROVar.Mage.UsingFlurryByPluseHandle:Cancel()
-    local t=GCDCDTime()-.2
+    local t=GCDCDTime()-.1
     IROVar.Mage.UsingFlurryByPluseHandle=C_Timer.NewTimer(t,function() IROVar.Mage.usingFlurryByPluse=0 end)
 end
 
@@ -173,7 +173,7 @@ function IROVar.Mage.CombatEvent()
         elseif (spellName=="Fingers of Frost") then
             IROVar.Mage.FoFProcEvent(14)
         end
-    elseif (subevent=="SPELL_CAST_START") and (spellName=="Frostbolt") and IROVar.Mage.usingFlurryRotation then
+    elseif (subevent=="SPELL_CAST_START") and (spellName=="Frostbolt") and IROVar.Mage.usingFlurryRotation>0 then
         IROVar.Mage.usingFlurryRotation=0
         --Fail Save IROVar.Mage.usingFlurryRotation
     end

@@ -1,4 +1,4 @@
--- Many Function Version Mage 9.0.5/2b
+-- Many Function Version Mage 9.0.5/3
 -- this file save many function for paste to TMW Snippet LUA
 
 --function IROVar.Mage.registerCheckSpellSequence(sequence,timeout,timeout_after1stSpell|nil,callback,run_callback_when_timeout)
@@ -16,6 +16,8 @@ IROVar.Mage.BrainFreezeStatus=0
 IROVar.Mage.currentIL=1
 IROVar.Mage.FoFStatus=0
 IROVar.Mage.usingFlurryRotation=0
+IROVar.Mage.usingFlurryByPluse=0 -- 0 = can use flurry , 1  = block use flurry
+--pluse by GCDTime-0.2
 --use "/run IROVar.Mage.UsingFlurryRotation()" in macro button
 --and it ll reset to false when end of Flurry Rotation
 IROVar.Mage.BlizardList={}
@@ -74,14 +76,33 @@ function IROVar.Mage.destroySequence(se,finishSequence)
     end
 end
 
+IROVar.Mage.UsingFlurryByPluseHandle = C_Timer.NewTimer(0.1,function() end)
+IROVar.Mage.ResetUsingFlurryByPluse = function()
+    IROVar.Mage.UsingFlurryByPluseHandle:Cancel()
+    local t=GCDCDTime()-.2
+    IROVar.Mage.UsingFlurryByPluseHandle=C_Timer.NewTimer(t,function() IROVar.Mage.usingFlurryByPluse=0 end)
+end
+
 function IROVar.Mage.UsingFlurryRotation()
     if (IROVar.Mage.FlurryIcon1Show~=nil) and
     (IROVar.Mage.FlurryIcon2Show~=nil) then
         if IROVar.Mage.FlurryIcon1Show or IROVar.Mage.FlurryIcon2Show then
+            if IROVar.Mage.usingFlurryRotation>0 then
+                IROVar.Mage.CastSequenceCheckEvent("Ice Lance")
+                IROVar.Mage.ILChecked=true
+            end
             IROVar.Mage.usingFlurryRotation=IROVar.Mage.usingFlurryRotation+1
+            IROVar.Mage.usingFlurryByPluse=1
+            IROVar.Mage.ResetUsingFlurryByPluse()
         end
     else
+        if IROVar.Mage.usingFlurryRotation>0 then
+            IROVar.Mage.CastSequenceCheckEvent("Ice Lance")
+            IROVar.Mage.ILChecked=true
+        end
         IROVar.Mage.usingFlurryRotation=IROVar.Mage.usingFlurryRotation+1
+        IROVar.Mage.usingFlurryByPluse=1
+        IROVar.Mage.ResetUsingFlurryByPluse()
     end
 end
 
@@ -141,7 +162,11 @@ function IROVar.Mage.CombatEvent()
     local _,subevent,_,sourceGUID,_,_,_,_,_,_,_,_,spellName=CombatLogGetCurrentEventInfo()
     if (sourceGUID~=IROVar.Mage.playerGUID) then return end
     if (subevent=="SPELL_CAST_SUCCESS")then
-        IROVar.Mage.CastSequenceCheckEvent(spellName)
+        if IROVar.Mage.ILChecked and spellName=="Ice Lance" then
+            IROVar.Mage.ILChecked=false
+        else
+            IROVar.Mage.CastSequenceCheckEvent(spellName)
+        end
     elseif (subevent=="SPELL_AURA_APPLIED") or (subevent=="SPELL_AURA_APPLIED_DOSE") then
         if (spellName=="Brain Freeze") then
             IROVar.Mage.FlurryProcEvent(14)

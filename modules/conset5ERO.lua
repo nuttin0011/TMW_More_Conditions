@@ -1,4 +1,4 @@
--- ERO DPS Decoder 9.0.5/6b
+-- ERO DPS Decoder 9.0.5/6c
 
 -- can copy this to LUA Snippted
 -- Set to Hiest Priority!!!!!!!!!!!!!!
@@ -149,6 +149,7 @@ function enSubMiniIROCode(IROcode)
 end
 
 function getMetaIconColor(icon)
+	if not icon then return "ff000000" end
 	local a=icon.__currentIcon
 	local b=a and a.__currentIcon or nil
 	while b do

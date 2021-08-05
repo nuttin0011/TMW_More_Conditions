@@ -1,4 +1,4 @@
--- Many Function Version Warlock 9.0.5/8d
+-- Many Function Version Warlock 9.0.5/8e
 -- this file save many function for paste to TMW Snippet LUA
 
 --function IROVar.Lock.Pet(PetType) return true/false
@@ -239,7 +239,7 @@ function IROVar.Lock.PredictSS()
 		return IROVar.Lock.SS.old_val
 	end
 	if (not IROVar.Lock.SS.trust_segment_cast) then
-		if (currentTime>IROVar.Lock.SS.old_spell_finish_cast_check) then
+		if (currentTime>(IROVar.Lock.SS.old_spell_finish_cast_check or 0)) then
 			IROVar.Lock.SS.trust_segment_cast = true
 		else
 			return IROVar.Lock.SS.old_val

@@ -6,7 +6,7 @@ if not IROVar.CSC then
     IROVar.CSC={}
     --[spell id/ spell name]= 1(stop cast is enough),2(must CD e.g. "Unending Resolve")
     IROVar.CSC.InterruptSpellCast ={
-        [242135]=1,--["Interrupting Roar"]=1,
+        [342135]=1,--["Interrupting Roar"]=1,
         [339415]=1,--["Deafening Crash"]=1,
         [335495]=2,--["Severing Roar"]=2,
     }

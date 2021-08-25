@@ -15,16 +15,33 @@ if not IROUsedSkillControl then
 	IROUsedSkillControl={}
 end
 
-IROUsedSkillControl.IdleTimeAfterUseSkill=0.2
-IROUsedSkillControl.PlayerSpec=GetSpecializationInfo(GetSpecialization())
-IROUsedSkillControl.AdjustIdleTimeAfterUseSkill = function()
-	IROUsedSkillControl.PlayerSpec=GetSpecializationInfo(GetSpecialization())
-	local CastType=IROUsedSkillControl.ClassType[IROUsedSkillControl.PlayerSpec][6]
-	if CastType=='Caster' then
-		IROUsedSkillControl.IdleTimeAfterUseSkill=0.4
-	else
-		IROUsedSkillControl.IdleTimeAfterUseSkill=0.4
+function IROUsedSkillControl.Haste_Event(Self,Event,Arg1)
+	if Arg1=="player" then
+		IROUsedSkillControl.GCDCD = math.max(0.5,1.5*(100/(100+UnitSpellHaste("player"))))
+		IROUsedSkillControl.AdjustIdleTimeAfterUseSkill()
 	end
+end
+IROUsedSkillControl.Haste_Event(nil,nil,"player")
+IROUsedSkillControl.fH=CreateFrame("Frame")
+IROUsedSkillControl.fH:RegisterEvent("UNIT_SPELL_HASTE")
+IROUsedSkillControl.fH:SetScript("OnEvent", IROUsedSkillControl.Haste_Event)
+IROUsedSkillControl.IdleTimeAfterUseSkill=IROUsedSkillControl.GCDCD
+IROUsedSkillControl.PlayerSpec=GetSpecializationInfo(GetSpecialization())
+IROUsedSkillControl.spec1secGCD = {
+	[259] = true-- Ass
+	,[260] = true -- Out
+	,[261] = true -- Sub
+	,[103] = true -- Feral
+	,[269] = true -- Windwalker
+}
+IROUsedSkillControl.AdjustIdleTimeAfterUseSkill = function()
+	local spec=GetSpecializationInfo(GetSpecialization())
+	if IROUsedSkillControl.spec1secGCD[spec] then
+		IROUsedSkillControl.IdleTimeAfterUseSkill=1
+	else
+		IROUsedSkillControl.IdleTimeAfterUseSkill=IROUsedSkillControl.GCDCD
+	end
+	IROUsedSkillControl.PlayerSpec=spec
 end
 C_Timer.After(5,IROUsedSkillControl.AdjustIdleTimeAfterUseSkill)
 IROUsedSkillControl.f2 = CreateFrame("Frame")
@@ -169,7 +186,7 @@ end
 
 local WorldPing={}
 WorldPing.now=0
-WorldPing.adjustTiming=5.14 -- check World Ping Every 3.14 sec
+WorldPing.adjustTiming=5.14 -- check World Ping
 WorldPing.adjustWorldPing = function()
 	WorldPing.now=(select(4,GetNetStats())/1000)
 	C_Timer.After(WorldPing.adjustTiming,WorldPing.adjustWorldPing)

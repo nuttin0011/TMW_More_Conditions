@@ -1,4 +1,4 @@
--- Many Function Rogue 9.0.5/2
+-- Many Function Rogue 9.0.5/4
 
 --function IROVar.Rogue.UpdateRTBBuff() ; update IROVar.Rogue.RTBBuff table ; return next update time,
 --function IROVar.Rogue.RTBBuff.count() ; return Buff RtB count
@@ -145,6 +145,7 @@ function IROVar.Rogue.ComboSerratedBoneSpikeGen()
         end
     end
     if TMW.CNDT.Env.AuraDur("player", "broadside", "PLAYER HELPFUL")>0.5 then combo=combo+1 end
+    if TMW.CNDT.Env.AuraDur("player", "shadow blades", "PLAYER HELPFUL")>0.5 then combo=combo+1 end
     return combo
 end
 

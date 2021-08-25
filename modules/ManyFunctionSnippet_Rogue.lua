@@ -144,7 +144,7 @@ function IROVar.Rogue.ComboSerratedBoneSpikeGen()
             end
         end
     end
-    if TMW.CNDT.Env.AuraDur("player", "Broadside", "PLAYER HELPFUL")>0.5 then combo=combo+combo end
+    if TMW.CNDT.Env.AuraDur("player", "broadside", "PLAYER HELPFUL")>0.5 then combo=combo+1 end
     return combo
 end
 

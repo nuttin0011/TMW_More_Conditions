@@ -1,16 +1,14 @@
--- Many Function Version Priest 9.1.0/1
+-- Many Function Version Priest 9.1.0/1b
 -- var IROVar.Priest.GUIDVT ; Check not cast same GUID target
--- 	use /run IROVar.Priest.GUIDVT=UnitGUID("target") after use macro cast VT
--- 	use /run IROVar.Priest.GUIDSpell=UnitGUID("target") after use macro cast spell
+-- 	use /run IROVar.Priest.GUIDVTInit=UnitGUID("target") after use macro cast VT
 -- IROVar.Priest.UnitMSCount ; unit count that MS hit
 
 if not IROVar then IROVar={} end
 if not IROVar.Priest then IROVar.Priest={} end
 
 IROVar.Priest.GUIDVT=nil
+IROVar.Priest.GUIDVTInit=nil
 IROVar.Priest.GUIDVT_Old=nil
-IROVar.Priest.GUIDSpell=nil
-IROVar.Priest.GUIDSpell_Old=nil
 
 IROVar.Priest.UnitMSCount=0
 IROVar.Priest.UnitMSCountTimer=0
@@ -21,6 +19,7 @@ function IROVar.Priest.GUIDVT_OnEvent(self,Event,Unit,CastID,SpellID)
 	-- .... VT Should Shadow by default??
 	then
 		if Event == "UNIT_SPELLCAST_START" then
+			IROVar.Priest.GUIDVT=IROVar.Priest.GUIDVTInit
 			IROVar.Priest.GUIDVT_Old=IROVar.Priest.GUIDVT
 		elseif Event == "UNIT_SPELLCAST_STOP" then
 			if IROVar.Priest.GUIDVT_Old==IROVar.Priest.GUIDVT then
@@ -28,14 +27,14 @@ function IROVar.Priest.GUIDVT_OnEvent(self,Event,Unit,CastID,SpellID)
 			end
 		end
 	end
-	-- other spell included VT
+	--[[ other spell included VT ......... still not use
 	if Event == "UNIT_SPELLCAST_START" then
 		IROVar.Priest.GUIDSpell_Old=IROVar.Priest.GUIDSpell
 	elseif Event == "UNIT_SPELLCAST_STOP" then
 		if IROVar.Priest.GUIDSpell_Old==IROVar.Priest.GUIDSpell then
 			IROVar.Priest.GUIDSpell=nil
 		end
-	end
+	end]]
 end
 IROVar.Priest.GUIDVT_Frame = CreateFrame("Frame")
 IROVar.Priest.GUIDVT_Frame:RegisterEvent("UNIT_SPELLCAST_START")

@@ -1,4 +1,4 @@
--- Many Function Version 9.0.5/43
+-- Many Function Version 9.0.5/44
 -- this file save many function for paste to TMW Snippet LUA
 
 --function IROEnemyCountInRange(nRange) ; return count, nRange = yard e.g. 2 5 8 15 20 30 40 50 200
@@ -6,7 +6,7 @@
 --function GCDActiveLessThan(ttime) ; return true/false
 --function SumHPMobinCombat() ; return SumHP
 --function SumHPMobin8yd() ; return SumHP
---function IROTargetVVHP(nMultipy) ; return (nMultipy*playerHealth*nG)<targetHealth
+--function IROTargetVVHP(nMultipy,unit) ; return (nMultipy*playerHealth*nG)<targetHealth;unit is unit or "target"
 --function IROEnemyGroupVVHP(nMultipy) ; return (nMultipy*playerHealth*nG)<EnemyGroupHP
 --function GCDCDTime() ; return GCD length time, = 1.5*(100/(100+UnitSpellHaste("player")))
 --function IsMyInterruptSpellReady() ; true/false
@@ -276,10 +276,11 @@ function SumHPMobin8yd()
     return sumhp
 end
 
-function IROTargetVVHP(nMultipy)
+function IROTargetVVHP(nMultipy,unit)
+    unit=unit or "target"
     nMultipy=nMultipy or 2
     local playerHealth=SumPartyHP()
-    local targetHealth=UnitHealth("target")
+    local targetHealth=UnitHealth(unit)
     return (nMultipy*playerHealth)<targetHealth
 end
 

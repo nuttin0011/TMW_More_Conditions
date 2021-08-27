@@ -17,7 +17,7 @@ IROVar.Priest.UnitMSCountTimer=0
 
 function IROVar.Priest.GUIDVT_OnEvent(self,Event,Unit,CastID,SpellID)
 	if (Unit ~= "player") then return end -- if not player return
-	if (SpellID == 34914) -- VT
+	if (SpellID==34914) -- VT
 	-- .... VT Should Shadow by default??
 	then
 		if Event == "UNIT_SPELLCAST_START" then
@@ -46,7 +46,7 @@ function IROVar.Priest.CombatLog_OnEvent()
     local _,subevent,_,sourceGUID,_,_,_,DesGUID,DesName,_,_,spellID,spellName = CombatLogGetCurrentEventInfo()
     if (sourceGUID==IROVar.playerGUID) -- player
     and (subevent=="SPELL_DAMAGE") -- spell damang
-    and spellID==(49821)then -- mind sear
+    and ((spellID==49821)or(spellName=="Mind Sear"))then -- mind sear
         local currentTime=GetTime()
         if currentTime-IROVar.Priest.UnitMSCountTimer<0.1 then
             IROVar.Priest.UnitMSCount=IROVar.Priest.UnitMSCount+1

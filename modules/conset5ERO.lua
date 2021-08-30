@@ -10,7 +10,10 @@
 --@Numdot
 --/run IROUsedSkillControl.NumDotPress() <-- keep log for in GCD skill
 --/run IROUsedSkillControl.KeepLogOffGCD() <-- keep log off GCD skill
+--@etc
+--/run IROUsedSkillControl.forceReady() <-- forceReady
 --log work only with EROTools Addon installed
+
 if not IROUsedSkillControl then
 	IROUsedSkillControl={}
 end
@@ -210,7 +213,7 @@ function NextTimeCheckLockUseSkill(PingAdjust)
 		if currentTime<CutPoint then
 			return CutPoint,false
 		else
-			return endTime+PingAdjust,true 
+			return endTime+PingAdjust,true
 		end
 	else -- Player Not Casting/Channel
 		if not GCDst then

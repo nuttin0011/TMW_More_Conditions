@@ -65,13 +65,18 @@ IROUsedSkillControl.f2:SetScript("OnEvent", IROUsedSkillControl.SpecChanged)
 function IROUsedSkillControl.Cast_OnEvent(self,Event,Unit,CastID,SpellID)
 	if (Unit ~= "player") then return end -- if not player return
     if Event == "UNIT_SPELLCAST_START" then
+		print("casting start")
+		IROUsedSkillControl.Stage=2
         IROUsedSkillControl.StopGCDPluse()
         IROUsedSkillControl.CreateCastPluse()
     elseif Event == "UNIT_SPELLCAST_STOP" then
+		print("casting stop")
        -- if not IROUsedSkillControl.GCDPluseActive
         -- ไปดูก่อนว่า จะ Start ก่อน Stop ได้ไหม ? ถ้าไม่ได้ให้ทำ
-        IROUsedSkillControl.SpellActive=false
-        if IROUsedSkillControl.GCDPluseTimeStamp<=IROUsedSkillControl.SpellTimeStamp then
+        if IROUsedSkillControl.SpellActive==true then
+			print("cast fail!")
+			IROUsedSkillControl.SpellActive=false
+			IROUsedSkillControl.GCDTickHandle:Cancel()
             IROUsedSkillControl.forceReady()
         end
     end
@@ -91,37 +96,46 @@ IROUsedSkillControl.forceReadyCheckHandle=C_Timer.NewTimer(0,function() end)
 
 function IROUsedSkillControl.forceReadyCheck()
     if IROUsedSkillControl.Stage==1 then
+		print("forceReadyCheck -> Stop GCD Pluse")
+		IROUsedSkillControl.GCDPluseActive=false
+		IROUsedSkillControl.SpellActive=false
         IROUsedSkillControl.GCDTickHandle:Cancel()
     end
 end
 
 function IROUsedSkillControl.forceReady()
+	print("forced ready")
     IROUsedSkillControl.forceReadyCheckHandle:Cancel()
     IROUsedSkillControl.Stage=1
     IROUsedSkillControl.forceReadyCheckHandle=C_Timer.NewTimer(0.4,IROUsedSkillControl.forceReadyCheck)
 end
 
 function IROUsedSkillControl.RepeatGCDPluse()
+	print("GCD tick")
     IROUsedSkillControl.forceReady()
     IROUsedSkillControl.GCDTickHandle=C_Timer.NewTimer(IROUsedSkillControl.GCDCD,IROUsedSkillControl.RepeatGCDPluse)
 end
 
 function IROUsedSkillControl.CreateNewGCDPluse()
+	print("create GCD pluse")
     IROUsedSkillControl.GCDTickHandle:Cancel()
     IROUsedSkillControl.GCDPluseActive=true
     IROUsedSkillControl.GCDPluseTimeStamp=GetTime()
     IROUsedSkillControl.GCDTickHandle=C_Timer.NewTimer(IROUsedSkillControl.GCDCD-0.05,
     function()
+		print("Start Tick")
         IROUsedSkillControl.RepeatGCDPluse()
     end)
 end
 
 function IROUsedSkillControl.StopGCDPluse()
+	print("stop GCD pluse")
     IROUsedSkillControl.GCDTickHandle:Cancel()
     IROUsedSkillControl.GCDPluseActive=false
 end
 
 function IROUsedSkillControl.CreateCastPluse()
+	print("create cast pluse")
     IROUsedSkillControl.SpellActive=true
     IROUsedSkillControl.SpellTimeStamp=GetTime()
     local n, _, _, _, endTimeMS= UnitCastingInfo("player")
@@ -131,14 +145,17 @@ function IROUsedSkillControl.CreateCastPluse()
     endTimeMS=(endTimeMS/1000)-GetTime()-0.4
     IROUsedSkillControl.GCDTickHandle=C_Timer.NewTimer(endTimeMS,
     function()
+		print("cast pluse end")
+		IROUsedSkillControl.SpellActive=false
         IROUsedSkillControl.forceReady()
     end)
 end
 
 function IROUsedSkillControl.NumDotPress()
+	print("numdot press")
     if IROUsedSkillControl.KeepLogText then IROUsedSkillControl.KeepLogText() end
     IROUsedSkillControl.Stage=2
-    if not IROUsedSkillControl.GCDPluseActive then
+    if (not IROUsedSkillControl.GCDPluseActive)and(not IROUsedSkillControl.SpellActive) then
         IROUsedSkillControl.CreateNewGCDPluse()
     end
 end

@@ -17,152 +17,165 @@
 if not IROUsedSkillControl then
 	IROUsedSkillControl={}
 end
-IROUsedSkillControl.debugmode=false
-IROUsedSkillControl.KeepLogOffGCD = function()
-	if IROUsedSkillControl.KeepLogText then IROUsedSkillControl.KeepLogText(true) end
+local IUSC=IROUsedSkillControl
+local GetTime=GetTime
+
+IUSC.debugmode=false
+IUSC.KeepLogOffGCD = function()
+	if IUSC.KeepLogText then IUSC.KeepLogText(true) end
 end
-IROUsedSkillControl.Stage=1
-IROUsedSkillControl.GCDCD=1
-IROUsedSkillControl.PlayerSpec=GetSpecializationInfo(GetSpecialization())
-IROUsedSkillControl.spec1secGCD = {
+IUSC.Stage=1
+IUSC.GCDCD=1
+IUSC.PlayerSpec=GetSpecializationInfo(GetSpecialization())
+IUSC.spec1secGCD = {
 	[259] = true-- Ass
 	,[260] = true -- Out
 	,[261] = true -- Sub
 	,[103] = true -- Feral
 	,[269] = true -- Windwalker
 }
-function IROUsedSkillControl.NotReadyToUseSkill()
-	return IROUsedSkillControl.Stage~=1
+function IUSC.NotReadyToUseSkill()
+	return IUSC.Stage~=1
 end
-function IROUsedSkillControl.printdebug(m)
-	if IROUsedSkillControl.debugmode then
+function IUSC.printdebug(m)
+	if IUSC.debugmode then
 		print(m)
 	end
 end
-function IROUsedSkillControl.Haste_Event(Self,Event,Arg1)
-	if(Arg1=="player")and(not IROUsedSkillControl.spec1secGCD[IROUsedSkillControl.PlayerSpec])then
-        IROUsedSkillControl.GCDCD = math.max(0.5,1.5*(100/(100+UnitSpellHaste("player"))))
+function IUSC.Haste_Event(Self,Event,Arg1)
+	if(Arg1=="player")and(not IUSC.spec1secGCD[IUSC.PlayerSpec])then
+        IUSC.GCDCD = math.max(0.5,1.5*(100/(100+UnitSpellHaste("player"))))
 	end
 end
-IROUsedSkillControl.Haste_Event(nil,nil,"player")
-IROUsedSkillControl.f1=CreateFrame("Frame")
-IROUsedSkillControl.f1:RegisterEvent("UNIT_SPELL_HASTE")
-IROUsedSkillControl.f1:SetScript("OnEvent", IROUsedSkillControl.Haste_Event)
+IUSC.Haste_Event(nil,nil,"player")
+IUSC.f1=CreateFrame("Frame")
+IUSC.f1:RegisterEvent("UNIT_SPELL_HASTE")
+IUSC.f1:SetScript("OnEvent", IUSC.Haste_Event)
 
-function IROUsedSkillControl.SpecChanged()
+function IUSC.SpecChanged()
 	local spec=GetSpecializationInfo(GetSpecialization())
-	if IROUsedSkillControl.spec1secGCD[spec] then
-		IROUsedSkillControl.GCDCD=1
+	if IUSC.spec1secGCD[spec] then
+		IUSC.GCDCD=1
 	else
-		IROUsedSkillControl.GCDCD=math.max(0.5,1.5*(100/(100+UnitSpellHaste("player"))))
+		IUSC.GCDCD=math.max(0.5,1.5*(100/(100+UnitSpellHaste("player"))))
 	end
-	IROUsedSkillControl.PlayerSpec=spec
+	IUSC.PlayerSpec=spec
 end
-C_Timer.After(5,IROUsedSkillControl.SpecChanged)
-IROUsedSkillControl.f2 = CreateFrame("Frame")
-IROUsedSkillControl.f2:RegisterEvent("PLAYER_SPECIALIZATION_CHANGED")
-IROUsedSkillControl.f2:SetScript("OnEvent", IROUsedSkillControl.SpecChanged)
+C_Timer.After(5,IUSC.SpecChanged)
+IUSC.f2 = CreateFrame("Frame")
+IUSC.f2:RegisterEvent("PLAYER_SPECIALIZATION_CHANGED")
+IUSC.f2:SetScript("OnEvent", IUSC.SpecChanged)
 
-function IROUsedSkillControl.Cast_OnEvent(self,Event,Unit,CastID,SpellID)
+function IUSC.Cast_OnEvent(self,Event,Unit,CastID,SpellID)
 	if (Unit ~= "player") then return end
     if Event == "UNIT_SPELLCAST_START" then
-		IROUsedSkillControl.printdebug("casting start")
-		IROUsedSkillControl.Stage=2
-        IROUsedSkillControl.StopGCDPluse()
-        IROUsedSkillControl.CreateCastPluse()
+		IUSC.printdebug("casting start")
+		if not IUSC.GCDPluseActive then
+			IUSC.GCDPluseNextTick=GetTime()+IUSC.GCDCD-0.2
+		end
+		IUSC.Stage=2
+        IUSC.StopGCDPluse()
+        IUSC.CreateCastPluse()
     elseif Event == "UNIT_SPELLCAST_STOP" then
-		IROUsedSkillControl.printdebug("casting stop")
-        if IROUsedSkillControl.SpellActive==true then
-			print("cast fail!")
-			IROUsedSkillControl.SpellActive=false
-			IROUsedSkillControl.GCDTickHandle:Cancel()
-            IROUsedSkillControl.forceReady()
-        end
+		IUSC.printdebug("casting stop")
     elseif Event == "UNIT_SPELLCAST_FAILED" then
-		IROUsedSkillControl.printdebug("casting fail!!!")
-		IROUsedSkillControl.GCDPluseActive=false
-		IROUsedSkillControl.SpellActive=false
-		IROUsedSkillControl.GCDTickHandle:Cancel()
-		IROUsedSkillControl.forceReady()
+		IUSC.printdebug("casting fail!!!")
+		IUSC.GCDPluseActive=false
+		IUSC.SpellActive=false
+		IUSC.GCDTickHandle:Cancel()
+		IUSC.forceReady()
+	elseif Event == "UNIT_SPELLCAST_INTERRUPTED" then
+		if IUSC.SpellActive==true then
+			IUSC.printdebug("cast Interrupted!")
+			IUSC.SpellActive=false
+			IUSC.GCDTickHandle:Cancel()
+            IUSC.forceReady()
+        end
 	end
 end
 
-IROUsedSkillControl.f3 = CreateFrame("Frame")
-IROUsedSkillControl.f3:RegisterEvent("UNIT_SPELLCAST_START")
-IROUsedSkillControl.f3:RegisterEvent("UNIT_SPELLCAST_STOP")
-IROUsedSkillControl.f3:RegisterEvent("UNIT_SPELLCAST_FAILED")
-IROUsedSkillControl.f3:SetScript("OnEvent", IROUsedSkillControl.Cast_OnEvent)
+IUSC.f3 = CreateFrame("Frame")
+IUSC.f3:RegisterEvent("UNIT_SPELLCAST_START")
+IUSC.f3:RegisterEvent("UNIT_SPELLCAST_STOP")
+IUSC.f3:RegisterEvent("UNIT_SPELLCAST_FAILED")
+IUSC.f3:RegisterEvent("UNIT_SPELLCAST_INTERRUPTED")
+IUSC.f3:SetScript("OnEvent", IUSC.Cast_OnEvent)
 
-IROUsedSkillControl.GCDTickHandle=C_Timer.NewTimer(0,function() end)
-IROUsedSkillControl.GCDPluseActive=false
-IROUsedSkillControl.GCDPluseTimeStamp=0
-IROUsedSkillControl.SpellActive=false
-IROUsedSkillControl.SpellTimeStamp=0
-IROUsedSkillControl.forceReadyCheckHandle=C_Timer.NewTimer(0,function() end)
+IUSC.GCDTickHandle=C_Timer.NewTimer(0,function() end)
+IUSC.GCDPluseActive=false
+IUSC.GCDPluseTimeStamp=0
+IUSC.GCDPluseNextTick=0
+IUSC.SpellActive=false
+IUSC.SpellTimeStamp=0
+IUSC.forceReadyCheckHandle=C_Timer.NewTimer(0,function() end)
+IUSC.NumDotStampTime=0
 
-function IROUsedSkillControl.forceReadyCheck()
-    if IROUsedSkillControl.Stage==1 then
-		IROUsedSkillControl.printdebug("forceReadyCheck -> Stop GCD Pluse")
-		IROUsedSkillControl.GCDPluseActive=false
-		IROUsedSkillControl.SpellActive=false
-        IROUsedSkillControl.GCDTickHandle:Cancel()
+function IUSC.forceReadyCheck()
+    if IUSC.Stage==1 then
+		IUSC.printdebug("forceReadyCheck -> Stop GCD Pluse")
+		IUSC.GCDPluseActive=false
+		IUSC.SpellActive=false
+        IUSC.GCDTickHandle:Cancel()
     end
 end
 
-function IROUsedSkillControl.forceReady()
-	IROUsedSkillControl.printdebug("forced ready")
-    IROUsedSkillControl.forceReadyCheckHandle:Cancel()
-    IROUsedSkillControl.Stage=1
-    IROUsedSkillControl.forceReadyCheckHandle=C_Timer.NewTimer(0.4,IROUsedSkillControl.forceReadyCheck)
+function IUSC.forceReady()
+	IUSC.printdebug("forced ready")
+    IUSC.forceReadyCheckHandle:Cancel()
+    IUSC.Stage=1
+    IUSC.forceReadyCheckHandle=C_Timer.NewTimer(0.4,IUSC.forceReadyCheck)
 end
 
-function IROUsedSkillControl.RepeatGCDPluse()
-	IROUsedSkillControl.printdebug("GCD tick")
-    IROUsedSkillControl.forceReady()
-    IROUsedSkillControl.GCDTickHandle=C_Timer.NewTimer(IROUsedSkillControl.GCDCD,IROUsedSkillControl.RepeatGCDPluse)
+function IUSC.RepeatGCDPluse()
+	IUSC.printdebug("GCD tick")
+    IUSC.forceReady()
+	IUSC.GCDPluseNextTick=GetTime()+IUSC.GCDCD
+    IUSC.GCDTickHandle=C_Timer.NewTimer(IUSC.GCDCD,IUSC.RepeatGCDPluse)
 end
 
-function IROUsedSkillControl.CreateNewGCDPluse()
-	IROUsedSkillControl.printdebug("create GCD pluse")
-    IROUsedSkillControl.GCDTickHandle:Cancel()
-    IROUsedSkillControl.GCDPluseActive=true
-    IROUsedSkillControl.GCDPluseTimeStamp=GetTime()
-    IROUsedSkillControl.GCDTickHandle=C_Timer.NewTimer(IROUsedSkillControl.GCDCD-0.05,
+function IUSC.CreateNewGCDPluse()
+	IUSC.printdebug("create GCD pluse")
+    IUSC.GCDTickHandle:Cancel()
+    IUSC.GCDPluseActive=true
+    IUSC.GCDPluseTimeStamp=GetTime()
+	IUSC.GCDPluseNextTick=IUSC.GCDPluseNextTick+IUSC.GCDCD-0.05
+    IUSC.GCDTickHandle=C_Timer.NewTimer(IUSC.GCDCD-0.05,
     function()
-		IROUsedSkillControl.printdebug("Start Tick")
-        IROUsedSkillControl.RepeatGCDPluse()
+		IUSC.printdebug("Start Tick")
+        IUSC.RepeatGCDPluse()
     end)
 end
 
-function IROUsedSkillControl.StopGCDPluse()
-	IROUsedSkillControl.printdebug("stop GCD pluse")
-    IROUsedSkillControl.GCDTickHandle:Cancel()
-    IROUsedSkillControl.GCDPluseActive=false
+function IUSC.StopGCDPluse()
+	IUSC.printdebug("stop GCD pluse")
+    IUSC.GCDTickHandle:Cancel()
+    IUSC.GCDPluseActive=false
 end
 
-function IROUsedSkillControl.CreateCastPluse()
-	IROUsedSkillControl.printdebug("create cast pluse")
-    IROUsedSkillControl.SpellActive=true
-    IROUsedSkillControl.SpellTimeStamp=GetTime()
+function IUSC.CreateCastPluse()
+	IUSC.printdebug("create cast pluse")
+    IUSC.SpellActive=true
+    IUSC.SpellTimeStamp=GetTime()
     local n, _, _, _, endTimeMS= UnitCastingInfo("player")
     if not n then
         n, _, _, _, endTimeMS= UnitChannelInfo("player")
     end
-    endTimeMS=(endTimeMS/1000)-GetTime()-0.4
-    IROUsedSkillControl.GCDTickHandle=C_Timer.NewTimer(endTimeMS,
+	endTimeMS=math.max((endTimeMS/1000)-0.4,IUSC.GCDPluseNextTick)-IUSC.SpellTimeStamp
+    IUSC.GCDTickHandle=C_Timer.NewTimer(endTimeMS,
     function()
-		IROUsedSkillControl.printdebug("cast pluse end")
-		IROUsedSkillControl.SpellActive=false
-        IROUsedSkillControl.forceReady()
+		IUSC.printdebug("cast pluse end")
+		IUSC.SpellActive=false
+        IUSC.forceReady()
     end)
 end
 
-function IROUsedSkillControl.NumDotPress()
-	IROUsedSkillControl.printdebug("numdot press")
-    if IROUsedSkillControl.KeepLogText then IROUsedSkillControl.KeepLogText() end
-    IROUsedSkillControl.Stage=2
-    if (not IROUsedSkillControl.GCDPluseActive)and(not IROUsedSkillControl.SpellActive) then
-        IROUsedSkillControl.CreateNewGCDPluse()
+function IUSC.NumDotPress()
+	IUSC.NumDotStampTime=GetTime()
+	IUSC.printdebug("numdot press")
+    if IUSC.KeepLogText then IUSC.KeepLogText() end
+    IUSC.Stage=2
+    if (not IUSC.GCDPluseActive)and(not IUSC.SpellActive) then
+        IUSC.CreateNewGCDPluse()
     end
 end
 
@@ -254,7 +267,7 @@ function enMiniIROcode(IROcode1,IROcode2,IROcode3)
 	return "ff"..miniIROCode3..miniIROCode2..miniIROCode1
 end
 
-IROUsedSkillControl.ClassType={
+IUSC.ClassType={
 	--[specID]={interruptTier,interruptSpellName,DPSCheckSkill,Range,Role,CastType}
 	[71] = {'B','Pummel','Pummel','Melee','DPS','InstanceCast'} -- Arm
 	,[72] = {'B','Pummel','Pummel','Melee','DPS','InstanceCast'} -- fury

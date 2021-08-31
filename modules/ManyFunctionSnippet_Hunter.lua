@@ -14,15 +14,12 @@ function IROVar.Hun.CombatLog_OnEvent()
     local _,subevent,_,sourceGUID,_,_,_,DesGUID,DesName,_,_,spellID,spellName = CombatLogGetCurrentEventInfo()
     if (sourceGUID==IROVar.playerGUID) then
         if (subevent=="SPELL_CAST_START") and (spellName=="Aimed Shot") then
-            print("start cast AS")
             IROVar.Hun.AimedShotActive=true
         end
         if (subevent=="SPELL_CAST_SUCCESS") and (spellName=="Aimed Shot") then
-            print("success cast AS")
             C_Timer.After(GCDCDTime()*.4,function() IROVar.Hun.AimedShotActive=false end)
         end
         if (subevent=="SPELL_CAST_FAILED") and (spellName=="Aimed Shot") then
-            print("fail cast AS")
             IROVar.Hun.AimedShotActive=false
         end
     end

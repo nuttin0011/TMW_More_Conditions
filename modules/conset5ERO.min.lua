@@ -34,6 +34,10 @@ IROUsedSkillControl.spec1secGCD = {
 	,[269] = true -- Windwalker
 }
 
+function IROUsedSkillControl.NotReadyToUseSkill()
+	return IROUsedSkillControl.Stage~=1
+end
+
 function IROUsedSkillControl.Haste_Event(Self,Event,Arg1)
 	if(Arg1=="player")and(not IROUsedSkillControl.spec1secGCD[IROUsedSkillControl.PlayerSpec])then
         IROUsedSkillControl.GCDCD = math.max(0.5,1.5*(100/(100+UnitSpellHaste("player"))))
@@ -226,3 +230,43 @@ function enMiniIROcode(IROcode1,IROcode2,IROcode3)
 	local miniIROCode3 = enSubMiniIROCode(IROcode3)
 	return "ff"..miniIROCode3..miniIROCode2..miniIROCode1
 end
+
+IROUsedSkillControl.ClassType={
+	--[specID]={interruptTier,interruptSpellName,DPSCheckSkill,Range,Role,CastType}
+	[71] = {'B','Pummel','Pummel','Melee','DPS','InstanceCast'} -- Arm
+	,[72] = {'B','Pummel','Pummel','Melee','DPS','InstanceCast'} -- fury
+	,[73] = {'A','Pummel','Pummel','Melee','Tank','InstanceCast'} -- Protection
+	,[265] = {'D','Command Demon','Corruption','Range','DPS','Caster'} -- Aff [Spell Lock]
+	,[266] = {'D','Command Demon','Corruption','Range','DPS','Caster'} -- Demo
+	,[267] = {'D','Command Demon','Corruption','Range','DPS','Caster'} -- Dest
+	,[262] = {'C','Wind Shear','Lightning Bolt','Range','DPS','Caster'} -- Element
+	,[263] = {'B','Wind Shear','primal strike','Melee','DPS','InstanceCast'} -- Enha
+	,[264] = {'D','Wind Shear','Lightning Bolt','Range','Healer','Caster'} -- Resto
+	,[259] = {'B','Kick','Kick','Melee','DPS','InstanceCast'} -- Ass
+	,[260] = {'B','Kick','Kick','Melee','DPS','InstanceCast'} -- Out
+	,[261] = {'B','Kick','Kick','Melee','DPS','InstanceCast'} -- Sub
+	,[256] = {'N','','Smite','Range','Healer','Caster'} -- Disc
+	,[257] = {'N','','Smite','Range','Healer','Caster'} -- Holy
+	,[258] = {'D','Silence','Smite','Range','DPS','Caster'} -- Shadow
+	,[65] = {'N','','Crusader Strike','Range','Healer','Caster'} -- Holy
+	,[66] = {'A','Rebuke','Crusader Strike','Melee','Tank','InstanceCast'} -- Port
+	,[70] = {'B','Rebuke','Crusader Strike','Melee','DPS','InstanceCast'} -- Ret
+	,[268] = {'A','Spear Hand Strike','Tiger Palm','Melee','Tank','InstanceCast'} -- Brewmaster
+	,[270] = {'N','','Tiger Palm','Range','Healer','Caster'} -- Mistweaver
+	,[269] = {'B','Spear Hand Strike','Tiger Palm','Melee','DPS','InstanceCast'} -- Windwalker
+	,[62] = {'C','Counterspell','Fire Blast','Range','DPS','Caster'} -- arcane
+	,[63] = {'C','Counterspell','Fire Blast','Range','DPS','Caster'} -- fire
+	,[64] = {'C','Counterspell','Fire Blast','Range','DPS','Caster'} -- frost
+	,[253] = {'C','Counter Shot','Arcane Shot','Range','DPS','InstanceCast'} -- Beast Mastery
+	,[254] = {'C','Counter Shot','Arcane Shot','Range','DPS','InstanceCast'} -- Marksmanship
+	,[255] = {'C','Muzzle','Raptor Strike','Melee','DPS','InstanceCast'} -- Survival
+	,[102] = {'C','Solar Beam','Moonfire','Range','DPS','Caster'} -- Balance
+	,[103] = {'B','Skull Bash','Rake','Melee','DPS','InstanceCast'} -- Feral
+	,[104] = {'A','Skull Bash','Mangle','Melee','Tank','Caster'} -- Guardian
+	,[105] = {'N','','Moonfire','Range','Healer','Caster'} -- Restoration
+	,[577] = {'B','Disrupt','Chaos Strike','Melee','DPS','InstanceCast'} -- Havoc
+	,[581] = {'A','Disrupt','Chaos Strike','Melee','Tank','InstanceCast'} -- Vengeance
+	,[250] = {'A','Mind Freeze','Death Strike','Melee','Tank','InstanceCast'} -- Blood
+	,[251] = {'B','Mind Freeze','Death Strike','Melee','DPS','InstanceCast'} -- frost
+	,[252] = {'B','Mind Freeze','Death Strike','Melee','DPS','InstanceCast'} -- unholy
+}

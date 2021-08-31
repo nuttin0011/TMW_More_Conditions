@@ -19,6 +19,16 @@ if not IROUsedSkillControl then
 end
 local IUSC=IROUsedSkillControl
 local GetTime=GetTime
+local Ping={}
+Ping.now=0
+Ping.nowPlus=0
+Ping.aT=7.88
+Ping.aP = function()
+    Ping.now=(select(4,GetNetStats())/1000)
+	Ping.nowPlus=Ping.now+0.15
+    C_Timer.After(Ping.aT,Ping.aP)
+end
+Ping.aP()
 
 IUSC.debugmode=false
 IUSC.KeepLogOffGCD = function()
@@ -71,7 +81,7 @@ function IUSC.Cast_OnEvent(self,Event,Unit,CastID,SpellID)
     if Event == "UNIT_SPELLCAST_START" then
 		IUSC.printdebug("casting start")
 		if not IUSC.GCDPluseActive then
-			IUSC.GCDPluseNextTick=GetTime()+IUSC.GCDCD-0.2
+			IUSC.GCDPluseNextTick=GetTime()+IUSC.GCDCD-Ping.nowPlus
 		end
 		IUSC.Stage=2
         IUSC.StopGCDPluse()
@@ -160,7 +170,7 @@ function IUSC.CreateCastPluse()
     if not n then
         n, _, _, _, endTimeMS= UnitChannelInfo("player")
     end
-	endTimeMS=math.max((endTimeMS/1000)-0.4,IUSC.GCDPluseNextTick)-IUSC.SpellTimeStamp
+	endTimeMS=math.max((endTimeMS/1000)-Ping.nowPlus,IUSC.GCDPluseNextTick)-IUSC.SpellTimeStamp
     IUSC.GCDTickHandle=C_Timer.NewTimer(endTimeMS,
     function()
 		IUSC.printdebug("cast pluse end")

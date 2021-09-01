@@ -19,17 +19,6 @@ if not IROUsedSkillControl then
 end
 local IUSC=IROUsedSkillControl
 local GetTime=GetTime
-local Ping={}
-Ping.now=0
-Ping.nowPlus=0
-Ping.aT=7.88
-Ping.aP = function()
-    Ping.now=(select(4,GetNetStats())/1000)
-	Ping.nowPlus=Ping.now+0.15
-    C_Timer.After(Ping.aT,Ping.aP)
-end
-Ping.aP()
-
 IUSC.debugmode=false
 IUSC.KeepLogOffGCD = function()
 	if IUSC.KeepLogText then IUSC.KeepLogText(true) end
@@ -44,6 +33,15 @@ IUSC.spec1secGCD = {
 	,[103] = true -- Feral
 	,[269] = true -- Windwalker
 }
+
+local Ping={}
+function Ping.aP()
+    Ping.now=(select(4,GetNetStats())/1000)
+	Ping.nowPlus=Ping.now+0.2
+    C_Timer.After(7.88,Ping.aP)
+end
+Ping.aP()
+
 function IUSC.NotReadyToUseSkill()
 	return IUSC.Stage~=1
 end
@@ -170,7 +168,17 @@ function IUSC.CreateCastPluse()
     if not n then
         n, _, _, _, endTimeMS= UnitChannelInfo("player")
     end
-	endTimeMS=math.max((endTimeMS/1000)-Ping.nowPlus,IUSC.GCDPluseNextTick)-IUSC.SpellTimeStamp
+	endTimeMS=(endTimeMS/1000)-Ping.nowPlus
+
+	--endTimeMS=math.max((endTimeMS/1000)-Ping.nowPlus,IUSC.GCDPluseNextTick)-IUSC.SpellTimeStamp
+	if endTimeMS<=IUSC.GCDPluseNextTick then
+		IUSC.printdebug("casttime<=GCD : use GCD timer")
+		endTimeMS=IUSC.GCDPluseNextTick-IUSC.SpellTimeStamp
+	else
+		IUSC.printdebug("casttime>GCD : use Spell timer")
+		endTimeMS=endTimeMS-IUSC.SpellTimeStamp
+	end
+
     IUSC.GCDTickHandle=C_Timer.NewTimer(endTimeMS,
     function()
 		IUSC.printdebug("cast pluse end")

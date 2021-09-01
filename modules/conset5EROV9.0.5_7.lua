@@ -178,7 +178,7 @@ function IUSC.CreateCastPluse()
 		IUSC.printdebug("casttime>GCD : use Spell timer")
 		endTimeMS=endTimeMS-IUSC.SpellTimeStamp
 	end
-
+	if endTimeMS<0 then endTimeMS=0.1 end
     IUSC.GCDTickHandle=C_Timer.NewTimer(endTimeMS,
     function()
 		IUSC.printdebug("cast pluse end")

@@ -46,3 +46,4 @@ IROVar.Healer.UnitToIRO={
 
 
 
+local MAdd="/cast [mod:ctrlaltshift,@party4target]Flayed Shot;[mod:ctrlalt,@party3target]Flayed Shot;[mod:ctrlshift,@party2target]Flayed Shot;[mod:altshift,@party1target]Flayed Shot;[mod:ctrl,@focus]Flayed Shot;[mod:alt,@mouseover]Flayed Shot"

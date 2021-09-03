@@ -1,4 +1,4 @@
--- ERO DPS Decoder 9.0.5/7
+-- ERO DPS Decoder 9.0.5/7b
 
 -- can copy this to LUA Snippted
 -- Set to Hiest Priority!!!!!!!!!!!!!!
@@ -75,6 +75,12 @@ IUSC.f2:RegisterEvent("PLAYER_SPECIALIZATION_CHANGED")
 IUSC.f2:SetScript("OnEvent", IUSC.SpecChanged)
 
 function IUSC.Cast_OnEvent(self,Event,Unit,CastID,SpellID)
+	local function StopAllPluse()
+		IUSC.GCDPluseActive=false
+		IUSC.SpellActive=false
+		IUSC.GCDTickHandle:Cancel()
+		IUSC.forceReady(true)
+	end
 	if (Unit ~= "player") then return end
     if Event == "UNIT_SPELLCAST_START" then
 		IUSC.printdebug("casting start")
@@ -88,17 +94,15 @@ function IUSC.Cast_OnEvent(self,Event,Unit,CastID,SpellID)
 		IUSC.printdebug("casting stop")
     elseif Event == "UNIT_SPELLCAST_FAILED" then
 		IUSC.printdebug("casting fail!!!")
-		IUSC.GCDPluseActive=false
-		IUSC.SpellActive=false
-		IUSC.GCDTickHandle:Cancel()
-		IUSC.forceReady()
+		StopAllPluse()
 	elseif Event == "UNIT_SPELLCAST_INTERRUPTED" then
 		if IUSC.SpellActive==true then
 			IUSC.printdebug("cast Interrupted!")
-			IUSC.SpellActive=false
-			IUSC.GCDTickHandle:Cancel()
-            IUSC.forceReady()
+			StopAllPluse()
         end
+	elseif Event == "UNIT_SPELLCAST_FAILED_QUIET" then
+		IUSC.printdebug("UNIT_SPELLCAST_FAILED_QUIET !")
+		StopAllPluse()
 	end
 end
 
@@ -107,6 +111,8 @@ IUSC.f3:RegisterEvent("UNIT_SPELLCAST_START")
 IUSC.f3:RegisterEvent("UNIT_SPELLCAST_STOP")
 IUSC.f3:RegisterEvent("UNIT_SPELLCAST_FAILED")
 IUSC.f3:RegisterEvent("UNIT_SPELLCAST_INTERRUPTED")
+IUSC.f3:RegisterEvent("UNIT_SPELLCAST_FAILED_QUIET")
+
 IUSC.f3:SetScript("OnEvent", IUSC.Cast_OnEvent)
 
 IUSC.GCDTickHandle=C_Timer.NewTimer(0,function() end)
@@ -127,11 +133,11 @@ function IUSC.forceReadyCheck()
     end
 end
 
-function IUSC.forceReady()
+function IUSC.forceReady(NotCheckNextPluse)
 	IUSC.printdebug("forced ready")
     IUSC.forceReadyCheckHandle:Cancel()
     IUSC.Stage=1
-    IUSC.forceReadyCheckHandle=C_Timer.NewTimer(0.4,IUSC.forceReadyCheck)
+    if not NotCheckNextPluse then IUSC.forceReadyCheckHandle=C_Timer.NewTimer(0.4,IUSC.forceReadyCheck) end
 end
 
 function IUSC.RepeatGCDPluse()
@@ -183,7 +189,7 @@ function IUSC.CreateCastPluse()
     function()
 		IUSC.printdebug("cast pluse end")
 		IUSC.SpellActive=false
-        IUSC.forceReady()
+        IUSC.forceReady(true)
     end)
 end
 

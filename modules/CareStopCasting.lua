@@ -79,7 +79,7 @@ if not IROVar.CSC then
         destGUID, destName, destFlags, destRaidFlags,spellId, spellName, spellSchool, amount,
         overkill, school, resisted, blocked, absorbed, critical, glancing, crushing, isOffHand
         = CombatLogGetCurrentEventInfo()
-        if (subevent=="SPELL_AURA_APPLIED")and(sourceGUID==IROVar.playerGUID) then
+        if (subevent=="SPELL_AURA_APPLIED")and(destGUID==IROVar.playerGUID) then
             if IROVar.CSC.DebuffAtPlayer[spellId] then
                 IROVar.CSC.AddPlayerHitedTime(select(3,TMW.CNDT.Env.AuraDur("player",spellId,"harm")))
             end

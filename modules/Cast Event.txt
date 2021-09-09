@@ -1,0 +1,63 @@
+
+UNIT_SPELLCAST_SENT
+    arg1 UnitToken
+    arg2 targetName
+    arg3 CastID
+    arg4 SpellID
+
+UNIT_SPELLCAST_START
+    arg1 UnitToken
+    arg2 CastID
+    arg3 SpellID
+
+UNIT_SPELLCAST_SUCCEEDED
+    arg1 UnitToken
+    arg2 CastID
+    arg3 SpellID
+
+UNIT_SPELLCAST_STOP
+    arg1 UnitToken
+    arg2 CastID
+    arg3 SpellID
+
+UNIT_SPELLCAST_CHANNEL_START
+    arg1 UnitToken
+    arg2 nil
+    arg3 SpellID
+
+UNIT_SPELLCAST_CHANNEL_STOP
+    arg1 UnitToken
+    arg2 nil
+    arg3 SpellID
+
+casting
+UNIT_SPELLCAST_SENT
+UNIT_SPELLCAST_START
+casting-----------
+UNIT_SPELLCAST_SUCCEEDED
+UNIT_SPELLCAST_STOP
+
+Instance skill
+UNIT_SPELLCAST_SENT
+UNIT_SPELLCAST_SUCCEEDED
+
+channeling
+UNIT_SPELLCAST_SENT
+UNIT_SPELLCAST_START
+UNIT_SPELLCAST_SUCCEEDED
+channeling---------
+UNIT_SPELLCAST_CHANNEL_STOP
+
+casting interrupt
+UNIT_SPELLCAST_SENT
+UNIT_SPELLCAST_START
+casting-----------
+UNIT_SPELLCAST_INTERRUPTED
+UNIT_SPELLCAST_STOP
+
+channeling interrupt *** no event interrupted
+UNIT_SPELLCAST_SENT
+UNIT_SPELLCAST_START
+UNIT_SPELLCAST_SUCCEEDED
+channeling---------
+UNIT_SPELLCAST_CHANNEL_STOP

@@ -1,4 +1,4 @@
--- ERO DPS Decoder 9.0.5/7b
+-- ERO DPS Decoder 9.0.5/7c
 
 -- can copy this to LUA Snippted
 -- Set to Hiest Priority!!!!!!!!!!!!!!
@@ -152,7 +152,7 @@ function IUSC.CreateNewGCDPluse()
     IUSC.GCDTickHandle:Cancel()
     IUSC.GCDPluseActive=true
     IUSC.GCDPluseTimeStamp=GetTime()
-	IUSC.GCDPluseNextTick=IUSC.GCDPluseNextTick+IUSC.GCDCD-0.05
+	IUSC.GCDPluseNextTick=IUSC.GCDPluseTimeStamp+IUSC.GCDCD-0.05
     IUSC.GCDTickHandle=C_Timer.NewTimer(IUSC.GCDCD-0.05,
     function()
 		IUSC.printdebug("Start Tick")

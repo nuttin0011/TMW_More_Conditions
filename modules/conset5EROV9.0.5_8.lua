@@ -1,4 +1,5 @@
--- ERO DPS Decoder 9.0.5/8
+-- ERO DPS Decoder 9.0.5/8 BETA not complete soon
+-- ******************* 9.0.5/7 is still batter
 
 -- can copy this to LUA Snippted
 -- Set to Hiest Priority!!!!!!!!!!!!!!

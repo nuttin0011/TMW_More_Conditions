@@ -39,6 +39,9 @@ IUSC.spec1secGCD = {
 	,[103] = true -- Feral
 	,[269] = true -- Windwalker
 }
+IUSC.OnGCDSpellList={}
+IUSC.OnGCDSpellName={}
+IUSC.OnGCDSpellID={}
 
 local Ping={}
 function Ping.aP()

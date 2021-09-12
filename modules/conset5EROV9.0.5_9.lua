@@ -41,6 +41,7 @@ IUSC.debugmode=false
 IUSC.NumDotStampTime=0
 IUSC.IUSCLog=""
 IUSC.IUSCLog1stLine=""
+IUSC.SkillPress=0
 IUSC.KeepLogOffGCD = function()
 	if IUSC.KeepLogText then IUSC.KeepLogText(true) end
 end
@@ -56,7 +57,7 @@ IUSC.spec1secGCD = {
 }
 
 IUSC.NumToSpell={}
-
+IUSC.NumToID={}
 local Ping={}
 function Ping.aP()
     Ping.now=(select(4,GetNetStats())/1000)
@@ -97,13 +98,15 @@ IUSC.f2:SetScript("OnEvent", IUSC.SpecChanged)
 
 --Skill Use
 function IUSC.SU(k) --k is string e.g. "33" , "3a"
+	IUSC.Stage=2
 	local S = IsShiftKeyDown() and 4 or 0
 	local C = IsControlKeyDown() and 1 or 0
 	local A = IsAltKeyDown() and 2 or 0
 	C=A+S+C --mod
 	S=bit.lshift(tonumber(k,16),8) -- k * 256
 	C=bit.bor(C,S) -- k .. mod
-	print("skill use : ",IUSC.NumToSpell[C])
+	IUSC.SkillPress=IUSC.NumToID[C] or 0
+	print("skill use : ",IUSC.NumToSpell[C] or "none",IUSC.NumToID[C] or 0)
 end
 
 --Skill use off gcd
@@ -114,7 +117,7 @@ function IUSC.SO(k) --k is string e.g. "33" , "3a"
 	C=A+S+C --mod
 	S=bit.lshift(tonumber(k,16),8) -- k * 256
 	C=bit.bor(C,S) -- k .. mod
-	print("skill use : ",IUSC.NumToSpell[C])
+	print("skill use : ",IUSC.NumToSpell[C] or "none",IUSC.NumToID[C] or 0)
 end
 
 

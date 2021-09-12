@@ -26,8 +26,10 @@ IROUsedSkillControl.SU(k) -- skill use , k= key name string e.g. num0 = "30" , F
 --log work only with EROTools Addon installed
 
 if not IROUsedSkillControl then
-	IROUsedSkillControl={}
-	IUSC=IROUsedSkillControl
+    IROUsedSkillControl={}
+end
+if not IUSC then
+    IUSC=IROUsedSkillControl
 end
 
 if not EROTools then EROTools={} end
@@ -93,7 +95,7 @@ IUSC.f2:RegisterEvent("PLAYER_SPECIALIZATION_CHANGED")
 IUSC.f2:SetScript("OnEvent", IUSC.SpecChanged)
 
 
-
+--Skill Use
 function IUSC.SU(k) --k is string e.g. "33" , "3a"
 	local S = IsShiftKeyDown() and 4 or 0
 	local C = IsControlKeyDown() and 1 or 0
@@ -104,7 +106,16 @@ function IUSC.SU(k) --k is string e.g. "33" , "3a"
 	print("skill use : ",IUSC.NumToSpell[C])
 end
 
-
+--Skill use off gcd
+function IUSC.SO(k) --k is string e.g. "33" , "3a"
+	local S = IsShiftKeyDown() and 4 or 0
+	local C = IsControlKeyDown() and 1 or 0
+	local A = IsAltKeyDown() and 2 or 0
+	C=A+S+C --mod
+	S=bit.lshift(tonumber(k,16),8) -- k * 256
+	C=bit.bor(C,S) -- k .. mod
+	print("skill use : ",IUSC.NumToSpell[C])
+end
 
 
 

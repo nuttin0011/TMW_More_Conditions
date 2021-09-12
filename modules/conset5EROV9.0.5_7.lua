@@ -1,4 +1,4 @@
--- ERO DPS Decoder 9.0.5/7c
+-- ERO DPS Decoder 9.0.5/7d
 
 -- can copy this to LUA Snippted
 -- Set to Hiest Priority!!!!!!!!!!!!!!
@@ -93,6 +93,13 @@ function IUSC.Cast_OnEvent(self,Event,arg1,arg2,arg3,arg4)
 		IUSC.GCDTickHandle:Cancel()
 		IUSC.forceReady(true)
 	end
+	local function CheckCast()
+		local n=UnitCastingInfo("player")
+		if not n then
+			n=UnitChannelInfo("player")
+		end
+		return n~=nil
+	end
 	if (arg1 ~= "player") then return end
 	if Event=="UNIT_SPELLCAST_SENT" then
 		if IUSC.debugmode then
@@ -116,7 +123,7 @@ function IUSC.Cast_OnEvent(self,Event,arg1,arg2,arg3,arg4)
 		if IUSC.debugmode then
 			IUSC.printdebug("|FAILED")
 		end
-		StopAllPluse()
+		if not CheckCast() then StopAllPluse() end
 	elseif Event == "UNIT_SPELLCAST_INTERRUPTED" then
 		if IUSC.SpellActive==true then
 			if IUSC.debugmode then
@@ -128,7 +135,7 @@ function IUSC.Cast_OnEvent(self,Event,arg1,arg2,arg3,arg4)
 		if IUSC.debugmode then
 			IUSC.printdebug("|FAILED_QUIET")
 		end
-		StopAllPluse()
+		--StopAllPluse()
 	end
 end
 

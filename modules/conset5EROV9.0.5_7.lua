@@ -147,8 +147,6 @@ IUSC.f3:RegisterEvent("UNIT_SPELLCAST_INTERRUPTED")
 IUSC.f3:RegisterEvent("UNIT_SPELLCAST_FAILED_QUIET")
 IUSC.f3:RegisterEvent("UNIT_SPELLCAST_SENT")
 
-
-
 IUSC.f3:SetScript("OnEvent", IUSC.Cast_OnEvent)
 
 IUSC.GCDTickHandle=C_Timer.NewTimer(0,function() end)

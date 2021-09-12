@@ -38,7 +38,7 @@ if not EROTools.IUSCLog.UpdateText then EROTools.IUSCLog.UpdateText=function() e
 
 local GetTime=GetTime
 IUSC.debugmode=false
-IUSC.NumDotStampTime=0
+IUSC.SkillPressStampTime=0
 IUSC.IUSCLog=""
 IUSC.IUSCLog1stLine=""
 IUSC.SkillPress=0
@@ -47,6 +47,7 @@ IUSC.KeepLogOffGCD = function()
 end
 IUSC.Stage=1
 IUSC.GCDCD=1
+IUSC.GCDCDMinus005=IUSC.GCDCD-0.05
 IUSC.PlayerSpec=GetSpecializationInfo(GetSpecialization())
 IUSC.spec1secGCD = {
 	[259] = true-- Ass
@@ -58,10 +59,13 @@ IUSC.spec1secGCD = {
 
 IUSC.NumToSpell={}
 IUSC.NumToID={}
+IUSC.IDToSpell={}
+
 local Ping={}
 function Ping.aP()
     Ping.now=(select(4,GetNetStats())/1000)
-	Ping.nowPlus=math.min(0.4,Ping.now+0.2)
+	Ping.nowPlus=math.min(0.8,Ping.now+0.2)
+	Ping.nowMul=Ping.now*2
     C_Timer.After(7.8,Ping.aP)
 end
 Ping.aP()
@@ -73,6 +77,7 @@ end
 function IUSC.Haste_Event(Self,Event,Arg1)
 	if(Arg1=="player")and(not IUSC.spec1secGCD[IUSC.PlayerSpec])then
         IUSC.GCDCD = math.max(0.5,1.5*(100/(100+UnitSpellHaste("player"))))
+		IUSC.GCDCDMinus005=IUSC.GCDCD-0.05
 	end
 end
 
@@ -88,6 +93,7 @@ function IUSC.SpecChanged()
 	else
 		IUSC.GCDCD=math.max(0.5,1.5*(100/(100+UnitSpellHaste("player"))))
 	end
+	IUSC.GCDCDMinus005=IUSC.GCDCD-0.05
 	IUSC.PlayerSpec=spec
 end
 C_Timer.After(5,IUSC.SpecChanged)
@@ -95,6 +101,155 @@ IUSC.f2 = CreateFrame("Frame")
 IUSC.f2:RegisterEvent("PLAYER_SPECIALIZATION_CHANGED")
 IUSC.f2:SetScript("OnEvent", IUSC.SpecChanged)
 
+
+------------------------------------------------------------------------------------------------------
+
+function IUSC.Cast_OnEvent(self,Event,arg1,arg2,arg3,arg4)
+	local function StopAllPluse()
+		IUSC.GCDPluseActive=false
+		IUSC.SpellActive=false
+		IUSC.GCDTickHandle:Cancel()
+		IUSC.forceReady()
+	end
+	if (arg1 ~= "player") then return end
+	if (Event=="UNIT_SPELLCAST_SENT") and (arg4==IUSC.SkillPress) then
+		if IUSC.debugmode then
+			IUSC.printdebug("|SENT:"..IUSC.IDToSpell[arg4]..string.format(":%.2f",(GetTime()-IUSC.SkillPressStampTime)))
+		end
+		IUSC.CheckSentEventHandle:Cancel()
+    elseif (Event == "UNIT_SPELLCAST_START")and(arg3==IUSC.SkillPress)then
+		if IUSC.debugmode then
+			IUSC.printdebug("|START")
+		end
+		if not IUSC.GCDPluseActive then
+			IUSC.GCDPluseNextTick=GetTime()+IUSC.GCDCDMinus005-Ping.nowPlus
+		end
+		IUSC.Stage=2
+        IUSC.StopPluse()
+        IUSC.CreateCastPluse()
+    elseif (Event == "UNIT_SPELLCAST_STOP")and(arg3==IUSC.SkillPress)then
+		if IUSC.debugmode then
+			IUSC.printdebug("|STOP")
+		end
+    elseif (Event == "UNIT_SPELLCAST_FAILED")and(arg3==IUSC.SkillPress) then
+		if IUSC.debugmode then
+			IUSC.printdebug("|FAILED")
+		end
+		IUSC.CheckSentEventHandle:Cancel()
+		StopAllPluse()
+	elseif (Event == "UNIT_SPELLCAST_INTERRUPTED")and(arg3==IUSC.SkillPress) then
+		if IUSC.SpellActive==true then
+			if IUSC.debugmode then
+				IUSC.printdebug("|INTERRUPTED")
+			end
+			StopAllPluse()
+        end
+	elseif (Event == "UNIT_SPELLCAST_FAILED_QUIET")and(arg3==IUSC.SkillPress) then
+		if IUSC.debugmode then
+			IUSC.printdebug("|FAILED_QUIET")
+		end
+		IUSC.CheckSentEventHandle:Cancel()
+		StopAllPluse()
+	end
+end
+
+IUSC.f3 = CreateFrame("Frame")
+IUSC.f3:RegisterEvent("UNIT_SPELLCAST_START")
+--IUSC.f3:RegisterEvent("UNIT_SPELLCAST_STOP")
+IUSC.f3:RegisterEvent("UNIT_SPELLCAST_FAILED")
+IUSC.f3:RegisterEvent("UNIT_SPELLCAST_INTERRUPTED")
+IUSC.f3:RegisterEvent("UNIT_SPELLCAST_FAILED_QUIET")
+IUSC.f3:RegisterEvent("UNIT_SPELLCAST_SENT")
+
+IUSC.f3:SetScript("OnEvent", IUSC.Cast_OnEvent)
+
+
+------------------------------------------------------------------------------------------------------
+
+IUSC.GCDTickHandle=C_Timer.NewTimer(0,function() end)
+IUSC.CheckSentEventHandle=C_Timer.NewTimer(0,function() end)
+IUSC.GCDPluseActive=false
+IUSC.SpellActive=false
+IUSC.GCDPluseTimeStamp=0
+IUSC.GCDPluseNextTick=0
+
+function IUSC.printdebug(m)
+    IUSC.IUSCLog1stLine=IUSC.IUSCLog1stLine..m
+    if string.sub(IUSC.IUSCLog1stLine,string.len(IUSC.IUSCLog1stLine))=="\n" then
+        IUSC.IUSCLog=IUSC.IUSCLog1stLine..IUSC.IUSCLog
+        IUSC.IUSCLog1stLine=""
+    end
+    EROTools.IUSCLog.UpdateText()
+end
+
+function IUSC.forceReady()
+    if IUSC.debugmode then
+        IUSC.printdebug("|forced ready\n")
+    end
+    IUSC.Stage=1
+end
+
+function IUSC.CreateGCDPluse()
+    if IUSC.debugmode then
+        IUSC.printdebug("|create GCD pluse")
+    end
+    IUSC.GCDTickHandle:Cancel()
+    IUSC.GCDPluseActive=true
+    IUSC.GCDPluseTimeStamp=GetTime()
+    IUSC.GCDPluseNextTick=IUSC.GCDPluseTimeStamp+IUSC.GCDCDMinus005
+    IUSC.GCDTickHandle=C_Timer.NewTimer(IUSC.GCDCDMinus005,
+        function()
+            if IUSC.debugmode then
+                IUSC.printdebug("|GCD Pluse end")
+            end
+			IUSC.GCDPluseActive=false
+            IUSC.forceReady()
+    end)
+end
+
+function IUSC.StopPluse()
+    if IUSC.debugmode then
+        IUSC.printdebug("|stop pluse")
+    end
+    IUSC.GCDTickHandle:Cancel()
+    IUSC.GCDPluseActive=false
+	IUSC.SpellActive=false
+end
+
+function IUSC.CreateCastPluse()
+	if IUSC.debugmode then
+		IUSC.printdebug("|create cast pluse")
+	end
+	IUSC.GCDTickHandle:Cancel()
+    IUSC.SpellActive=true
+    IUSC.SpellTimeStamp=GetTime()
+    local n, _, _, _, endTimeMS= UnitCastingInfo("player")
+    if not n then
+        n, _, _, _, endTimeMS= UnitChannelInfo("player")
+    end
+	endTimeMS=(endTimeMS/1000)-Ping.nowPlus
+	--endTimeMS=math.max((endTimeMS/1000)-Ping.nowPlus,IUSC.GCDPluseNextTick)-IUSC.SpellTimeStamp
+	if endTimeMS<=IUSC.GCDPluseNextTick then
+		if IUSC.debugmode then
+			IUSC.printdebug("|casttime<=GCD : use GCD timer")
+		end
+		endTimeMS=IUSC.GCDPluseNextTick-IUSC.SpellTimeStamp
+	else
+		if IUSC.debugmode then
+			IUSC.printdebug("|casttime>GCD : use Spell timer")
+		end
+		endTimeMS=endTimeMS-IUSC.SpellTimeStamp
+	end
+	if endTimeMS<0 then endTimeMS=0.1 end
+    IUSC.GCDTickHandle=C_Timer.NewTimer(endTimeMS,
+    function()
+		if IUSC.debugmode then
+			IUSC.printdebug("|cast pluse end")
+		end
+		IUSC.SpellActive=false
+        IUSC.forceReady()
+    end)
+end
 
 --Skill Use
 function IUSC.SU(k) --k is string e.g. "33" , "3a"
@@ -106,7 +261,21 @@ function IUSC.SU(k) --k is string e.g. "33" , "3a"
 	S=bit.lshift(tonumber(k,16),8) -- k * 256
 	C=bit.bor(C,S) -- k .. mod
 	IUSC.SkillPress=IUSC.NumToID[C] or 0
-	print("skill use : ",IUSC.NumToSpell[C] or "none",IUSC.NumToID[C] or 0)
+	IUSC.SkillPressStampTime=GetTime()
+	if IUSC.debugmode then
+		IUSC.printdebug("skill use : "..(IUSC.NumToSpell[C] or "none")..(IUSC.NumToID[C] or 0))
+	end
+	IUSC.CreateGCDPluse()
+	IUSC.CheckSentEventHandle:Cancel()
+	IUSC.CheckSentEventHandle=C_Timer.NewTimer(Ping.nowMul,function()
+		if IUSC.debugmode then
+			IUSC.printdebug("|cant SENT in "..string.format(":%.2f",(GetTime()-IUSC.SkillPressStampTime)))
+		end
+		IUSC.GCDTickHandle:Cancel()
+		IUSC.GCDPluseActive=false
+		IUSC.SpellActive=false
+        IUSC.forceReady()
+	end)
 end
 
 --Skill use off gcd

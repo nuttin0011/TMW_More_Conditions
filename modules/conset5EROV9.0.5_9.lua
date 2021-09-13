@@ -64,7 +64,7 @@ IUSC.IDToSpell={}
 local Ping={}
 function Ping.aP()
     Ping.now=(select(4,GetNetStats())/1000)
-	Ping.nowPlus=math.min(0.8,Ping.now+0.2)
+	Ping.nowPlus=0.4--math.min(0.8,Ping.now+0.2)
 	Ping.nowMul=Ping.now*2
     C_Timer.After(7.8,Ping.aP)
 end
@@ -93,7 +93,7 @@ function IUSC.SpecChanged()
 	else
 		IUSC.GCDCD=math.max(0.5,1.5*(100/(100+UnitSpellHaste("player"))))
 	end
-	IUSC.GCDCDMinus005=IUSC.GCDCD-0.05
+	IUSC.GCDCDMinus005=IUSC.GCDCD-0.08
 	IUSC.PlayerSpec=spec
 end
 C_Timer.After(5,IUSC.SpecChanged)

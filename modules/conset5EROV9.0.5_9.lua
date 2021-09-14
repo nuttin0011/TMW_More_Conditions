@@ -48,6 +48,7 @@ end
 IUSC.Stage=1
 IUSC.GCDCD=1
 IUSC.GCDCDMinus005=IUSC.GCDCD-0.05
+IUSC.GCDCDMinus02=IUSC.GCDCD-0.2
 IUSC.PlayerSpec=GetSpecializationInfo(GetSpecialization())
 IUSC.spec1secGCD = {
 	[259] = true-- Ass
@@ -78,6 +79,7 @@ function IUSC.Haste_Event(Self,Event,Arg1)
 	if(Arg1=="player")and(not IUSC.spec1secGCD[IUSC.PlayerSpec])then
         IUSC.GCDCD = math.max(0.5,1.5*(100/(100+UnitSpellHaste("player"))))
 		IUSC.GCDCDMinus005=IUSC.GCDCD-0.05
+		IUSC.GCDCDMinus02=IUSC.GCDCD-0.2
 	end
 end
 
@@ -93,7 +95,8 @@ function IUSC.SpecChanged()
 	else
 		IUSC.GCDCD=math.max(0.5,1.5*(100/(100+UnitSpellHaste("player"))))
 	end
-	IUSC.GCDCDMinus005=IUSC.GCDCD-0.08
+	IUSC.GCDCDMinus005=IUSC.GCDCD-0.05
+	IUSC.GCDCDMinus02=IUSC.GCDCD-0.2
 	IUSC.PlayerSpec=spec
 end
 C_Timer.After(5,IUSC.SpecChanged)
@@ -127,6 +130,17 @@ function IUSC.Cast_OnEvent(self,Event,arg1,arg2,arg3,arg4)
 		IUSC.Stage=2
         IUSC.StopPluse()
         IUSC.CreateCastPluse()
+	elseif (Event == "UNIT_SPELLCAST_SUCCEEDED")and(arg3==IUSC.SkillPress)then
+		if IUSC.SpellActive==false then
+			--instance cast
+			if GetTime()-IUSC.SkillPressStampTime>Ping.nowPlus then
+				if IUSC.debugmode then
+					IUSC.printdebug("|Instance Cast Skill Adjust GCD")
+				end
+				IUSC.StopPluse()
+				IUSC.CreateGCDPluse(IUSC.GCDCDMinus02)
+			end
+		end
     elseif (Event == "UNIT_SPELLCAST_STOP")and(arg3==IUSC.SkillPress)then
 		if IUSC.debugmode then
 			IUSC.printdebug("|STOP")
@@ -160,7 +174,7 @@ IUSC.f3:RegisterEvent("UNIT_SPELLCAST_FAILED")
 IUSC.f3:RegisterEvent("UNIT_SPELLCAST_INTERRUPTED")
 IUSC.f3:RegisterEvent("UNIT_SPELLCAST_FAILED_QUIET")
 IUSC.f3:RegisterEvent("UNIT_SPELLCAST_SENT")
-
+IUSC.f3:RegisterEvent("UNIT_SPELLCAST_SUCCEEDED")
 IUSC.f3:SetScript("OnEvent", IUSC.Cast_OnEvent)
 
 
@@ -189,15 +203,16 @@ function IUSC.forceReady()
     IUSC.Stage=1
 end
 
-function IUSC.CreateGCDPluse()
+function IUSC.CreateGCDPluse(T)
+	T=T or IUSC.GCDCDMinus005
     if IUSC.debugmode then
         IUSC.printdebug("|create GCD pluse")
     end
     IUSC.GCDTickHandle:Cancel()
     IUSC.GCDPluseActive=true
     IUSC.GCDPluseTimeStamp=GetTime()
-    IUSC.GCDPluseNextTick=IUSC.GCDPluseTimeStamp+IUSC.GCDCDMinus005
-    IUSC.GCDTickHandle=C_Timer.NewTimer(IUSC.GCDCDMinus005,
+    IUSC.GCDPluseNextTick=IUSC.GCDPluseTimeStamp+T
+    IUSC.GCDTickHandle=C_Timer.NewTimer(T,
         function()
             if IUSC.debugmode then
                 IUSC.printdebug("|GCD Pluse end")
@@ -262,7 +277,7 @@ function IUSC.SU(k) --k is string e.g. "33" , "3a"
 	if not IsCurrentSpell(IUSC.NumToID[C]) then
 		-- Spell not queue
 		if IUSC.debugmode then
-			IUSC.printdebug("skill "..(IUSC.NumToSpell[C] or "none")..(IUSC.NumToID[C] or 0).."not queue")
+			IUSC.printdebug("skill "..(IUSC.NumToSpell[C] or "not found spell")..(IUSC.NumToID[C] or 0).."not queue")
 		end
 		IUSC.forceReady()
 		return

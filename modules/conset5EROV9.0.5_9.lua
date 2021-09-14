@@ -124,6 +124,7 @@ function IUSC.Cast_OnEvent(self,Event,arg1,arg2,arg3,arg4)
 		if IUSC.debugmode then
 			IUSC.printdebug("|SENT:"..IUSC.IDToSpell[arg4]..string.format(":%.2f",(GetTime()-IUSC.SkillPressStampTime)))
 		end
+		IUSC.SENTStampTime=GetTime()
 		--IUSC.CheckSentEventHandle:Cancel()
     elseif (Event == "UNIT_SPELLCAST_START")and(arg3==IUSC.SkillPress)then
 		if IUSC.debugmode then
@@ -136,9 +137,10 @@ function IUSC.Cast_OnEvent(self,Event,arg1,arg2,arg3,arg4)
         IUSC.StopPluse()
         IUSC.CreateCastPluse()
 	elseif (Event == "UNIT_SPELLCAST_SUCCEEDED")and(arg3==IUSC.SkillPress)then
-		if IUSC.SpellActive==false then
+		local currentTime=GetTime()
+		if (IUSC.SpellActive==false)and((currentTime-IUSC.SENTStampTime)<0.1) then
 			--instance cast
-			if GetTime()-IUSC.SkillPressStampTime>Ping.nowPlus then
+			if currentTime-IUSC.SkillPressStampTime>Ping.nowPlus then
 				if IUSC.debugmode then
 					IUSC.printdebug("|Instance Cast Skill Adjust GCD")
 				end
@@ -191,6 +193,7 @@ IUSC.GCDPluseActive=false
 IUSC.SpellActive=false
 IUSC.GCDPluseTimeStamp=0
 IUSC.GCDPluseNextTick=0
+IUSC.SENTStampTime=0
 
 function IUSC.printdebug(m)
     IUSC.IUSCLog1stLine=IUSC.IUSCLog1stLine..m

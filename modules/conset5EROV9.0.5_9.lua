@@ -64,8 +64,8 @@ IUSC.IDToSpell={}
 local Ping={}
 function Ping.aP()
     Ping.now=(select(4,GetNetStats())/1000)
-	Ping.nowPlus=0.4--math.min(0.8,Ping.now+0.2)
-	Ping.nowMul=Ping.now*2
+	Ping.nowPlus=math.min(0.8,Ping.now+0.2)
+	--Ping.nowMul=Ping.now*2
     C_Timer.After(7.8,Ping.aP)
 end
 Ping.aP()
@@ -116,7 +116,7 @@ function IUSC.Cast_OnEvent(self,Event,arg1,arg2,arg3,arg4)
 		if IUSC.debugmode then
 			IUSC.printdebug("|SENT:"..IUSC.IDToSpell[arg4]..string.format(":%.2f",(GetTime()-IUSC.SkillPressStampTime)))
 		end
-		IUSC.CheckSentEventHandle:Cancel()
+		--IUSC.CheckSentEventHandle:Cancel()
     elseif (Event == "UNIT_SPELLCAST_START")and(arg3==IUSC.SkillPress)then
 		if IUSC.debugmode then
 			IUSC.printdebug("|START")
@@ -135,7 +135,7 @@ function IUSC.Cast_OnEvent(self,Event,arg1,arg2,arg3,arg4)
 		if IUSC.debugmode then
 			IUSC.printdebug("|FAILED")
 		end
-		IUSC.CheckSentEventHandle:Cancel()
+		--IUSC.CheckSentEventHandle:Cancel()
 		StopAllPluse()
 	elseif (Event == "UNIT_SPELLCAST_INTERRUPTED")and(arg3==IUSC.SkillPress) then
 		if IUSC.SpellActive==true then
@@ -148,7 +148,7 @@ function IUSC.Cast_OnEvent(self,Event,arg1,arg2,arg3,arg4)
 		if IUSC.debugmode then
 			IUSC.printdebug("|FAILED_QUIET")
 		end
-		IUSC.CheckSentEventHandle:Cancel()
+		--IUSC.CheckSentEventHandle:Cancel()
 		StopAllPluse()
 	end
 end
@@ -224,19 +224,19 @@ function IUSC.CreateCastPluse()
     IUSC.SpellActive=true
     IUSC.SpellTimeStamp=GetTime()
     local n, _, _, _, endTimeMS= UnitCastingInfo("player")
-    if not n then
-        n, _, _, _, endTimeMS= UnitChannelInfo("player")
-    end
+    --if not n then
+    --    n, _, _, _, endTimeMS= UnitChannelInfo("player")
+    --end
 	endTimeMS=(endTimeMS/1000)-Ping.nowPlus
 	--endTimeMS=math.max((endTimeMS/1000)-Ping.nowPlus,IUSC.GCDPluseNextTick)-IUSC.SpellTimeStamp
 	if endTimeMS<=IUSC.GCDPluseNextTick then
 		if IUSC.debugmode then
-			IUSC.printdebug("|casttime<=GCD : use GCD timer")
+			IUSC.printdebug("|casttime<=GCD")
 		end
 		endTimeMS=IUSC.GCDPluseNextTick-IUSC.SpellTimeStamp
 	else
 		if IUSC.debugmode then
-			IUSC.printdebug("|casttime>GCD : use Spell timer")
+			IUSC.printdebug("|casttime>GCD")
 		end
 		endTimeMS=endTimeMS-IUSC.SpellTimeStamp
 	end
@@ -253,21 +253,30 @@ end
 
 --Skill Use
 function IUSC.SU(k) --k is string e.g. "33" , "3a"
-	IUSC.Stage=2
 	local S = IsShiftKeyDown() and 4 or 0
 	local C = IsControlKeyDown() and 1 or 0
 	local A = IsAltKeyDown() and 2 or 0
 	C=A+S+C --mod
 	S=bit.lshift(tonumber(k,16),8) -- k * 256
 	C=bit.bor(C,S) -- k .. mod
+	if not IsCurrentSpell(IUSC.NumToID[C]) then
+		-- Spell not queue
+		if IUSC.debugmode then
+			IUSC.printdebug("skill "..(IUSC.NumToSpell[C] or "none")..(IUSC.NumToID[C] or 0).."not queue")
+		end
+		IUSC.forceReady()
+		return
+	end
+	IUSC.Stage=2
 	IUSC.SkillPress=IUSC.NumToID[C] or 0
 	IUSC.SkillPressStampTime=GetTime()
 	if IUSC.debugmode then
 		IUSC.printdebug("skill use : "..(IUSC.NumToSpell[C] or "none")..(IUSC.NumToID[C] or 0))
 	end
 	IUSC.CreateGCDPluse()
-	IUSC.CheckSentEventHandle:Cancel()
-	IUSC.CheckSentEventHandle=C_Timer.NewTimer(Ping.nowMul,function()
+	--IUSC.CheckSentEventHandle:Cancel()
+	--[[
+	IUSC.CheckSentEventHandle=C_Timer.NewTimer(IUSC.GCDCD,function()
 		if IUSC.debugmode then
 			IUSC.printdebug("|cant SENT in "..string.format(":%.2f",(GetTime()-IUSC.SkillPressStampTime)))
 		end
@@ -276,6 +285,7 @@ function IUSC.SU(k) --k is string e.g. "33" , "3a"
 		IUSC.SpellActive=false
         IUSC.forceReady()
 	end)
+	]]
 end
 
 --Skill use off gcd
@@ -286,7 +296,7 @@ function IUSC.SO(k) --k is string e.g. "33" , "3a"
 	C=A+S+C --mod
 	S=bit.lshift(tonumber(k,16),8) -- k * 256
 	C=bit.bor(C,S) -- k .. mod
-	print("skill use : ",IUSC.NumToSpell[C] or "none",IUSC.NumToID[C] or 0)
+	print("skill offGCD use : ",IUSC.NumToSpell[C] or "none",IUSC.NumToID[C] or 0)
 end
 
 

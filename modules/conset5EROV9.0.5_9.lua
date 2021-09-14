@@ -1,28 +1,33 @@
 -- ZRO Decoder 9.0.5/9
 -- check Spell GCD
 --[[ e.g.
+IUSC.NumToSpell={}
+IUSC.NumToID={}
+IUSC.IDToSpell={}
 
-IROUsedSkillControl.OnGCDSpellList={"spell_A","spell_B"}
-IROUsedSkillControl.OnGCDSpellName={["spell_A"]=true, ["spell_B"]=true}
-IROUsedSkillControl.OnGCDSpellID={spell_A_ID=true, spell_B_ID=true}
+Num= [NumKeyID]..[Mod] in 16 base --> change to 10 base
+e.g. key "30" .. Mod CtrlAlt "03" = "0x3003" = 12291
 
-IROUsedSkillControl.SU(k) -- skill use , k= key name string e.g. num0 = "30" , F10="2a"
+IUSC.SU(k) -- skill use , k= key name string e.g. num0 = "30" , F10="2a"
+place at end of macro
+e.g. /cast [nomod]shadow bolt; \n/run IUSC.SU("30")
 
-
+Skill use off gcd
+function IUSC.SO(k) --k is string e.g. "33" , "3a"
+no any effect.... just keep log.......
 ]]
 
 -- can copy this to LUA Snippted
 -- Set to Hiest Priority!!!!!!!!!!!!!!
 -- Setup UsedSkill System
 
+--IUSC=IROUsedSkillControl
+
 --Wait For Use Skill Icon Control
---can use skill when "IROUsedSkillControl.Stage=1"
---show icon that block Rotation "IROUsedSkillControl.NotReadyToUseSkill()==true"
---@Numdot
---/run IROUsedSkillControl.NumDotPress() <-- keep log for in GCD skill
---/run IROUsedSkillControl.KeepLogOffGCD() <-- keep log off GCD skill
---@etc
---/run IROUsedSkillControl.forceReady() <-- forceReady
+--can use skill when "IUSC.Stage=1"
+--show icon that block Rotation "IUSC.NotReadyToUseSkill()==true"
+
+--/run IUSC.forceReady() <-- forceReady
 --log work only with EROTools Addon installed
 
 if not IROUsedSkillControl then
@@ -239,11 +244,10 @@ function IUSC.CreateCastPluse()
     IUSC.SpellActive=true
     IUSC.SpellTimeStamp=GetTime()
     local n, _, _, _, endTimeMS= UnitCastingInfo("player")
-    --if not n then
+    --if not n then ----------- should not has Channeling??????
     --    n, _, _, _, endTimeMS= UnitChannelInfo("player")
     --end
 	endTimeMS=(endTimeMS/1000)-Ping.nowPlus
-	--endTimeMS=math.max((endTimeMS/1000)-Ping.nowPlus,IUSC.GCDPluseNextTick)-IUSC.SpellTimeStamp
 	if endTimeMS<=IUSC.GCDPluseNextTick then
 		if IUSC.debugmode then
 			IUSC.printdebug("|casttime<=GCD")
@@ -289,18 +293,6 @@ function IUSC.SU(k) --k is string e.g. "33" , "3a"
 		IUSC.printdebug("skill use : "..(IUSC.NumToSpell[C] or "none")..(IUSC.NumToID[C] or 0))
 	end
 	IUSC.CreateGCDPluse()
-	--IUSC.CheckSentEventHandle:Cancel()
-	--[[
-	IUSC.CheckSentEventHandle=C_Timer.NewTimer(IUSC.GCDCD,function()
-		if IUSC.debugmode then
-			IUSC.printdebug("|cant SENT in "..string.format(":%.2f",(GetTime()-IUSC.SkillPressStampTime)))
-		end
-		IUSC.GCDTickHandle:Cancel()
-		IUSC.GCDPluseActive=false
-		IUSC.SpellActive=false
-        IUSC.forceReady()
-	end)
-	]]
 end
 
 --Skill use off gcd

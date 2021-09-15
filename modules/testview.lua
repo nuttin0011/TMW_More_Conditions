@@ -1,49 +1,110 @@
-
-local MAdd="/cast [mod:ctrlaltshift,@raid12]Shadow Word: Death;[mod:ctrlalt,@player]Shadow Word: Death;[mod:ctrlshift,@raid13]Shadow Word: Death;[mod:altshift,@raid14]Shadow Word: Death;[mod:ctrl,@party1]Shadow Word: Death;[mod:alt,@party2]Shadow Word: Death"
-
-local MSub="/cast [mod:ctrlaltshift,@raid16];[mod:ctrlalt,@party4];[mod:ctrlshift,@raid17];[mod:altshift,@raid18];[mod:ctrl,@raid1];[mod:alt,@raid2];[mod:shift,@raid19];[nomod,@raid3];"
-
-local MMul="/cast [mod:ctrlaltshift];[mod:ctrlalt,@raid4];[mod:ctrlshift,@raid20];[mod:altshift,@raid21];[mod:ctrl,@raid5];[mod:alt,@raid6];[mod:shift,@raid22];[nomod,@raid7];"
-
-local MDiv="/cast [mod:ctrlaltshift,@raid23];[mod:ctrlalt,@raid8];[mod:ctrlshift,@raid24];[mod:altshift,@raid25];[mod:ctrl,@raid9];[mod:alt,@raid10];[mod:shift,@raid26];[nomod,@raid11];"
+-- Key Setting...
+local Nm={}
 
 
-if not IROVar then IROVar={} end
-if not IROVar.Healer then IROVar.Healer={} end
-IROVar.Healer.UnitToIRO={
-['player']='ff033b03',
-['party1']='ff013b01',
-['party2']='ff023b02',
-['party3']='ff003b00',
-['party4']='ff033c03',
-['raid1']='ff013c01',
-['raid2']='ff023c02',
-['raid3']='ff003c00',
-['raid4']='ff033d03',
-['raid5']='ff013d01',
-['raid6']='ff023d02',
-['raid7']='ff003d00',
-['raid8']='ff033e03',
-['raid9']='ff013e01',
-['raid10']='ff023e02',
-['raid11']='ff003e00',
-['raid12']='ff073b07',
-['raid13']='ff053b05',
-['raid14']='ff063b06',
-['raid15']='ff043b04',
-['raid16']='ff073c07',
-['raid17']='ff053c05',
-['raid18']='ff063c06',
-['raid19']='ff043c04',
-['raid20']='ff053d05',
-['raid21']='ff063d06',
-['raid22']='ff043d04',
-['raid23']='ff073e07',
-['raid24']='ff053e05',
-['raid25']='ff063e06',
-['raid26']='ff043e04',
+Nm[0]="/petattack\n/cast [mod:ctrlalt]Nether Portal;[mod:ctrl]Create Healthstone;[mod:alt]Curse of Exhaustion;[nomod]Curse of Tongues\n/run IUSC.SU('30')"
+Nm[1]="\n/petattack\n/cast [mod:ctrlalt]Curse of Weakness;[mod:ctrl]Drain Life;[mod:alt]Health Funnel;[nomod]Shadow Bolt\n/run IUSC.SU('31')"
+Nm[2]="/cast [mod:alt,nomod:ctrl,combat]Fel Domination\n/cast [mod:ctrlalt]Shadowfury;[mod:ctrl,@focus]Soulstone;[mod:alt]Summon Felguard;[nomod]Soul Rot\n/run IUSC.SU('32')"
+Nm[3]="\n/petattack\n/cast [mod:ctrlalt]Call Dreadstalkers;[mod:ctrl]Implosion;[mod:alt]Soul Strike;[nomod]Demonbolt\n/run IUSC.SU('33')"
+Nm[4]="/petassist [mod:ctrl]\n/petattack\n/cast [mod:ctrlalt]Corruption;[mod:ctrl]Summon Demonic Tyrant;[mod:alt,@cursor]Bilescourge Bombers;[nomod]Demonic Strength\n/run IUSC.SU('34')"
+Nm[5]="\n/petattack\n/cast [mod:ctrlalt]Power Siphon;[mod:ctrl]Doom;[mod:alt];[nomod]Hand of Gul'dan\n/run IUSC.SU('35')"
+Nm[6]="/petassist [mod:ctrlalt][nomod]\n/petattack\n/cast [mod:ctrlalt]Summon Vilefiend;[mod:ctrl]Mortal Coil;[mod:alt]Darkfury;[nomod]Grimoire: Felguard\n/run IUSC.SU('36')"
+Nm[7]="/petattack\n/cast [mod:ctrlalt]Command Demon\n/target [@focustarget,mod:alt,nomod:ctrl,harm,nodead]\n/focus [mod:ctrl,nomod:alt,@pet,exists,nodead]\n/cancelaura [nomod]Burning Rush\n/run IUSC.SU('37')"
+
+
+--print((IROVar.InterruptSpell~=nil) and IROVar.InterruptSpell or "nil")
+--print((IROSpecID~=nil) and IROSpecID or "nil")
+local iS=IROVar.InterruptSpell or ""
+Nm[8]='/petattack\n/use [mod:ctrl,nomod:alt]13\n/use [mod:ctrl,nomod:alt]14\n/cast [mod:alt,nomod:ctrl]Dark Pact;[nomod]Unending Resolve'
+Nm[9]='/petattack\n/focus [@mouseover,exists,harm,nodead,mod:ctrlalt]'..
+'\n/cast [mod:ctrl,nomod:alt,@focus]'..iS..';[mod:alt,nomod:ctrl]'..iS
+
+
+if not IROUsedSkillControl then IROUsedSkillControl={} end
+
+IROUsedSkillControl.ColorToSpell={
+    ["ff000000"]="---",
+    ["ff033003"]="Nether Portal",
+    ["ff013001"]="Create Healthstone",
+    ["ff023002"]="Curse of Exhaustion",
+    ["ff003000"]="Curse of Tongues",
+    ["ff033103"]="Curse of Weakness",
+    ["ff013101"]="Drain Life",
+    ["ff023102"]="Health Funnel",
+    ["ff003100"]="Shadow Bolt",
+    ["ff033203"]="Shadowfury",
+    ["ff013201"]="Soulstone",
+    ["ff023202"]="Summon Felguard",
+    ["ff003200"]="Soul Rot",
+    ["ff033303"]="Call Dreadstalkers",
+    ["ff013301"]="Implosion",
+    ["ff023302"]="Soul Strike",
+    ["ff003300"]="Demonbolt",
+    ["ff033403"]="Corruption",
+    ["ff013401"]="Summon Demonic Tyrant",
+    ["ff023402"]="Bilescourge Bombers",
+    ["ff003400"]="Demonic Strength",
+    ["ff033503"]="Power Siphon",
+    ["ff013501"]="Doom",
+
+    ["ff003500"]="Hand of Gul'dan",
+    ["ff033603"]="Summon Vilefiend",
+    ["ff013601"]="Mortal Coil",
+    ["ff023602"]="Darkfury",
+    ["ff003600"]="Grimoire: Felguard",
+    ["ff033703"]="Command Demon",
+    ["ff013702"]="target focustarget",
+    
+    ["ff003700"]="Cancel Burning Rush",
+    
+    ["ff013801"]="Use Trinket",
+    ["ff023802"]="Dark Pact",
+    ["ff003800"]="Unending Resolve",
+    
+    
+    ["ff013a01"]="Use Health Stone",
+    ["ff023902"]="Interrupt Target",
+    ["ff013901"]="Interrupt Focus",
+    ["ff033903"]="Focus Mouse Over",
+    ["ff013701"]="focus pet",
+    
+    ["ff023a02"]="Stop Casting",
 }
 
 
 
-local MAdd="/cast [mod:ctrlaltshift,@party4target]Flayed Shot;[mod:ctrlalt,@party3target]Flayed Shot;[mod:ctrlshift,@party2target]Flayed Shot;[mod:altshift,@party1target]Flayed Shot;[mod:ctrl,@focus]Flayed Shot;[mod:alt,@mouseover]Flayed Shot"
+
+local function SetKey(IncombatStatus)
+    if InCombatLockdown() then
+        if IncombatStatus then print("cannot Bind Key while Incombat") end
+        C_Timer.After(1,SetKey)
+    else
+        if not IncombatStatus then print("Out Combat Bind Key Done!") end
+        local nname
+        for i in pairs(Nm) do
+            nname='~!Num'..i
+            DeleteMacro(nname)
+            DeleteMacro(nname)
+            CreateMacro(nname,460699,Nm[i] ,true)
+end end end
+SetKey(true)
+
+
+IUSC.NumToSpell={}
+IUSC.NumToID={}
+IUSC.IDToSpell={}
+
+for k,v in pairs(IUSC.ColorToSpell) do
+    k=string.sub(k,5,8)
+    local n=tonumber(k,16)
+    local N,_,_,_,_,_,id=GetSpellInfo(v)
+    if N then
+        IUSC.NumToSpell[n]=N
+        IUSC.NumToID[n]=id
+        IUSC.IDToSpell[id]=N
+    else
+        IUSC.NumToSpell[n]=v
+        IUSC.NumToID[n]=0
+    end
+end
+

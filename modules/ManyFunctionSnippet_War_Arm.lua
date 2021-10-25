@@ -8,6 +8,7 @@ IROVar.WarArm.isRend=false
 IROVar.WarArm.isWarMachine=false
 IROVar.WarArm.BSTime=600/(100+UnitSpellHaste("player"))
 IROVar.WarArm.RagePerAttack=24
+IROVar.WarArm.RagePerAttackCri=31
 
 IROVar.WarArm.FOnEvent=function(_,event)
     if event=="PLAYER_TALENT_UPDATE" then
@@ -21,8 +22,9 @@ IROVar.WarArm.FOnEvent=function(_,event)
             IROVar.WarArm.RagePerAttack=IROVar.WarArm.RagePerAttack*1.1
         end
         IROVar.WarArm.RagePerAttack = math.floor(IROVar.WarArm.RagePerAttack)-1
+        IROVar.WarArm.RagePerAttackCri = math.floor(IROVar.WarArm.RagePerAttack*1.3)
     elseif event=="UNIT_SPELL_HASTE" then
-        IROVar.WarArm.BSTime=600/(100+UnitSpellHaste("player"))
+        IROVar.WarArm.BSTime=(600/(100+UnitSpellHaste("player")))+0.2
     end
 
 end
@@ -85,7 +87,7 @@ function IROVar.WarArm.PredictRageForBS()
         local BSEnd=GetTime()+IROVar.WarArm.BSTime
         SwSt=SwSt+SwDu
         while SwSt<BSEnd do
-            rage=rage+IROVar.WarArm.RagePerAttack
+            rage=rage+IROVar.WarArm.RagePerAttackCri
             SwSt=SwSt+SwDu
         end
     end

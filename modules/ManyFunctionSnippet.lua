@@ -1,4 +1,4 @@
--- Many Function Version 9.0.5/44
+-- Many Function Version 9.0.5/45
 -- this file save many function for paste to TMW Snippet LUA
 
 --function IROEnemyCountInRange(nRange) ; return count, nRange = yard e.g. 2 5 8 15 20 30 40 50 200
@@ -27,6 +27,9 @@
 --var IROVar.incombat ;
 --function IROVar.CanUnitProcFirstStrikeConduit(n) ; e.g. n = "target"
 --var IROVar.Haste ; player Haste
+--var IROVar.CastTime2sec ; cast time in second mod by haste
+--var IROVar.CastTime1_5sec ; cast time in second mod by haste
+--var IROVar.HasteFactor ; multiply by cast time = time to cast , = 100/(100+UnitSpellHaste("player"))
 
 if not IROVar then IROVar={} end
 IROVar.playerGUID = UnitGUID("player")
@@ -36,8 +39,16 @@ IROVar.SkillCheckDPSRange = nil
 IROVar.InstanceName = GetInstanceInfo()
 IROVar.activeConduits = {}
 IROVar.activeConduits.IsKoraynAndFirstStrike = false
-IROVar.Haste = UnitSpellHaste("player")
-C_Timer.After(2,function() IROVar.Haste = UnitSpellHaste("player") end)
+IROVar.CalculateHaste = function()
+    IROVar.Haste = UnitSpellHaste("player")
+    IROVar.HasteFactor = 100/(100+IROVar.Haste)
+    IROVar.CastTime2sec = 2*IROVar.HasteFactor
+    IROVar.CastTime1_5sec = 1.5*IROVar.HasteFactor
+end
+IROVar.CalculateHaste()
+IROVar.CastTime2sec = 2*(100/(100+IROVar.Haste))
+IROVar.CastTime1_5sec = 1.5*(100/(100+IROVar.Haste))
+C_Timer.After(2,IROVar.CalculateHaste)
 if not IROSpecID then
     IROSpecID = GetSpecializationInfo(GetSpecialization())
 end
@@ -51,7 +62,7 @@ IROInterruptTier.CDEnd=0
 
 function IROVar.UpdateHaste(self,event,unittoken)
     if unittoken=="player" then
-        IROVar.Haste = UnitSpellHaste("player")
+        IROVar.CalculateHaste()
     end
 end
 

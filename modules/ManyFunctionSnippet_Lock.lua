@@ -40,6 +40,7 @@ IROVar.Lock.SS.LockSpellModSS = {
 
 IROVar.Lock.Imp={}
 IROVar.Lock.Imp.FreezEn=false
+IROVar.Lock.Imp.FreezEnTime=0
 IROVar.Lock.Imp.count=0
 IROVar.Lock.Imp.spawn={}
 --[[
@@ -176,9 +177,13 @@ function IROVar.Lock.COMBAT_LOG_EVENT_UNFILTERED_OnEvent()
 		if (sourceGUID==IROVar.Lock.playerGUID) then
 			if (subevent=="SPELL_SUMMON") then
 				if (DesName=="Wild Imp") then
+					local FreezTime=0
+					if IROVar.Lock.Imp.FreezEn then -- FreezEN=buff Demonic Power
+						FreezTime=15-(GetTime()-IROVar.Lock.Imp.FreezEn)
+					end
 					IROVar.Lock.Imp.spawn[DesGUID]={
 						FelFireboltCount=6,
-						SpawnTime=GetTime()+(IROVar.Lock.Imp.FreezEn and 15 or 0), -- FreezEN=buff Demonic Power
+						SpawnTime=GetTime()+FreezTime,
 						ExpireTimeHandel=C_Timer.NewTimer(21,IROVar.Lock.CheckImpExpire),
 					}
 					IROVar.Lock.Imp.count=IROVar.Lock.Imp.count+1
@@ -191,6 +196,7 @@ function IROVar.Lock.COMBAT_LOG_EVENT_UNFILTERED_OnEvent()
 				IROVar.Lock.Imp.count=0
 			elseif (subevent=="SPELL_AURA_APPLIED") and (spellID==265273) then --buff Demonic Power
 				IROVar.Lock.Imp.FreezEn=true
+				IROVar.Lock.Imp.FreezEnTime=GetTime()
 				for _,v in pairs(IROVar.Lock.Imp.spawn) do
 					v.SpawnTime=v.SpawnTime+15
 				end
@@ -206,6 +212,10 @@ function IROVar.Lock.COMBAT_LOG_EVENT_UNFILTERED_OnEvent()
 				IROVar.Lock.Imp.spawn[sourceGUID]=nil
 				IROVar.Lock.Imp.count=IROVar.Lock.Imp.count-1
 			end
+		end
+
+		if IROVar.Lock.Imp.spawn[sourceGUID] and (subevent=="SPELL_CAST_START") and (spellID==104318) then --imp Start Cast Fel Firebolt
+			IROVar.Lock.Imp.spawn[sourceGUID].SPELL_CAST_START=GetTime()
 		end
 	end
 end
@@ -223,6 +233,12 @@ function IROVar.Lock.GetWildImpCount(FelFireboltRemainAtLeast)
 	end
 	return ImpCount
 end
+
+function IROVar.Lock.GetWildImpCountTimePass(t)
+	--***
+end
+
+
 
 IROVar.Lock.SS.Frame = CreateFrame("Frame")
 IROVar.Lock.SS.Frame:RegisterEvent("COMBAT_LOG_EVENT_UNFILTERED")

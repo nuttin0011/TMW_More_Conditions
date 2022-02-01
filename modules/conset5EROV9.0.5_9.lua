@@ -317,7 +317,7 @@ function IUSC.SO(k) --k is string e.g. "33" , "3a"
 	C=A+S+C --mod
 	S=bit.lshift(tonumber(k,16),8) -- k * 256
 	C=bit.bor(C,S) -- k .. mod
-	print("skill offGCD use : ",IUSC.NumToSpell[C] or "none",IUSC.NumToID[C] or 0)
+	--print("skill offGCD use : ",IUSC.NumToSpell[C] or "none",IUSC.NumToID[C] or 0)
 	if IUSC.KeepLogText then IUSC.KeepLogText(true) end
 end
 

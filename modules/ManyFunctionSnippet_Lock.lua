@@ -1,10 +1,11 @@
--- Many Function Version Warlock 9.0.5/8e
+-- Many Function Version Warlock 9.0.5/9
 -- this file save many function for paste to TMW Snippet LUA
 
 --function IROVar.Lock.Pet(PetType) return true/false
 ----PetType 1=Felg 2=Succ 4=Felh 8=Voidw 16=Imp can use 3 for check felg+succ
 --function IROVar.Lock.PredictSS() return SSFragment / 10 SSFragment = 1 SS
 --function IROVar.Lock.GetWildImpCount(FelFireboltRemainAtLeast) ; return wild imp
+--IROVar.Lock.GetWildImpCountTimePass(t) ; return impCount when t sec passed
 -- var IROVar.Lock.GUIDImmolate ; Check not cast same GUID target
 -- var IROVar.Lock.Infernal.Count ; = count infernal in Des spec
 -- 	use /run IROVar.Lock.GUIDImmolate=UnitGUID("target") after use macro cast immolate
@@ -185,6 +186,7 @@ function IROVar.Lock.COMBAT_LOG_EVENT_UNFILTERED_OnEvent()
 						FelFireboltCount=6,
 						SpawnTime=GetTime()+FreezTime,
 						ExpireTimeHandel=C_Timer.NewTimer(21,IROVar.Lock.CheckImpExpire),
+						PredictDespawnTime=GetTime()+IROVar.CastTime2sec*6
 					}
 					IROVar.Lock.Imp.count=IROVar.Lock.Imp.count+1
 				end
@@ -216,6 +218,7 @@ function IROVar.Lock.COMBAT_LOG_EVENT_UNFILTERED_OnEvent()
 
 		if IROVar.Lock.Imp.spawn[sourceGUID] and (subevent=="SPELL_CAST_START") and (spellID==104318) then --imp Start Cast Fel Firebolt
 			IROVar.Lock.Imp.spawn[sourceGUID].SPELL_CAST_START=GetTime()
+			IROVar.Lock.Imp.spawn[sourceGUID].PredictDespawnTime=GetTime()+(IROVar.CastTime2sec*IROVar.Lock.Imp.spawn[sourceGUID].FelFireboltCount)
 		end
 	end
 end
@@ -235,10 +238,17 @@ function IROVar.Lock.GetWildImpCount(FelFireboltRemainAtLeast)
 end
 
 function IROVar.Lock.GetWildImpCountTimePass(t)
-	--***
+	-- cannot use when tyrant summoned
+	-- use only prepair summon tyrant
+	local timeCompare=GetTime()+t
+	local ImpCount=0
+	for _,v in pairs(IROVar.Lock.Imp.spawn) do
+		if v.PredictDespawnTime>timeCompare then
+			ImpCount=ImpCount+1
+		end
+	end
+	return ImpCount
 end
-
-
 
 IROVar.Lock.SS.Frame = CreateFrame("Frame")
 IROVar.Lock.SS.Frame:RegisterEvent("COMBAT_LOG_EVENT_UNFILTERED")

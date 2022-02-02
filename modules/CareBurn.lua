@@ -1,4 +1,4 @@
--- Care Burn 1.6 Icon
+-- Care Burn 1.7 Icon
 -- Burst Only Condition met / no condition on this mob
 -- IROVar.CareBurn(spec) ; return true / false ; can use only "target"
 
@@ -32,6 +32,9 @@ if not IROVar.MobListForBurn then
         ["The Necrotic Wake"] ={
             ["Stitchflesh's Creation"]=false,
             ["Zolramus Siphoner"]=false,
+        },
+        ["Spires of Ascension"] ={
+            ["Oryphrion"]=[[return TMW.CNDT.Env.AuraDur("target", "drained", "HARMFUL")>10]],
         },
         ["Castle Nathria"]={
             --burn after impact

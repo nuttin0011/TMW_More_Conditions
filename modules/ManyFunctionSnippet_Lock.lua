@@ -1,4 +1,4 @@
--- Many Function Version Warlock 9.0.5/9
+-- Many Function Version Warlock 9.0.5/9b
 -- this file save many function for paste to TMW Snippet LUA
 
 --function IROVar.Lock.Pet(PetType) return true/false
@@ -178,13 +178,13 @@ function IROVar.Lock.COMBAT_LOG_EVENT_UNFILTERED_OnEvent()
 		if (sourceGUID==IROVar.Lock.playerGUID) then
 			if (subevent=="SPELL_SUMMON") then
 				if (DesName=="Wild Imp") then
-					local FreezTime=0
+					local ImpSpawnTime=GetTime()
 					if IROVar.Lock.Imp.FreezEn then -- FreezEN=buff Demonic Power
-						FreezTime=15-(GetTime()-IROVar.Lock.Imp.FreezEn)
+						ImpSpawnTime=15+IROVar.Lock.Imp.FreezEnTime
 					end
 					IROVar.Lock.Imp.spawn[DesGUID]={
 						FelFireboltCount=6,
-						SpawnTime=GetTime()+FreezTime,
+						SpawnTime=ImpSpawnTime,
 						ExpireTimeHandel=C_Timer.NewTimer(21,IROVar.Lock.CheckImpExpire),
 						PredictDespawnTime=GetTime()+IROVar.CastTime2sec*6
 					}

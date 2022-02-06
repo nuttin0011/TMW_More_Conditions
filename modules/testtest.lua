@@ -60,3 +60,43 @@ end)()
     return cd<t3
 end)()
 
+
+
+
+
+--IROVar.IconSweepCompair(IROCallDSIcon,18,h) and (IROVar.IconSweepCompair(IROVileFiendIcon,18,h) or not TMW.CNDT.Env.TalentMap["summon vilefiend"])
+
+--IROVar.Lock.GetWildImpCountTimePass(t)
+
+(function()
+    local n,_,_,_,et = UnitCastingInfo("player")
+    if n~="Summon Demonic Tyrant" then return false end
+    local C=(et/1000)-GetTime()
+    local ImpTyrant1=IROVar.Lock.GetWildImpCountTimePass(C)
+    local TyHoG=IROVar.CastTime1_5sec+IROVar.CastTime2sec
+    local ImpTyrant2=IROVar.Lock.GetWildImpCountTimePass(0.2+TyHoG)
+    if ImpTyrant2>=ImpTyrant1 then
+        TyHoG=TyHoG+0.3
+        local DSVFRemain=IROVar.IconSweepCompair(IROCallDSIcon,18,TyHoG) and (IROVar.IconSweepCompair(IROVileFiendIcon,18,TyHoG) or not TMW.CNDT.Env.TalentMap["summon vilefiend"])
+        if DSVFRemain then
+            return true
+        end
+    end
+    return false
+end)()
+
+
+
+local a=(not IROVar.activeConduits["Tyrant's Soul"])or(TMW.CNDT.Env.AuraDur("player", "demonic power", "PLAYER HELPFUL")==0)
+
+
+
+
+
+(function()
+    local n,_,_,_,et = UnitCastingInfo("player")
+    if n~="Hand of Gul'dan" then return false end
+    local C=(et/1000)-GetTime()
+
+    return true
+end)()

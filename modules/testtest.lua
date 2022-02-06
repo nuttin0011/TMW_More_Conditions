@@ -50,3 +50,13 @@
     return false
 end)()
 
+(function ()-- start Tyrant Rotation by check Vilefiend+Grimoire
+    local td= IROVar.GetDemonicCoreStack()
+    local t1= (GetSpellCooldown("Summon Vilefiend")==0) and IROVar.CastTime2sec or 0
+    local t2= (GetSpellCooldown("Grimoire: Felguard")==0) and IROVar.CastTime2sec or 0
+    local t3= 7+t1+t2+(IROVar.CastTime2sec*td)
+    local st,du=GetSpellCooldown("Summon Demonic Tyrant")
+    local cd=st+du-GetTime()
+    return cd<t3
+end)()
+

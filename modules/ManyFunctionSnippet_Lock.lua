@@ -1,4 +1,4 @@
--- Many Function Version Warlock 9.0.5/9b
+-- Many Function Version Warlock 9.0.5/10
 -- this file save many function for paste to TMW Snippet LUA
 
 --function IROVar.Lock.Pet(PetType) return true/false
@@ -12,6 +12,7 @@
 -- 	use /run IROVar.Lock.GUIDSpell=UnitGUID("target") after use macro cast spell
 -- var IROVar.Lock.HavocGUID ; keep HavocGUID
 -- function IROVar.Lock.HasHavoc() -- return unit token,duration,end e.g. "nameplate1" , or nil
+-- function IROVar.GetDemonicCoreStack() -- return stack of Demonic Core
 --[[ NOTE
 GetSpellCount("Implosion") ;Implosion Stack
 UnitPower("player",7) ; SoulShards
@@ -38,6 +39,27 @@ IROVar.Lock.SS.LockSpellModSS = {
 	["Chaos Bolt267"]=-20, -- 267 = des
 	["Incinerate267"]=2
 }
+IROVar.GetDemonicCoreStackTime=0
+IROVar.GetDemonicCoreStackOldValue=0
+IROVar.GetDemonicCoreStack=function()
+	local currentTime=GetTime()
+	if currentTime>IROVar.GetDemonicCoreStackTime then
+		IROVar.GetDemonicCoreStackTime=currentTime
+		for i=1,40 do
+			local name,_,count = UnitBuff("player",i)
+			if name=="Demonic Core" then
+				IROVar.GetDemonicCoreStackOldValue=count
+				return count
+			end
+			if not name then
+				IROVar.GetDemonicCoreStackOldValue=0
+				return 0
+			end
+		end
+	else
+		return IROVar.GetDemonicCoreStackOldValue
+	end
+end
 
 IROVar.Lock.Imp={}
 IROVar.Lock.Imp.FreezEn=false

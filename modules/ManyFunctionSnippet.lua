@@ -1,4 +1,4 @@
--- Many Function Version 9.0.5/46
+-- Many Function Version 9.0.5/47
 -- this file save many function for paste to TMW Snippet LUA
 
 --function IROEnemyCountInRange(nRange) ; return count, nRange = yard e.g. 2 5 8 15 20 30 40 50 200
@@ -407,6 +407,7 @@ IROVar.DontUseCD ={
 function IROVar.IconSweepCompair(icon,max,min)
     --return max>SweepCD>min
     if not icon then return true end
+    if (min<=0) and (icon.Modules.IconModule_CooldownSweep.start==0) then return true end
     local stdu=icon.Modules.IconModule_CooldownSweep.start+icon.Modules.IconModule_CooldownSweep.duration
     local mint=stdu-max
     local maxt=stdu-min

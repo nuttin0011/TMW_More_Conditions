@@ -89,10 +89,6 @@ end)()
 
 local a=(not IROVar.activeConduits["Tyrant's Soul"])or(TMW.CNDT.Env.AuraDur("player", "demonic power", "PLAYER HELPFUL")==0)
 
-
-
-
-
 (function()
     local n,_,_,_,et = UnitCastingInfo("player")
     if n~="Hand of Gul'dan" then return false end
@@ -100,3 +96,4 @@ local a=(not IROVar.activeConduits["Tyrant's Soul"])or(TMW.CNDT.Env.AuraDur("pla
 
     return true
 end)()
+

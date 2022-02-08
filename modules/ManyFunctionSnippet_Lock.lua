@@ -61,6 +61,7 @@ IROVar.GetDemonicCoreStack=function()
 	end
 end
 
+IROVar.Lock.DreadstalkerTime=0
 IROVar.Lock.Imp={}
 IROVar.Lock.Imp.FreezEn=false
 IROVar.Lock.Imp.FreezEnTime=0
@@ -211,6 +212,8 @@ function IROVar.Lock.COMBAT_LOG_EVENT_UNFILTERED_OnEvent()
 						PredictDespawnTime=GetTime()+IROVar.CastTime2sec*6
 					}
 					IROVar.Lock.Imp.count=IROVar.Lock.Imp.count+1
+				elseif DesName=="Dreadstalker" then
+					IROVar.Lock.DreadstalkerTime=GetTime()
 				end
 			elseif (subevent=="SPELL_CAST_SUCCESS") and (spellID==196277) then --Implosion
 				for _,v in pairs(IROVar.Lock.Imp.spawn) do
@@ -399,3 +402,39 @@ function IROVar.Lock.IsThisSpellEffectFirstStrike(nSpell)
 	end
 	return false
 end
+
+
+LockDemoRotation={}
+LockDemoRotation.HoG=false
+LockDemoRotation.Demonbolt=false
+LockDemoRotation.ShadowBolt=false
+LockDemoRotation.GrimoireFelguard=false
+LockDemoRotation.SummonVilefiend=false
+LockDemoRotation.SummonDemonicTyrant=false
+LockDemoRotation.CallDreadstalkers=false
+LockDemoRotation.SoulRot=false
+LockDemoRotation.DemonicStrength=false
+
+function CalculateDemoRotation()
+	local currentTime=GetTime()
+	local DreadstalkerTimer=(currentTime-IROVar.Lock.DreadstalkerTime)
+	if DreadstalkerTimer<0 then DreadstalkerTimer=0 end
+
+	local CastName,_,_,_,CastEndTimeMs = UnitCastingInfo("player")
+	local CastTime=0
+	if CastName then
+		CastTime=(CastEndTimeMs/1000)-currentTime
+	end
+
+	local Imp=IROVar.Lock.GetWildImpCount()
+	local SS=IROVar.Lock.PredictSS()
+
+	local HoGTyrantCast=C+IROVar.CastTime2sec
+	local HoGHoGTyrant=C+IROVar.CastTime1_5sec+IROVar.CastTime2sec
+	local HoGDBHoGTyrant=C+(IROVar.CastTime1_5sec*2)+IROVar.CastTime2sec
+	local ImpHoGTyrantCast=IROVar.Lock.GetWildImpCountTimePass(HoGTyrantCast)
+	local DCStack=IROVar.GetDemonicCoreStack()
+	
+end
+
+

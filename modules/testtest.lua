@@ -89,11 +89,55 @@ end)()
 
 local a=(not IROVar.activeConduits["Tyrant's Soul"])or(TMW.CNDT.Env.AuraDur("player", "demonic power", "PLAYER HELPFUL")==0)
 
+<<<<<<< HEAD
 (function()
+=======
+
+
+
+
+(function()-- player Castting HoG, then Cast Summon Tyrant After This HoG?
+    if GetSpellCooldown("Summon Demonic Tyrant")>0 then return false end
+>>>>>>> 0f44035e5cec387cb9d94978d258a7a919c09600
     local n,_,_,_,et = UnitCastingInfo("player")
     if n~="Hand of Gul'dan" then return false end
-    local C=(et/1000)-GetTime()
+    local Imp=IROVar.Lock.GetWildImpCount()
+    if Imp<3 then return false end
+    local SS=IROVar.Lock.PredictSS()
+    if SS==0 then return true end
 
-    return true
+    local C=(et/1000)-GetTime()
+    local HoGTyrantCast=C+IROVar.CastTime2sec
+    local HoGHoGTyrant=HoGTyrantCast+IROVar.CastTime1_5sec
+    local HoGDBHoGTyrant=HoGHoGTyrant+IROVar.CastTime1_5sec
+    local ImpHoGTyrantCast=IROVar.Lock.GetWildImpCountTimePass(HoGTyrantCast)
+    local DCStack=IROVar.GetDemonicCoreStack()
+
+    if SS==1 and DCStack>=1 then
+        local ImpHoGDBHoGTyrant=IROVar.Lock.GetWildImpCountTimePass(HoGDBHoGTyrant)
+        return ImpHoGDBHoGTyrant<ImpHoGTyrantCast
+    end
+    if SS>=2 then
+        local ImpHoGHoGTyrant=IROVar.Lock.GetWildImpCountTimePass(HoGHoGTyrant)
+        --IROVar.NextSpellIsHoG=true
+        return ImpHoGHoGTyrant<ImpHoGTyrantCast
+    end
+    return false
 end)()
 
+<<<<<<< HEAD
+=======
+local aa=
+IROVar.Lock.PredictSS()>=50 or
+(IROVar.Lock.PredictSS()>=40 and IROVar.GetDemonicCoreStack()>=2) or
+(IROVar.Lock.PredictSS()>=40 and
+GetSpellCooldown("Call Dreadstalkers")==0 and
+TMW.CNDT.Env.AuraDur("player", "demonic calling", "PLAYER HELPFUL")>0)
+
+
+
+
+
+
+
+>>>>>>> 0f44035e5cec387cb9d94978d258a7a919c09600

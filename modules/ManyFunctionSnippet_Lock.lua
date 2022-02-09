@@ -62,6 +62,7 @@ IROVar.GetDemonicCoreStack=function()
 end
 
 IROVar.Lock.DreadstalkerTime=0
+IROVar.Lock.VilefiendTime=0
 IROVar.Lock.Imp={}
 IROVar.Lock.Imp.FreezEn=false
 IROVar.Lock.Imp.FreezEnTime=0
@@ -214,6 +215,8 @@ function IROVar.Lock.COMBAT_LOG_EVENT_UNFILTERED_OnEvent()
 					IROVar.Lock.Imp.count=IROVar.Lock.Imp.count+1
 				elseif DesName=="Dreadstalker" then
 					IROVar.Lock.DreadstalkerTime=GetTime()
+				elseif DesName=="Vilefiend" then
+					IROVar.Lock.VilefiendTime=GetTime()
 				end
 			elseif (subevent=="SPELL_CAST_SUCCESS") and (spellID==196277) then --Implosion
 				for _,v in pairs(IROVar.Lock.Imp.spawn) do
@@ -403,38 +406,179 @@ function IROVar.Lock.IsThisSpellEffectFirstStrike(nSpell)
 	return false
 end
 
+if not IROVar then IROVar = {} end
+if not IROVar.Lock then IROVar.Lock = {} end
 
-LockDemoRotation={}
-LockDemoRotation.HoG=false
-LockDemoRotation.Demonbolt=false
-LockDemoRotation.ShadowBolt=false
-LockDemoRotation.GrimoireFelguard=false
-LockDemoRotation.SummonVilefiend=false
-LockDemoRotation.SummonDemonicTyrant=false
-LockDemoRotation.CallDreadstalkers=false
-LockDemoRotation.SoulRot=false
-LockDemoRotation.DemonicStrength=false
+IROVar.Lock.DemoRotation={}
+IROVar.Lock.DemoRotation.Current={}
+IROVar.Lock.DemoRotation.New={}
+
+IROVar.Lock.DemoRotation.Current["Hand of Gul'dan"]=false
+IROVar.Lock.DemoRotation.Current["Demonbolt"]=false
+IROVar.Lock.DemoRotation.Current["Shadow Bolt"]=false
+IROVar.Lock.DemoRotation.Current["Grimoire: Felguard"]=false
+IROVar.Lock.DemoRotation.Current["Summon Vilefiend"]=false
+IROVar.Lock.DemoRotation.Current["Summon Demonic Tyrant"]=false
+IROVar.Lock.DemoRotation.Current["Call Dreadstalkers"]=false
+IROVar.Lock.DemoRotation.Current["Soul Rot"]=false
+IROVar.Lock.DemoRotation.Current["Demonic Strength"]=false
+IROVar.Lock.DemoRotation.Current["Decimating Bolt"]=false
+IROVar.Lock.DemoRotation.Current["StopCasting"]=false
+
+function IROVar.Lock.DemoRotation.ResetDPSKey()
+	for k,_ in pairs(IROVar.Lock.DemoRotation.Current) do
+		IROVar.Lock.DemoRotation.New[k]=false
+	end
+end
+IROVar.Lock.DemoRotation.ResetDPSKey()
+function IROVar.Lock.DemoRotation.UpdateDPSKey()
+	for k,_ in pairs(IROVar.Lock.DemoRotation.Current) do
+		IROVar.Lock.DemoRotation.Current[k]=IROVar.Lock.DemoRotation.New[k]
+	end
+end
+function IROVar.Lock.DemoRotation.Cast(spell)
+	if not spell then return end
+	if IROVar.Lock.DemoRotation.New[spell]==nil then
+		print('Unknown Spell Name : "'..spell..'"')
+		return
+	end
+	IROVar.Lock.DemoRotation.New[spell]=true
+	IROVar.Lock.DemoRotation.UpdateDPSKey()
+end
 
 function CalculateDemoRotation()
+	local Cast=IROVar.Lock.DemoRotation.Cast
+	IROVar.Lock.DemoRotation.ResetDPSKey()
 	local currentTime=GetTime()
-	local DreadstalkerTimer=(currentTime-IROVar.Lock.DreadstalkerTime)
-	if DreadstalkerTimer<0 then DreadstalkerTimer=0 end
+	local DreadstalkerTimer=IROVar.Lock.DreadstalkerTime+12-currentTime
+	if DreadstalkerTimer<0 then DreadstalkerTimer=100 end
+	local VilefiendTimer=IROVar.Lock.VilefiendTime+15-currentTime
+	if VilefiendTimer<0 then VilefiendTimer=100 end
+	DreadstalkerTimer=math.min(DreadstalkerTimer,VilefiendTimer)
+	--TMW.CNDT.Env.TalentMap["summon vilefiend"]
+	--TMW.CNDT.Env.TalentMap["grimoire: felguard"]
 
 	local CastName,_,_,_,CastEndTimeMs = UnitCastingInfo("player")
 	local CastTime=0
 	if CastName then
 		CastTime=(CastEndTimeMs/1000)-currentTime
+	elseif TMW.GCD>0 then
+		local GCDSt,GCDDu = GetSpellCooldown(TMW.GCDSpell)
+		local GCDFinish = GCDSt+GCDDu
+		CastTime=GCDFinish-currentTime
 	end
 
-	local Imp=IROVar.Lock.GetWildImpCount()
-	local SS=IROVar.Lock.PredictSS()
+	local currentSS=UnitPower("player",7)
+	local ImpCurrent=IROVar.Lock.GetWildImpCount()
+	local ImpWhenCastEnd=IROVar.Lock.GetWildImpCountTimePass(CastTime)
 
-	local HoGTyrantCast=C+IROVar.CastTime2sec
-	local HoGHoGTyrant=C+IROVar.CastTime1_5sec+IROVar.CastTime2sec
-	local HoGDBHoGTyrant=C+(IROVar.CastTime1_5sec*2)+IROVar.CastTime2sec
+	local CallDSReady=(GetSpellCooldown("Call Dreadstalkers")==0)and CastName~="Call Dreadstalkers"
+	local SummonVFReady=(GetSpellCooldown("Summon Vilefiend")==0)and CastName~="Summon Vilefiend"
+	local GrimoireFGReady=(GetSpellCooldown("Grimoire: Felguard")==0)
+	local SummonDTReady=(GetSpellCooldown("Summon Demonic Tyrant")==0)and CastName~="Summon Demonic Tyrant"
+	local SS=IROVar.Lock.PredictSS()
+	local DCStack=IROVar.GetDemonicCoreStack()
+
+	local TyrantCast=CastTime+IROVar.CastTime2sec
+	local HoGTyrant=CastTime+IROVar.CastTime1_5sec+IROVar.CastTime2sec
+	local DBHoGTyrant=CastTime+(IROVar.CastTime1_5sec*2)+IROVar.CastTime2sec
+
+	if SS>=3 then
+		if GrimoireFGReady then
+			Cast("Grimoire: Felguard") return true
+		elseif SummonVFReady then
+			Cast("Summon Vilefiend") return true
+		elseif CallDSReady then
+			Cast("Call Dreadstalkers") return true
+		end
+	elseif SummonVFReady or GrimoireFGReady or CallDSReady then --SS<=2
+		if DCStack>=1 then
+			Cast("Demonbolt") return true
+		else --DCStack==0
+			Cast("Shadow Bolt") return true
+		end
+	end
+
+	if SummonDTReady and (DreadstalkerTimer<HoGTyrant) and
+	(DreadstalkerTimer>TyrantCast) then
+		Cast("Summon Demonic Tyrant") return true
+	end
+
+	if ImpCurrent<=2 then -- 1st HoG Cast
+		if CastName~="Hand of Gul'dan" then
+			if SS>=3 then
+				Cast("Hand of Gul'dan") return true
+			else
+				if DCStack>=1 then
+					Cast("Demonbolt") return true
+				else --DCStack==0
+					Cast("Shadow Bolt") return true
+				end
+			end
+		else --casting HoG
+			if SS<=1 then
+				if DCStack==0 then
+					Cast("Summon Demonic Tyrant") return true
+				else
+					Cast("Demonbolt") return true
+				end
+			elseif SS==2 then
+				local SBHoGTyrant=CastTime+IROVar.CastTime1_5sec+(IROVar.CastTime2sec*2)
+				if DCStack==0 then
+					if DreadstalkerTimer<(HoGTyrant+0.3) then
+						Cast("Summon Demonic Tyrant") return true
+					elseif DreadstalkerTimer<(SBHoGTyrant+0.3) then
+						Cast("Hand of Gul'dan") return true
+					else
+						Cast("Shadow Bolt") return true
+					end
+				end
+
+			end
+		end
+	end
+
+
+
+
+	if CastName=="Summon Demonic Tyrant" then
+		if ImpCurrent>=2 then
+			IROVar.Lock.DemoRotation.New.SummonDemonicTyrant=true
+		end
+
+
+
+		if GetSpellCooldown("Soul Rot")==0 then
+			IROVar.Lock.DemoRotation.Cast("Soul Rot")
+			return
+		elseif GetSpellCooldown("Demonic Strength")==0 then
+			IROVar.Lock.DemoRotation.Cast("Demonic Strength")
+			return
+		elseif currentSS>=1 then
+			IROVar.Lock.DemoRotation.Cast("Hand of Gul'dan")
+			return
+		elseif GetSpellCooldown("Decimating Bolt")==0 then
+			IROVar.Lock.DemoRotation.Cast("Decimating Bolt")
+			return
+		else
+			IROVar.Lock.DemoRotation.Cast("Hand of Gul'dan")
+			return
+		end
+	end
+
+
+	local Imp=IROVar.Lock.GetWildImpCount()
+
+
+	local TyrantCast=CastTime+IROVar.CastTime2sec
+	local HoGTyrant=CastTime+IROVar.CastTime1_5sec+IROVar.CastTime2sec
+	local DBHoGTyrant=CastTime+(IROVar.CastTime1_5sec*2)+IROVar.CastTime2sec
+
 	local ImpHoGTyrantCast=IROVar.Lock.GetWildImpCountTimePass(HoGTyrantCast)
 	local DCStack=IROVar.GetDemonicCoreStack()
-	
+
+
+
 end
 
 

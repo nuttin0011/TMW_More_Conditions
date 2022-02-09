@@ -1,4 +1,4 @@
--- Many Function Version Warlock 9.0.5/10
+-- Many Function Version Warlock 9.0.5/11
 -- this file save many function for paste to TMW Snippet LUA
 
 --function IROVar.Lock.Pet(PetType) return true/false
@@ -6,6 +6,7 @@
 --function IROVar.Lock.PredictSS() return SSFragment / 10 SSFragment = 1 SS
 --function IROVar.Lock.GetWildImpCount(FelFireboltRemainAtLeast) ; return wild imp
 --IROVar.Lock.GetWildImpCountTimePass(t) ; return impCount when t sec passed
+--function IROVar.Lock.GetHoGActiveCount(timePass) ; return HoG active count when t sec passed
 -- var IROVar.Lock.GUIDImmolate ; Check not cast same GUID target
 -- var IROVar.Lock.Infernal.Count ; = count infernal in Des spec
 -- 	use /run IROVar.Lock.GUIDImmolate=UnitGUID("target") after use macro cast immolate
@@ -68,6 +69,8 @@ IROVar.Lock.Imp.FreezEn=false
 IROVar.Lock.Imp.FreezEnTime=0
 IROVar.Lock.Imp.count=0
 IROVar.Lock.Imp.spawn={}
+IROVar.Lock.HoG={}
+
 --[[
 	IROVar.Lock.Imp.spawn = {
 		["Creature-0-3766-blablabla"]={
@@ -213,17 +216,25 @@ function IROVar.Lock.COMBAT_LOG_EVENT_UNFILTERED_OnEvent()
 						PredictDespawnTime=GetTime()+IROVar.CastTime2sec*6
 					}
 					IROVar.Lock.Imp.count=IROVar.Lock.Imp.count+1
+					for k,v in pairs(IROVar.Lock.HoG) do
+						if v=="x" then IROVar.Lock.HoG[k]=DesGUID end
+					end
 				elseif DesName=="Dreadstalker" then
 					IROVar.Lock.DreadstalkerTime=GetTime()
 				elseif DesName=="Vilefiend" then
 					IROVar.Lock.VilefiendTime=GetTime()
 				end
-			elseif (subevent=="SPELL_CAST_SUCCESS") and (spellID==196277) then --Implosion
-				for _,v in pairs(IROVar.Lock.Imp.spawn) do
-					v.ExpireTimeHandel:Cancel()
+			elseif subevent=="SPELL_CAST_SUCCESS" then
+				if spellID==196277 then--Implosion
+					for _,v in pairs(IROVar.Lock.Imp.spawn) do
+						v.ExpireTimeHandel:Cancel()
+					end
+					IROVar.Lock.Imp.spawn={}
+					IROVar.Lock.Imp.count=0
 				end
-				IROVar.Lock.Imp.spawn={}
-				IROVar.Lock.Imp.count=0
+				if spellID==105174 then--Hand of Guldan
+					table.insert(IROVar.Lock.HoG,"x")
+				end
 			elseif (subevent=="SPELL_AURA_APPLIED") and (spellID==265273) then --buff Demonic Power
 				IROVar.Lock.Imp.FreezEn=true
 				IROVar.Lock.Imp.FreezEnTime=GetTime()
@@ -243,12 +254,31 @@ function IROVar.Lock.COMBAT_LOG_EVENT_UNFILTERED_OnEvent()
 				IROVar.Lock.Imp.count=IROVar.Lock.Imp.count-1
 			end
 		end
-
 		if IROVar.Lock.Imp.spawn[sourceGUID] and (subevent=="SPELL_CAST_START") and (spellID==104318) then --imp Start Cast Fel Firebolt
-			IROVar.Lock.Imp.spawn[sourceGUID].SPELL_CAST_START=GetTime()
-			IROVar.Lock.Imp.spawn[sourceGUID].PredictDespawnTime=GetTime()+(IROVar.CastTime2sec*IROVar.Lock.Imp.spawn[sourceGUID].FelFireboltCount)
+			local currentTime=GetTime()
+			IROVar.Lock.Imp.spawn[sourceGUID].SPELL_CAST_START=currentTime
+			IROVar.Lock.Imp.spawn[sourceGUID].PredictDespawnTime=currentTime+(IROVar.CastTime2sec*IROVar.Lock.Imp.spawn[sourceGUID].FelFireboltCount)
 		end
 	end
+end
+
+function IROVar.Lock.GetHoGActiveCount(timePass)
+	timePass=timePass or 0
+	timePass=timePass+GetTime()
+	local count=0
+	for k,v in pairs(IROVar.Lock.HoG) do
+		if v~="x" then
+			local imp=IROVar.Lock.Imp.spawn[v]
+			if imp then
+				if imp.PredictDespawnTime>=timePass then
+					count=count+1
+				end
+			else
+				IROVar.Lock.HoG[k]=nil
+			end
+		end
+	end
+	return count
 end
 
 function IROVar.Lock.GetWildImpCount(FelFireboltRemainAtLeast)
@@ -570,12 +600,11 @@ function CalculateDemoRotation()
 	local Imp=IROVar.Lock.GetWildImpCount()
 
 
-	local TyrantCast=CastTime+IROVar.CastTime2sec
-	local HoGTyrant=CastTime+IROVar.CastTime1_5sec+IROVar.CastTime2sec
-	local DBHoGTyrant=CastTime+(IROVar.CastTime1_5sec*2)+IROVar.CastTime2sec
+
+
 
 	local ImpHoGTyrantCast=IROVar.Lock.GetWildImpCountTimePass(HoGTyrantCast)
-	local DCStack=IROVar.GetDemonicCoreStack()
+
 
 
 

@@ -89,16 +89,12 @@ end)()
 
 local a=(not IROVar.activeConduits["Tyrant's Soul"])or(TMW.CNDT.Env.AuraDur("player", "demonic power", "PLAYER HELPFUL")==0)
 
-<<<<<<< HEAD
-(function()
-=======
 
 
 
 
 (function()-- player Castting HoG, then Cast Summon Tyrant After This HoG?
     if GetSpellCooldown("Summon Demonic Tyrant")>0 then return false end
->>>>>>> 0f44035e5cec387cb9d94978d258a7a919c09600
     local n,_,_,_,et = UnitCastingInfo("player")
     if n~="Hand of Gul'dan" then return false end
     local Imp=IROVar.Lock.GetWildImpCount()
@@ -125,8 +121,6 @@ local a=(not IROVar.activeConduits["Tyrant's Soul"])or(TMW.CNDT.Env.AuraDur("pla
     return false
 end)()
 
-<<<<<<< HEAD
-=======
 local aa=
 IROVar.Lock.PredictSS()>=50 or
 (IROVar.Lock.PredictSS()>=40 and IROVar.GetDemonicCoreStack()>=2) or
@@ -140,4 +134,3 @@ TMW.CNDT.Env.AuraDur("player", "demonic calling", "PLAYER HELPFUL")>0)
 
 
 
->>>>>>> 0f44035e5cec387cb9d94978d258a7a919c09600

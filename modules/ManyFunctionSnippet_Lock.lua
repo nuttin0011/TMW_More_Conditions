@@ -499,8 +499,9 @@ function CalculateDemoRotation()
 	end
 
 	local currentSS=UnitPower("player",7)
-	local ImpCurrent=IROVar.Lock.GetWildImpCount()
-	local ImpWhenCastEnd=IROVar.Lock.GetWildImpCountTimePass(CastTime)
+
+	local HoGActive=IROVar.Lock.GetHoGActiveCount()
+
 
 	local CallDSReady=(GetSpellCooldown("Call Dreadstalkers")==0)and CastName~="Call Dreadstalkers"
 	local SummonVFReady=(GetSpellCooldown("Summon Vilefiend")==0)and CastName~="Summon Vilefiend"
@@ -534,7 +535,7 @@ function CalculateDemoRotation()
 		Cast("Summon Demonic Tyrant") return true
 	end
 
-	if ImpCurrent<=2 then -- 1st HoG Cast
+	if HoGActive==0 then -- 1st HoG Cast
 		if CastName~="Hand of Gul'dan" then
 			if SS>=3 then
 				Cast("Hand of Gul'dan") return true
@@ -572,11 +573,6 @@ function CalculateDemoRotation()
 
 
 	if CastName=="Summon Demonic Tyrant" then
-		if ImpCurrent>=2 then
-			IROVar.Lock.DemoRotation.New.SummonDemonicTyrant=true
-		end
-
-
 
 		if GetSpellCooldown("Soul Rot")==0 then
 			IROVar.Lock.DemoRotation.Cast("Soul Rot")

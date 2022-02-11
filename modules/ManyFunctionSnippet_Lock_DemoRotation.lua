@@ -20,6 +20,19 @@ Lock.DemoRotationSkill={
         FinishRotation=true, -- Stop Calculate Rotation
     },
     {
+        Name="Hand of Gul'dan",
+        SS=-2,
+        CastTime=1.5,
+        TimeLimit=12,
+        InstanceCast=false,
+        TimeLimitDepenOnHaste=true,
+        UseWhenSS={[2]=true},
+        CheckCDName=nil,
+        UseDemonicCalling=0,
+        NeedDemonicCore=false,
+        isHoG=false,
+    },
+    {
         Name="Call Dreadstalkers",
         SS=0,
         CastTime=1.5,
@@ -52,7 +65,7 @@ Lock.DemoRotationSkill={
         TimeLimit=12,
         InstanceCast=false,
         TimeLimitDepenOnHaste=true,
-        UseWhenSS={[5]=true,[4]=true,[3]=true,[2]=true},
+        UseWhenSS={[5]=true,[4]=true,[3]=true},
         CheckCDName=nil,
         UseDemonicCalling=0,
         NeedDemonicCore=false,

@@ -530,9 +530,20 @@ function CalculateDemoRotation()
 		end
 	end
 
-	if SummonDTReady and (DreadstalkerTimer<HoGTyrant) and
-	(DreadstalkerTimer>TyrantCast) then
-		Cast("Summon Demonic Tyrant") return true
+	if SummonDTReady then
+		if (DreadstalkerTimer<HoGTyrant) and (DreadstalkerTimer>TyrantCast) then
+			Cast("Summon Demonic Tyrant") return true
+		end
+		if SS<=1 then
+			if DCStack==0 then
+				if DreadstalkerTimer>TyrantCast then
+					Cast("Summon Demonic Tyrant") return true
+				end
+			else --DCStack>=1
+				Cast("Shadow Bolt") return true
+			end
+		end
+		
 	end
 
 	if HoGActive==0 then -- 1st HoG Cast

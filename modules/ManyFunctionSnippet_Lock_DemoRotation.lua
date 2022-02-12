@@ -7,22 +7,24 @@ local Lock=IROVar.Lock
 Lock.DemoRotationSkill={
     {
         Name="Summon Demonic Tyrant",
-        SS=5,
-        CastTime=2,
-        TimeLimit=99,
-        InstanceCast=false,
-        TimeLimitDepenOnHaste=false,
+        NextSequence=nil, -- follow by skill name
+        SS=5, -- generate SS
+        CastTime=2, -- befor Haste Modify
+        TimeLimit=99, -- limit Rotation time after Cast
+        InstanceCast=false, -- if true, limit time calculate at Begin of CastTime
+        TimeLimitDepenOnHaste=false, -- if true, limit time mod by Haste
         UseWhenSS={[5]=true,[4]=true,[3]=true,[2]=true,[1]=true,[0]=true},
-        CheckCDName={["Summon Demonic Tyrant"]=true},
-        UseDemonicCalling=0,
+        CheckCDName={["Summon Demonic Tyrant"]=true}, -- check CD
+        UseDemonicCalling=0,-- -1: must not has DemonicCalling; 0: dont check; 1: must has DemonicCalling
         NeedDemonicCore=false,
         isHoG=false,
         FinishRotation=true, -- Stop Calculate Rotation
     },
     {
-        Name="Hand of Gul'dan",
-        SS=-2,
-        CastTime=1.5,
+        Name="Hand of Gul'dan", -- use at 2 SS before Summon Tyrant
+        NextSequence="Summon Demonic Tyrant",
+        SS=5,
+        CastTime=3.5,
         TimeLimit=12,
         InstanceCast=false,
         TimeLimitDepenOnHaste=true,

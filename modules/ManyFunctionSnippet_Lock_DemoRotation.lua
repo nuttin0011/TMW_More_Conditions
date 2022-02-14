@@ -1,4 +1,5 @@
 --Pre Process Lock Demo Rotation
+--Set Priority to 2
 
 if not IROVar then IROVar={} end
 if not IROVar.Lock then IROVar.Lock={} end
@@ -17,12 +18,11 @@ Lock.DemoRotationSkill={
         CheckCDName="Summon Demonic Tyrant", -- check CD
         UseDemonicCalling=0,-- -1: must not has DemonicCalling; 0: dont check; 1: must has DemonicCalling
         NeedDemonicCore=false,
-        isHoG=false,
         FinishRotation=true, -- Stop Calculate Rotation
     },
     {
         Name="Hand of Gul'dan", -- use at 2 SS before Summon Tyrant
-        NextSequence="Summon Demonic Tyrant",
+        NextSequence=nil, -- Set this to Lock.DemoRotationSkill[1] later
         SS=-2,
         CastTime=1.5,
         TimeLimit=12,
@@ -32,7 +32,7 @@ Lock.DemoRotationSkill={
         CheckCDName=nil,
         UseDemonicCalling=0,
         NeedDemonicCore=false,
-        isHoG=false,
+        FinishRotation=true,
     },
     {
         Name="Call Dreadstalkers",
@@ -45,7 +45,6 @@ Lock.DemoRotationSkill={
         CheckCDName="Call Dreadstalkers",
         UseDemonicCalling=1, -- -1: must not has DemonicCalling; 0: dont check; 1: must has DemonicCalling
         NeedDemonicCore=false,
-        isHoG=false,
     },
     {
         Name="Call Dreadstalkers",
@@ -58,7 +57,6 @@ Lock.DemoRotationSkill={
         CheckCDName="Call Dreadstalkers",
         UseDemonicCalling=-1, -- -1: must not has DemonicCalling; 0: dont check; 1: must has DemonicCalling
         NeedDemonicCore=false,
-        isHoG=false,
     },
     {
         Name="Hand of Gul'dan",
@@ -71,7 +69,6 @@ Lock.DemoRotationSkill={
         CheckCDName=nil,
         UseDemonicCalling=0,
         NeedDemonicCore=false,
-        isHoG=false,
     },
     {
         Name="Shadow Bolt",
@@ -84,7 +81,6 @@ Lock.DemoRotationSkill={
         CheckCDName=nil,
         UseDemonicCalling=0,
         NeedDemonicCore=false,
-        isHoG=false,
     },
     {
         Name="Demonbolt",
@@ -97,7 +93,6 @@ Lock.DemoRotationSkill={
         CheckCDName=nil,
         UseDemonicCalling=1,
         NeedDemonicCore=false,
-        isHoG=false,
     },
     {
         Name="Grimoire: Felguard",
@@ -110,7 +105,6 @@ Lock.DemoRotationSkill={
         CheckCDName="Grimoire: Felguard",
         UseDemonicCalling=0,
         NeedDemonicCore=false,
-        isHoG=false,
     },
     {
         Name="Summon Vilefiend",
@@ -123,9 +117,10 @@ Lock.DemoRotationSkill={
         CheckCDName="Summon Vilefiend",
         UseDemonicCalling=0,
         NeedDemonicCore=false,
-        isHoG=false,
     },
 }
+
+Lock.DemoRotationSkill[2].NextSequence=Lock.DemoRotationSkill[1] --set sequence use HoG at SS=2 and Tyrant immediately
 
 Lock.DemoRotation={} -- [Haste%]={}
 local DemoRotation=Lock.DemoRotation
@@ -140,7 +135,7 @@ local DemoRotation=Lock.DemoRotation
         DemonboltUse=3,
     },]]
 
-Lock.DemoRotationQData={} -- [Haste%]={}
+Lock.DemoRotationQData={} -- [Haste%][start SS][start Demonic Core][start HasDemonicCalling]={}
 local QData=Lock.DemoRotationQData
 --[[
     Sequence={},
@@ -156,58 +151,142 @@ local QData=Lock.DemoRotationQData
     DemonicCore=2,
 ]]
 
-local HasteForCal = 20.0 -- xx.x%
-
-if QData[HasteForCal]==nil then
-    QData[HasteForCal]={}
-end
-for i=0,5 do
-    for i2=0,4 do
-        table.insert(QData[HasteForCal],
-            {
-                Sequence={},
-                TotalTimeUse=0,
-                ImpCreate=0,
-                ["Call Dreadstalkers"]=99, -- 99 = not use , other = Time use
-                ["Summon Vilefiend"]=99,
-                ["Grimoire: Felguard"]=-1,
-                ["Summon Demonic Tyrant"]=-1,
-                DemonboltUse=0,
-                TimeLimit=99,
-                SS=i,
-                DemonicCore=i2,
-            }
-        )
+function Lock.DemoRotationGenerateStartData(HasteForCal)
+    if QData[HasteForCal]==nil then
+        QData[HasteForCal]={}
+    end
+    for i=0,5 do
+        if QData[HasteForCal][i]==nil then
+            QData[HasteForCal][i]={}
+        end
+        for i2=0,4 do
+            if QData[HasteForCal][i][i2]==nil then
+                QData[HasteForCal][i][i2]={}
+            end
+            for i3=0,1 do
+                if QData[HasteForCal][i][i2][i3]==nil then
+                    QData[HasteForCal][i][i2][i3]={}
+                end
+                table.insert(QData[HasteForCal][i][i2][i3],
+                    {
+                        Sequence={},
+                        TotalTimeUse=0,
+                        ImpCreate=0,
+                        ["Call Dreadstalkers"]=99, -- 99 = not use , other = Time use
+                        ["Summon Vilefiend"]=99,
+                        ["Grimoire: Felguard"]=99,
+                        ["Summon Demonic Tyrant"]=99,
+                        DemonboltUse=0,
+                        TimeLimit=99,
+                        SS=i,
+                        DemonicCore=i2,
+                        HasDemonicCalling=i3, -- 0 = false , 1= true
+                    }
+                )
+            end
+        end
     end
 end
 
-function SearchRotation(Haste) -- return true if must continue search
-    function CheckCanUseThisSkill(RotationSet,SkillAdd)
-        if SkillAdd.UseWhenSS[RotationSet.SS] and
-        (RotationSet.TimeLimit>=RotationSet.TotalTimeUse+SkillAdd.CastTime+(SkillAdd.FinishRotation and 0 or 2)) and
-        (SkillAdd.NeedDemonicCore==false or RotationSet.DemonicCore>=1)
-        
-        
-        
+function Lock.AddRotationSetToDemoRotation(Haste,StartSS,StartDemonicCore,StartHasDemonicCalling,RotationSet)
+    if DemoRotation[Haste]==nil then
+        DemoRotation[Haste]={}
+    end
+    if DemoRotation[Haste][StartSS]==nil then
+        DemoRotation[Haste][StartSS]={}
+    end
+    if DemoRotation[Haste][StartSS][StartDemonicCore]==nil then
+        DemoRotation[Haste][StartSS][StartDemonicCore]={}
+    end
+    if DemoRotation[Haste][StartSS][StartDemonicCore][StartHasDemonicCalling]==nil then
+        DemoRotation[Haste][StartSS][StartDemonicCore][StartHasDemonicCalling]={}
+    end
+    table.insert(DemoRotation[Haste][StartSS][StartDemonicCore][StartHasDemonicCalling],RotationSet)
+end
+
+
+function Lock.SearchRotation(HasteForCal) -- return true if must continue search
+    function AddSkillToRotationSet(RotationSet,skill,hasteFactor)
+        RotationSet.Sequence[#RotationSet.Sequence+1]=skill.Name --add skill name
+
+        if RotationSet[skill.Name]==99 then -- if Check CD then add time use
+            RotationSet[skill.Name]=RotationSet.TotalTimeUse
+        end
+
+        local TrueCastTime=skill.CastTime*hasteFactor
+        RotationSet.TotalTimeUse=RotationSet.TotalTimeUse+TrueCastTime
+
+        local TrueTimeLimit=skill.TimeLimit
+        if skill.TimeLimitDepenOnHaste then
+            TrueTimeLimit=TrueTimeLimit*hasteFactor
+        end
+        if skill.InstanceCast then
+            TrueTimeLimit=TrueTimeLimit-TrueCastTime
+        end
+        RotationSet.TimeLimit=math.min(RotationSet.TimeLimit-TrueCastTime,TrueTimeLimit)
+
+        RotationSet.TotalTimeUse=RotationSet.TotalTimeUse+TrueCastTime
+
+        if skill.Name=="Hand of Gul'dan" then
+            RotationSet.ImpCreate=RotationSet.ImpCreate-skill.SS
+        end
+
+        RotationSet.SS=RotationSet.SS+skill.SS
+        if RotationSet.SS>5 then
+            RotationSet.SS=5
+        end
+
+        if skill.Name=="Demonbolt" then
+            RotationSet.DemonboltUse=RotationSet.DemonboltUse+1
+            RotationSet.DemonicCore=RotationSet.DemonicCore-1
+        end
+
+        if skill.NextSequence then
+            AddSkillToRotationSet(RotationSet,skill.NextSequence,hasteFactor)
+        end
+    end
+
+    function CheckCanUseThisSkill(RotationSet,skill,hasteFactor)
+        local TrueCastTime=skill.CastTime*hasteFactor
+        local CheckSkillNextSequence=skill.NextSequence
+        while CheckSkillNextSequence do -- commulate CastTime this sequence
+            TrueCastTime=TrueCastTime+CheckSkillNextSequence.CastTime*hasteFactor
+            CheckSkillNextSequence=CheckSkillNextSequence.NextSequence
+        end
+
+        if skill.UseWhenSS[RotationSet.SS] and -- check SS
+        (RotationSet.TimeLimit>=TrueCastTime+(skill.FinishRotation and 0 or (hasteFactor*2))) and -- check time limit if not finish spare for Tyrant
+        (skill.NeedDemonicCore==false or RotationSet.DemonicCore>=1) and
+        (not skill.CheckCDName or (RotationSet[skill.CheckCDName==99])) and
+        ((skill.UseDemonicCalling==0) or
+         ((RotationSet.HasDemonicCalling==1) and skill.UseDemonicCalling==1) or
+         ((RotationSet.HasDemonicCalling==0) and skill.UseDemonicCalling==-1))
         then
             return true
         end
-
         return false
     end
 
-    if table.getn(Lock.DemoRotationQueue)==0 then return false end
-    local SummonTyrantCastTime=2
-    local Rotation=table.remove(Lock.DemoRotationQueue)
-    for k,v in pairs(Lock.DemoRotationSkill) do
-
-
-
-        --local newRotation=CopyTable(Rotation)
-
-
-        --table.insert(newRotation.Sequence,v)
-
+    local HasteFactor=100/(100+HasteForCal)
+    for k,v in pairs(QData) do--haste
+        for k2,v2 in pairs(v) do--start SS
+            for k3,v3 in pairs(v2) do--start demonic core
+                for k4,v4 in pairs(v3) do--has demonic calling
+                    local PopRotation=table.remove(v4,1)
+                    for k5,skillTry in pairs(Lock.DemoRotationSkill) do
+                        if CheckCanUseThisSkill(PopRotation,skillTry,HasteFactor) then
+                            AddSkillToRotationSet(PopRotation,skillTry,HasteFactor)
+                            if skillTry.FinishRotation then
+                                Lock.AddRotationSetToDemoRotation(k,k2,k3,k4,PopRotation)
+                            else
+                                table.insert(v4,PopRotation)
+                            end
+                        end
+                    end
+                    return true
+                end
+            end
+        end
     end
-    return true
+    return false
 end

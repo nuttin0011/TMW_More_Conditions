@@ -128,7 +128,8 @@ Lock.DemoRotationSkill[2].NextSequence=Lock.DemoRotationSkill[1] --set sequence 
 Lock.DemoRotationSkillGenSSByName={}
 for k,v in pairs(Lock.DemoRotationSkill) do
     Lock.DemoRotationSkillGenSSByName[v.Name]=v.SS
-end***
+end
+Lock.DemoRotationSkillGenSSByName["Call Dreadstalkers"]=-2 -- Set Call DS to not use Demonic Calling
 
 
 Lock.DemoRotation={} -- [Haste%]={}
@@ -244,13 +245,96 @@ function Lock.AddRotationSetToDemoRotation(Haste,StartSS,StartDemonicCore,StartH
     function ChoseBestRotation(Rotation1,Rotation2,ss,demonicCalling) -- return 1 or 2
         -- criteria 1. SS must not Hit 5 when use Demonbolt
         -- criteria 2. SS must not Hit 5 when use DS wile demonicCalling
-        -- criteria 3. G:FG befor VF Befor DS
-        -- criteria 4. HoG use Late as possible
+        -- criteria 3. chose less Time use
+        -- criteria 4. chose more Time limit
+        -- criteria 5. G:FG befor VF Befor DS
+        -- criteria 6. HoG use Late as possible
+        local UseRotation11=true
+        local UseRotation12=true
+        local UseRotation21=true
+        local UseRotation22=true
         local ss1=ss
-        local ss2=ss***
-        for k,v in ipairs(Rotation1.Sequence) do -- criteria 1
-            ss1=ss1+Rotation1.Sequence[k]
+        local ss2=ss
+        for k,v in ipairs(Rotation1.Sequence) do -- criteria 1+2
+            local GenSS1 = Lock.DemoRotationSkillGenSSByName[v.Name]
+            if (demonicCalling==1) and (v.Name=="Call Dreadstalkers") then
+                GenSS1=GenSS1+2
+            end
+            ss1=ss1+GenSS1
+            if (ss1==5) then
+                if (v.Name=="Demonbolt") then
+                    UseRotation11=false
+                    break
+                elseif (v.Name=="Call Dreadstalkers") and (demonicCalling==1) then
+                    UseRotation12=false
+                end
+            end
         end
+        for k,v in ipairs(Rotation2.Sequence) do -- criteria 1+2
+            local GenSS2 = Lock.DemoRotationSkillGenSSByName[v.Name]
+            if (demonicCalling==1) and (v.Name=="Call Dreadstalkers") then
+                GenSS2=GenSS2+2
+            end
+            ss2=ss2+GenSS2
+            if (ss2==5) then
+                if (v.Name=="Demonbolt") then
+                    UseRotation21=false
+                    break
+                elseif (v.Name=="Call Dreadstalkers") and (demonicCalling==1) then
+                    UseRotation22=false
+                end
+            end
+        end
+        if UseRotation11~=UseRotation12 then
+            return UseRotation11 and 1 or 2
+        end
+        if UseRotation21~=UseRotation22 then
+            return UseRotation21 and 1 or 2
+        end
+        if math.abs(Rotation1.TotalTimeUse-Rotation2.TotalTimeUse)>0.1 then -- criteria 3
+            return Rotation1.TotalTimeUse<Rotation2.TotalTimeUse and 1 or 2
+        end
+        if math.abs(Rotation1.TimeLimit-Rotation2.TimeLimit)>0.1 then -- criteria 4
+            return Rotation1.TimeLimit>Rotation2.TimeLimit and 1 or 2
+        end
+        local FG1=Rotation1["Grimoire: Felguard"]
+        local FG2=Rotation2["Grimoire: Felguard"]
+        local VF1=Rotation1["Summon Vilefiend"]
+        local VF2=Rotation2["Summon Vilefiend"]
+        local DS1=Rotation1["Call Dreadstalkers"]
+        local DS2=Rotation2["Call Dreadstalkers"]
+        UseRotation11=false
+        UseRotation12=false
+        if (FG1~=99 and 1 or 0)+(VF1~=99 and 1 or 0)+(DS1~=99 and 1 or 0)>=2 then -- criteria 5
+            -- check at least 2 Summon
+            if FG1==99 then FG1=0 FG2=0 end
+            if VF1==99 then VF1=(FG1+DS1)/2 VF2=(FG2+DS2)/2 end
+            if (FG1<VF1)and(VF1<DS1) then
+                UseRotation11=true
+            end
+            if (FG2<VF2)and(VF2<DS2) then
+                UseRotation12=true
+            end
+        end
+        if UseRotation11~=UseRotation12 then
+            return UseRotation11 and 1 or 2
+        end
+        local HoGScore1=0
+        local HoGScore2=0
+        for k,v in ipairs(Rotation1.Sequence) do -- criteria 6
+            if v.Name=="Hand of Gul'dan" then
+                HoGScore1=HoGScore1+k
+            end
+        end
+        for k,v in ipairs(Rotation2.Sequence) do
+            if v.Name=="Hand of Gul'dan" then
+                HoGScore2=HoGScore2+k
+            end
+        end
+        if HoGScore1~=HoGScore2 then
+            return HoGScore1>HoGScore2 and 1 or 2
+        end
+        return 2
     end
 
     if not DemoRotation then print("not DemoRotation") return end

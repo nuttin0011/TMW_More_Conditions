@@ -256,31 +256,31 @@ function Lock.AddRotationSetToDemoRotation(Haste,StartSS,StartDemonicCore,StartH
         local ss1=ss
         local ss2=ss
         for k,v in ipairs(Rotation1.Sequence) do -- criteria 1+2
-            local GenSS1 = Lock.DemoRotationSkillGenSSByName[v.Name]
+            local GenSS1 = Lock.DemoRotationSkillGenSSByName[v]
             if (demonicCalling==1) and (v.Name=="Call Dreadstalkers") then
                 GenSS1=GenSS1+2
             end
             ss1=ss1+GenSS1
             if (ss1==5) then
-                if (v.Name=="Demonbolt") then
+                if (v=="Demonbolt") then
                     UseRotation11=false
                     break
-                elseif (v.Name=="Call Dreadstalkers") and (demonicCalling==1) then
+                elseif (v=="Call Dreadstalkers") and (demonicCalling==1) then
                     UseRotation12=false
                 end
             end
         end
         for k,v in ipairs(Rotation2.Sequence) do -- criteria 1+2
-            local GenSS2 = Lock.DemoRotationSkillGenSSByName[v.Name]
+            local GenSS2 = Lock.DemoRotationSkillGenSSByName[v]
             if (demonicCalling==1) and (v.Name=="Call Dreadstalkers") then
                 GenSS2=GenSS2+2
             end
             ss2=ss2+GenSS2
             if (ss2==5) then
-                if (v.Name=="Demonbolt") then
+                if (v=="Demonbolt") then
                     UseRotation21=false
                     break
-                elseif (v.Name=="Call Dreadstalkers") and (demonicCalling==1) then
+                elseif (v=="Call Dreadstalkers") and (demonicCalling==1) then
                     UseRotation22=false
                 end
             end
@@ -322,12 +322,12 @@ function Lock.AddRotationSetToDemoRotation(Haste,StartSS,StartDemonicCore,StartH
         local HoGScore1=0
         local HoGScore2=0
         for k,v in ipairs(Rotation1.Sequence) do -- criteria 6
-            if v.Name=="Hand of Gul'dan" then
+            if v=="Hand of Gul'dan" then
                 HoGScore1=HoGScore1+k
             end
         end
         for k,v in ipairs(Rotation2.Sequence) do
-            if v.Name=="Hand of Gul'dan" then
+            if v=="Hand of Gul'dan" then
                 HoGScore2=HoGScore2+k
             end
         end
@@ -358,9 +358,14 @@ function Lock.AddRotationSetToDemoRotation(Haste,StartSS,StartDemonicCore,StartH
                 AddToRotation=false
                 break
             end
-            if TBuff==v.TyrantBuff and (ChoseBestRotation(RotationSet,v,StartSS,StartHasDemonicCalling)==2)  then
-                AddToRotation=false
-                break
+            if TBuff==v.TyrantBuff then
+                if ChoseBestRotation(RotationSet,v,StartSS,StartHasDemonicCalling)==1 then
+                    DemoRotation[Haste][StartSS][StartDemonicCore][StartHasDemonicCalling][i]=nil
+                    DataInRotation=DataInRotation-1
+                else
+                    AddToRotation=false
+                    break
+                end
             end
             if TBuff>v.TyrantBuff then
                 DemoRotation[Haste][StartSS][StartDemonicCore][StartHasDemonicCalling][i]=nil
@@ -368,6 +373,8 @@ function Lock.AddRotationSetToDemoRotation(Haste,StartSS,StartDemonicCore,StartH
             end
         end
     end
+
+    print("AddToRotation : ",AddToRotation)
 
     if AddToRotation then
         RotationSet.TyrantBuff=TBuff

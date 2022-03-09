@@ -1,4 +1,4 @@
--- ZRO Decoder 9.0.5/9
+-- ZRO Decoder 9.0.5/9b
 -- check Spell GCD
 --[[ e.g.
 IUSC.NumToSpell={}
@@ -15,6 +15,9 @@ e.g. /cast [nomod]shadow bolt; \n/run IUSC.SU("30")
 Skill use off gcd
 function IUSC.SO(k) --k is string e.g. "33" , "3a"
 no any effect.... just keep log.......
+
+function IUSC.After()
+call this function after macro end
 ]]
 
 -- can copy this to LUA Snippted
@@ -66,7 +69,7 @@ IUSC.spec1secGCD = {
 IUSC.NumToSpell={}
 IUSC.NumToID={}
 IUSC.IDToSpell={}
-
+IUSC.After=function(...) end
 local Ping={}
 function Ping.aP()
     Ping.now=(select(4,GetNetStats())/1000)
@@ -307,6 +310,7 @@ function IUSC.SU(k) --k is string e.g. "33" , "3a"
 		IUSC.printdebug(">>USE: "..s)
 	end
 	IUSC.CreateGCDPluse()
+	IUSC.After(IUSC.NumToID[C])
 end
 
 --Skill use off gcd
@@ -319,6 +323,7 @@ function IUSC.SO(k) --k is string e.g. "33" , "3a"
 	C=bit.bor(C,S) -- k .. mod
 	--print("skill offGCD use : ",IUSC.NumToSpell[C] or "none",IUSC.NumToID[C] or 0)
 	if IUSC.KeepLogText then IUSC.KeepLogText(true) end
+	IUSC.After(IUSC.NumToID[C])
 end
 
 

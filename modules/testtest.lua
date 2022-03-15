@@ -128,9 +128,36 @@ IROVar.Lock.PredictSS()>=50 or
 GetSpellCooldown("Call Dreadstalkers")==0 and
 TMW.CNDT.Env.AuraDur("player", "demonic calling", "PLAYER HELPFUL")>0)
 
+--Spec = "1","2","3"
+--IconName = "icon1" , "icon2" , "icon3"
+--use IROVar.SetIconColorForDPS(icon,"1","icon1")
+function IROVar.SetIconColorForDPS(TMWicon,Spec,IconName)
+    local cc=IROVar["Cast"..IconName] or "ff000000"
+    local SpecIconName="spec"..Spec..IconName --> all low char
+    if TMWicon.States[1].Color~=cc then
+        if IROVar[SpecIconName.."1"] then
+            IROVar[SpecIconName.."1"].States[1].Color=cc
+        end
+        if IROVar[SpecIconName.."2"] then
+            IROVar[SpecIconName.."2"].States[1].Color=cc
+        end
+        if TMW_ST:GetCounter(SpecIconName)==0
+        then
+            TMW_ST:UpdateCounter(SpecIconName,1)
+        else
+            TMW_ST:UpdateCounter(SpecIconName,0)
+        end
+    end
+end
 
+a=
 
-
-
-
+IROVar and IROVar.CareInterrupt
+and PercentCastbar2 and IROVar.InterruptSpell
+and (TMW_ST:GetCounter("wantinterrupt")==1)
+and (GetSpellCooldown(IROVar.InterruptSpell)==0)
+and (IsSpellInRange(IROVar.InterruptSpell,"target")==1)
+and PercentCastbar2()
+and IROVar.CareInterrupt("target")
+and ((not NextInterrupter) or NextInterrupter.IsMyTurn())
 

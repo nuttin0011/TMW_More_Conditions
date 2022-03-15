@@ -1,9 +1,14 @@
 --DPSRotation_Code_WarFury v1
 --*****Set DPSRotation of Class to 3
 
--- RP = Rampage
--- BT = Bloodthirst
--- RB = Raging Blow
--- WW = Whirlwind
--- EX = Execute
--- EXm = Execute @ mouse over
+
+
+local rage=UnitPower("player",1)
+
+if TMW.CNDT.Env.CooldownDuration("Mortal Strike")<=0.3 and rage>= 30 then
+    IROVar.Cast1("Mortal Strike")
+elseif rage>= 50 then
+    IROVar.Cast1("Slam")
+else
+    IROVar.Cast1("---")
+end

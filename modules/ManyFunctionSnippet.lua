@@ -1,4 +1,4 @@
--- Many Function Version 9.0.5/47
+-- Many Function Version 9.0.5/48
 -- this file save many function for paste to TMW Snippet LUA
 
 --function IROEnemyCountInRange(nRange) ; return count, nRange = yard e.g. 2 5 8 15 20 30 40 50 200
@@ -21,6 +21,8 @@
 --function IROVar.allBuffByMe(unit,needLowerCaseName)
 ----*********return table of [Buff name] = Buff time remaining
 -- function TMW.CNDT.Env.AuraDur(unit, name, filter) ; return duration,MaxDuration,TimeEnd
+--var IROVar.Icon ; Keep Icon Data from TMW for Use further
+--function IROVar.IsIconShow(icon) ; return true/false
 --function IROVar.IconSweepCompair(icon,max,min) ; return (max > SweepCD > min) (true/false)
 --var IROVar.activeConduits ; dump soulbind to table
 --var IROVar.playerGUID ;
@@ -31,7 +33,12 @@
 --var IROVar.CastTime1_5sec ; cast time in second mod by haste
 --var IROVar.HasteFactor ; multiply by cast time = time to cast , = 100/(100+UnitSpellHaste("player"))
 
+
 if not IROVar then IROVar={} end
+IROVar.Icon = {}
+function IROVar.IsIconShow(icon)
+    return icon and icon.attributes.shown and not icon:Update() and icon.attributes.realAlpha > 0
+end
 IROVar.playerGUID = UnitGUID("player")
 IROVar.DebugMode = false
 IROVar.InterruptSpell = nil

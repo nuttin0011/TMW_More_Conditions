@@ -1,8 +1,9 @@
--- Many Function Version War 9.0.5/3
+-- Many Function Version War 9.0.5/4
 -- this file save many function for paste to TMW Snippet LUA
 
 --function IROVar.War.CanExx(Unit or blank = "target") ; return true/false
 --function IROVar.War.IsEquipShield() ; return true/false
+--function IROVar.War.PredictFuryRageFromAutoAttack(r,t) ; return rage ; t is time ; r is rage from skill
 
 if not IROVar then IROVar={} end
 if not IROVar.InstanceName then IROVar.InstanceName = GetInstanceInfo() end
@@ -32,6 +33,11 @@ IROVar.War.isCondemn = false
 IROVar.War.isEquipShield = false
 IROVar.War.MainHandWeaponLink = nil
 IROVar.War.OffHandWeaponLink = nil
+IROVar.War.MHType=false
+IROVar.War.OHType=false
+IROVar.War.MHRage=2
+IROVar.War.OHRage=1
+IROVar.War.ReckEnd=0
 IROVar.War.ShieldLink = nil
 IROVar.War.CanUseSwapWeapon = false
 IROVar.War.WeaponChecking=false
@@ -142,8 +148,16 @@ function IROVar.War.CheckWeapon()
     local currentTime=GetTime()
     if (currentTime-IROVar.War.JustCheckShield)>0.1 then
         IROVar.War.ShieldChecking=true
-        local ItemLink=GetInventoryItemLink("player", 17)--shield
-        IROVar.War.isEquipShield=(ItemLink~=nil) and (select(7,GetItemInfo(ItemLink))=="Shields") or false
+        local MHItemLink=GetInventoryItemLink("player", 16)-- MH
+        local OHItemLink=GetInventoryItemLink("player", 17)-- Off hand
+
+        --local MHType=GetItemInfo(GetInventoryItemLink("player", 16))
+        --local OHType=GetItemInfo(GetInventoryItemLink("player", 17))
+        IROVar.War.isEquipShield=(OHItemLink~=nil) and (select(7,GetItemInfo(OHItemLink))=="Shields") or false
+        IROVar.War.MHType=(MHItemLink~=nil) and select(9,GetItemInfo(MHItemLink)) or false
+        IROVar.War.OHType=(OHItemLink~=nil) and select(9,GetItemInfo(OHItemLink)) or false
+        IROVar.War.MHRage=(IROVar.War.MHType=="INVTYPE_2HWEAPON") and 6 or ((IROVar.War.MHType=="INVTYPE_WEAPON") and 4 or 2)
+        IROVar.War.OHRage=(IROVar.War.OHType=="INVTYPE_2HWEAPON") and 3 or ((IROVar.War.OHType=="INVTYPE_WEAPON") and 2 or 1)
         C_Timer.After(0.1,function() IROVar.War.ShieldChecking=false end)
         IROVar.War.JustCheckShield=currentTime
     end
@@ -184,6 +198,8 @@ function IROVar.War.SetupEventCheck()
     IROVar.War.FEvent:SetScript("OnEvent", IROVar.War.FOnEvent)
 end
 
+C_Timer.After(0.1,function() IROVar.War.SetupEventCheck() end)
+
 function IROVar.War.IsEquipShield()
     if not IROVar.War.FOnEvent then IROVar.War.SetupEventCheck() end
     return IROVar.War.isEquipShield
@@ -207,3 +223,42 @@ function IROVar.War.CareSpell(nSpell) --Use Only Target
     return (IROVar.War.SpellThatCare[nSpell][IROVar.InstanceName][mName]==true) and true or
             loadstring(IROVar.War.SpellThatCare[nSpell][IROVar.InstanceName][mName])()
 end
+
+function IROVar.War.PredictFuryRageFromAutoAttack(r,t)
+    t=t or IROVar.CastTime1_5sec or 0
+    r=r or 0
+    local rage=UnitPower("player")
+    local MHNextSwing=TMW.COMMON.SwingTimerMonitor.SwingTimers[16].startTime+TMW.COMMON.SwingTimerMonitor.SwingTimers[16].duration
+    local OHNextSwing=TMW.COMMON.SwingTimerMonitor.SwingTimers[17].startTime+TMW.COMMON.SwingTimerMonitor.SwingTimers[17].duration
+    local currentTimeT=GetTime()+t
+
+    if currentTimeT>MHNextSwing then
+        rage=rage+IROVar.War.MHRage
+        if MHNextSwing<IROVar.War.ReckEnd then
+            rage=rage+IROVar.War.MHRage
+        end
+    end
+    if currentTimeT>OHNextSwing then
+        rage=rage+IROVar.War.OHRage
+        if OHNextSwing<IROVar.War.ReckEnd then
+            rage=rage+IROVar.War.OHRage
+        end
+    end
+    rage=rage+r
+    if currentTimeT<IROVar.War.ReckEnd then
+        rage=rage+r
+    end
+    return rage
+end
+
+IROVar.War.UnitAuraEvent=function(self,event,unit,_,table)
+    if unit=="player"  then
+        if table and table[1] and table[1].name=="Recklessness" then
+            --Reck Change Time
+            IROVar.War.ReckEnd=select(3,TMW.CNDT.Env.AuraDur("player","recklessness","PLAYER HELPFUL"))
+        end
+    end
+end
+IROVar.War.UnitAuraFrame=CreateFrame("Frame")
+IROVar.War.UnitAuraFrame:RegisterEvent("UNIT_AURA")
+IROVar.War.UnitAuraFrame:SetScript("OnEvent", IROVar.War.UnitAuraEvent)

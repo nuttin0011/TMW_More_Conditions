@@ -1,4 +1,4 @@
--- Many Function Version War Arm 9.1.0/2
+-- Many Function Version War Arm 9.1.0/3
 -- this file save many function for paste to TMW Snippet LUA
 
 
@@ -6,7 +6,6 @@ if not IROVar then IROVar={} end
 IROVar.WarArm={}
 IROVar.WarArm.isRend=false
 IROVar.WarArm.isWarMachine=false
-IROVar.WarArm.BSTime=600/(100+UnitSpellHaste("player"))
 IROVar.WarArm.RagePerAttack=24
 IROVar.WarArm.RagePerAttackCri=31
 
@@ -23,8 +22,6 @@ IROVar.WarArm.FOnEvent=function(_,event)
         end
         IROVar.WarArm.RagePerAttack = math.floor(IROVar.WarArm.RagePerAttack)-1
         IROVar.WarArm.RagePerAttackCri = math.floor(IROVar.WarArm.RagePerAttack*1.3)
-    elseif event=="UNIT_SPELL_HASTE" then
-        IROVar.WarArm.BSTime=(600/(100+UnitSpellHaste("player")))+0.2
     end
 
 end
@@ -36,7 +33,6 @@ end)
 IROVar.WarArm.FEvent = CreateFrame("Frame")
 IROVar.WarArm.FEvent:RegisterEvent("PLAYER_TALENT_UPDATE")
 IROVar.WarArm.FEvent:RegisterEvent("PLAYER_EQUIPMENT_CHANGED")
-IROVar.WarArm.FEvent:RegisterEvent("UNIT_SPELL_HASTE")
 IROVar.WarArm.FEvent:SetScript("OnEvent", IROVar.WarArm.FOnEvent)
 
 IROVar.WarArm.PredictRageForMSOldVal=0
@@ -84,7 +80,7 @@ function IROVar.WarArm.PredictRageForBS()
     if SwSt==0 then
         rage=rage+(2*IROVar.WarArm.RagePerAttack)
     else
-        local BSEnd=GetTime()+IROVar.WarArm.BSTime
+        local BSEnd=GetTime()+IROVar.CastTime6sec+0.2
         SwSt=SwSt+SwDu
         while SwSt<BSEnd do
             rage=rage+IROVar.WarArm.RagePerAttackCri

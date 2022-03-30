@@ -1,4 +1,4 @@
--- Many Function Version 9.0.5/48
+-- Many Function Version 9.0.5/49
 -- this file save many function for paste to TMW Snippet LUA
 
 --function IROEnemyCountInRange(nRange) ; return count, nRange = yard e.g. 2 5 8 15 20 30 40 50 200
@@ -490,10 +490,12 @@ IROVar.justCheckActiveConduits=0
 IROVar.fconduitOnEvent=function()
     local now=GetTime()
     if now <= IROVar.justCheckActiveConduits then return end
-    IROVar.justCheckActiveConduits=now+0.1
-    IROVar.activeConduits=IROVar.DetermineActiveCovenantAndSoulbindAndConduits()
-    if not IROVar.activeConduits then IROVar.activeConduits={} end
-    IROVar.activeConduits.IsKoraynAndFirstStrike=(IROVar.activeConduits.soulbindName=="Korayn")and(IROVar.activeConduits["First Strike"]==true)
+    IROVar.justCheckActiveConduits=now+0.4
+    C_Timer.After(0.5,function()
+        IROVar.activeConduits=IROVar.DetermineActiveCovenantAndSoulbindAndConduits()
+        if not IROVar.activeConduits then IROVar.activeConduits={} end
+        IROVar.activeConduits.IsKoraynAndFirstStrike=(IROVar.activeConduits.soulbindName=="Korayn")and(IROVar.activeConduits["First Strike"]==true)
+    end)
 end
 
 -- patch 9.x.x Shadowlands SL

@@ -1,4 +1,4 @@
--- Many Function Version War 9.0.5/5
+-- Many Function Version War 9.0.5/5b
 -- this file save many function for paste to TMW Snippet LUA
 
 --function IROVar.War.CanExx(Unit or blank = "target") ; return true/false
@@ -265,6 +265,11 @@ IROVar.War.UnitAuraFrame:RegisterEvent("UNIT_AURA")
 IROVar.War.UnitAuraFrame:SetScript("OnEvent", IROVar.War.UnitAuraEvent)
 
 IROVar.War.OldCovenantBeforChangeSkill=nil
+
+--[[
+\n/cast Conqueror's Banner\n/cast Condemn\n/cast Ancient Aftershock\n/cast [@cursor]Spear of Bastion
+\n/cast Fleshcraft\n/cast Door of Shadows\n/cast [nomounted]Soulshape\n/cast [nomounted]Summon Steward
+]]
 --ex /run IROVar.War.ChangeCovenantSkillMacro("War Covenant1")
 function IROVar.War.ChangeCovenantSkillMacro(mName,mName2)
     local CovenantName=IROVar.activeConduits.covenantName
@@ -274,30 +279,31 @@ function IROVar.War.ChangeCovenantSkillMacro(mName,mName2)
     local MacroName,MacroIcon,MacroBody = GetMacroInfo(mName);
     local MacroName2,MacroIcon2,MacroBody2 = GetMacroInfo(mName2);
     if CovenantName=="Necrolord" then
-        MacroBody="#showtooltip Conqueror's Banner\n/cast Conqueror's Banner"
+        MacroBody="#showtooltip Conqueror's Banner\n/cast Conqueror's Banner\n/cast Condemn\n/cast Ancient Aftershock\n/cast [@cursor]Spear of Bastion"
         --[Conqueror's Banner]3578234  [Fleshcraft]3586267
         MacroIcon=3578234
-        MacroBody2="#showtooltip Fleshcraft\n/cast Fleshcraft"
+        MacroBody2="#showtooltip Fleshcraft\n/cast Fleshcraft\n/cast Door of Shadows\n/cast [nomounted]Soulshape\n/cast [nomounted]Summon Steward"
         MacroIcon2=3586267
     end
+
     if CovenantName=="Venthyr" then
-        MacroBody="#showtooltip Condemn\n/cast Condemn"
+        MacroBody="#showtooltip Condemn\n/cast Conqueror's Banner\n/cast Condemn\n/cast Ancient Aftershock\n/cast [@cursor]Spear of Bastion"
         --[Condemn]3565727  [Door of Shadows] 3586270
         MacroIcon=3565727
-        MacroBody2="#showtooltip Door of Shadows\n/cast Door of Shadows"
+        MacroBody2="#showtooltip Door of Shadows\n/cast Fleshcraft\n/cast Door of Shadows\n/cast [nomounted]Soulshape\n/cast [nomounted]Summon Steward"
         MacroIcon2=3586270
     end
     if CovenantName=="Night Fae" then
         --[Ancient Aftershock]3636851  [Soulshape]3586268
-        MacroBody="#showtooltip Ancient Aftershock\n/cast Ancient Aftershock"
+        MacroBody="#showtooltip Ancient Aftershock\n/cast Conqueror's Banner\n/cast Condemn\n/cast Ancient Aftershock\n/cast [@cursor]Spear of Bastion"
         MacroIcon=3636851
-        MacroBody2="#showtooltip Soulshape\n/cast Soulshape"
+        MacroBody2="#showtooltip Soulshape\n/cast Fleshcraft\n/cast Door of Shadows\n/cast [nomounted]Soulshape\n/cast [nomounted]Summon Steward"
         MacroIcon2=3586268
     end
     if CovenantName=="Kyrian" then --[Spear of Bastion]3565453  [Summon Steward]3586266
-        MacroBody="#showtooltip Spear of Bastion\n/cast [@player]Spear of Bastion"
+        MacroBody="#showtooltip Spear of Bastion\n/cast Conqueror's Banner\n/cast Condemn\n/cast Ancient Aftershock\n/cast [@cursor]Spear of Bastion"
         MacroIcon=3565453
-        MacroBody2="#showtooltip Summon Steward\n/cast [nomounted]Summon Steward"
+        MacroBody2="#showtooltip Summon Steward\n/cast Fleshcraft\n/cast Door of Shadows\n/cast [nomounted]Soulshape\n/cast [nomounted]Summon Steward"
         MacroIcon2=3586266
     end
     if MacroName then EditMacro(MacroName, MacroName, MacroIcon, MacroBody) end

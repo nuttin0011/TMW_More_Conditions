@@ -4,17 +4,24 @@
 --function IROVar.DruidFeral.DotRakeEmpower(unitToken) -- return %Rake DMG , Eg no buff = 100, Has Berserk = 160
 --function IROVar.DruidFeral.DotRipEmpower(unitToken) -- return %Rip DMG , Dot at target , Eg no buff = 100, Has Bloodtalons = 130
 --function IROVar.DruidFeral.CastRakeEmpower() -- return %Rip DMG, will cast to target
+--function IROVar.DruidFeral.CastRakeEmpowerWithTigerFury()
 --function IROVar.DruidFeral.CastRipEmpower()
+--function IROVar.DruidFeral.CastRipEmpowerWithTigerFury()
+--function IROVar.DruidFeral.TigerFuryReady()
 
 if not IROVar then IROVar = {} end
 if not IROVar.DruidFeral then IROVar.DruidFeral = {} end
 
 IROVar.DruidFeral.HasBloodtalonsTalent = false
-IROVar.DruidFeral.HasTigerFuryAurs = TMW.CNDT.Env.AuraDur("player", "tiger's fury", "PLAYER HELPFUL")>0
-IROVar.DruidFeral.HasSavageRoarAura = TMW.CNDT.Env.AuraDur("player", "savage roar", "PLAYER HELPFUL")>0
-IROVar.DruidFeral.HasBerserkAurs = TMW.CNDT.Env.AuraDur("player", "berserk", "PLAYER HELPFUL")>0
-IROVar.DruidFeral.HasBloodtalonsAura = TMW.CNDT.Env.AuraDur("player", "bloodtalons", "PLAYER HELPFUL")>0
-
+IROVar.DruidFeral.TigerFuryReadyTime=GetTime()+TMW.CNDT.Env.CooldownDuration("Tiger's Fury")
+IROVar.DruidFeral.FTigerFury = CreateFrame("Frame")
+IROVar.DruidFeral.FTigerFury:RegisterEvent("SPELL_UPDATE_COOLDOWN")
+IROVar.DruidFeral.FTigerFury:SetScript("OnEvent", function()
+    IROVar.DruidFeral.TigerFuryReadyTime=GetTime()+TMW.CNDT.Env.CooldownDuration("Tiger's Fury")
+end)
+function IROVar.DruidFeral.TigerFuryReady()
+    return GetTime()>=IROVar.DruidFeral.TigerFuryReadyTime
+end
 IROVar.DruidFeral.AuraEffectRakeRip ={
     -- [auraName] = {effect Rake, effect rip, %increase}
     ["Tiger's Fury"]={true,true,15},
@@ -31,15 +38,31 @@ function IROVar.DruidFeral.CheckCarnivorousInstinct()
 end
 IROVar.DruidFeral.CheckCarnivorousInstinct()
 
-IROVar.DruidFeral.PlayerHasAura ={
+IROVar.DruidFeral.PlayerHasAura ={}
+--[[
     ["Sudden Ambush"]=TMW.CNDT.Env.AuraDur("player", "sudden ambush", "PLAYER HELPFUL")>0,
     ["Bloodtalons"]=TMW.CNDT.Env.AuraDur("player", "bloodtalons", "PLAYER HELPFUL")>0,
     ["Savage Roar"]=TMW.CNDT.Env.AuraDur("player", "savage roar", "PLAYER HELPFUL")>0,
     ["Tiger's Fury"]=TMW.CNDT.Env.AuraDur("player", "tiger's fury", "PLAYER HELPFUL")>0,
     ["Berserk"]=TMW.CNDT.Env.AuraDur("player", "berserk", "PLAYER HELPFUL")>0
-}
+]]
 
-IROVar.DruidFeral.CastEmpowerInfo = {100,100} --{RakeEmpower,RipEmpower},
+IROVar.DruidFeral.CheckPlayerAuraForRakeRip = function()
+    for auraName in pairs(IROVar.DruidFeral.AuraEffectRakeRip) do
+        IROVar.DruidFeral.PlayerHasAura[auraName] = false
+    end
+    for i=1,40 do
+        local name = UnitBuff("player", i,"PLAYER")
+        if name and IROVar.DruidFeral.AuraEffectRakeRip[name] then
+            IROVar.DruidFeral.PlayerHasAura[name] = true
+        else break end
+    end
+end
+
+IROVar.DruidFeral.CastEmpowerInfo = {0,0} --{RakeEmpower,RipEmpower},
+
+IROVar.DruidFeral.CheckPlayerAuraForRakeRip()
+
 IROVar.DruidFeral.DotAtMobInfo = {}
 --[[
     IROVar.DruidFeral.DotAtMobInfo = {
@@ -53,9 +76,18 @@ function IROVar.DruidFeral.EncodeEmpowerAura(aura) -- aura 1 is Rake , 2 is Rip
             power = power + (IROVar.DruidFeral.AuraEffectRakeRip[k][aura] and IROVar.DruidFeral.AuraEffectRakeRip[k][3] or 0)
         end
     end
+    if aura==1 and IROVar.DruidFeral.PlayerHasAura["Berserk"] and IROVar.DruidFeral.PlayerHasAura["Sudden Ambush"] then
+        -- Berserk and Sudden Ambush is same aura
+        power = power - 60
+    end
     return power
 end
 
+function IROVar.DruidFeral.CheckCastEmpower()
+    IROVar.DruidFeral.CastEmpowerInfo[1]=IROVar.DruidFeral.EncodeEmpowerAura(1)
+    IROVar.DruidFeral.CastEmpowerInfo[2]=IROVar.DruidFeral.EncodeEmpowerAura(2)
+end
+IROVar.DruidFeral.CheckCastEmpower()
 
 function IROVar.DruidFeral.DotRakeEmpower(unitToken) -- return %Rake DMG , Eg no buff = 100, Has Berserk = 160
     --Rake
@@ -63,7 +95,7 @@ function IROVar.DruidFeral.DotRakeEmpower(unitToken) -- return %Rake DMG , Eg no
     local unitGUID=UnitGUID(unitToken)
     if not unitGUID then return 0 end
     if not IROVar.DruidFeral.DotAtMobInfo[unitGUID] then return 0 end
-    return IROVar.DruidFeral.DotAtMobInfo[unitGUID][1] or 0
+    return IROVar.DruidFeral.DotAtMobInfo[unitGUID][1]
 end
 
 function IROVar.DruidFeral.DotRipEmpower(unitToken) -- return %Rip DMG , Eg no buff = 100, Has Bloodtalons = 130
@@ -72,7 +104,7 @@ function IROVar.DruidFeral.DotRipEmpower(unitToken) -- return %Rip DMG , Eg no b
     local unitGUID=UnitGUID(unitToken)
     if not unitGUID then return 0 end
     if not IROVar.DruidFeral.DotAtMobInfo[unitGUID] then return 0 end
-    return IROVar.DruidFeral.DotAtMobInfo[unitGUID][2] or 0
+    return IROVar.DruidFeral.DotAtMobInfo[unitGUID][2]
 end
 
 function IROVar.DruidFeral.CastRakeEmpower()
@@ -83,12 +115,27 @@ function IROVar.DruidFeral.CastRipEmpower()
     return IROVar.DruidFeral.CastEmpowerInfo[2]
 end
 
+function IROVar.DruidFeral.CastRakeEmpowerWithTigerFury()
+    return IROVar.DruidFeral.CastEmpowerInfo[1] +
+    (IROVar.DruidFeral.TigerFuryReady() and IROVar.DruidFeral.AuraEffectRakeRip["Tiger's Fury"][3] or 0)
+end
+
+function IROVar.DruidFeral.CastRipEmpowerWithTigerFury()
+    return IROVar.DruidFeral.CastEmpowerInfo[2] +
+    (IROVar.DruidFeral.TigerFuryReady() and IROVar.DruidFeral.AuraEffectRakeRip["Tiger's Fury"][3] or 0)
+end
+
+
 function IROVar.DruidFeral.CheckTalent()
     local _,TName,_,TSelected=GetTalentInfo(7,2,1)
     IROVar.DruidFeral.HasBloodtalonsTalent = (TName=="Bloodtalons") and TSelected
 end
 
-IROVar.DruidFeral.FOnEvent=function(_,event)
+function IROVar.DruidFeral.ClearDotAtMobInfo()
+    IROVar.DruidFeral.DotAtMobInfo = {}
+end
+
+function IROVar.DruidFeral.FOnEvent(_,event)
     if IROVar.DebugMode then
         print("Event in DruidFeral On Event",event)
     end
@@ -96,9 +143,15 @@ IROVar.DruidFeral.FOnEvent=function(_,event)
         C_Timer.After(2,IROVar.DruidFeral.CheckTalent)
     elseif event == "PLAYER_REGEN_ENABLED" then
         -- out combat
-        IROVar.DruidFeral.DotAtMobInfo ={}
+        IROVar.DruidFeral.ClearDotAtMobInfoHandle=C_Timer.NewTimer(20,IROVar.DruidFeral.ClearDotAtMobInfo)
     elseif event == "PLAYER_REGEN_DISABLED" then
         -- in combat
+        if IROVar.DruidFeral.ClearDotAtMobInfoHandle then
+            IROVar.DruidFeral.ClearDotAtMobInfoHandle:Cancel()
+            IROVar.DruidFeral.ClearDotAtMobInfoHandle=nil
+        end
+        IROVar.DruidFeral.CheckPlayerAuraForRakeRip()
+        IROVar.DruidFeral.CheckCastEmpower()
         IROVar.DruidFeral.CheckCarnivorousInstinct()
     end
 end
@@ -117,12 +170,12 @@ IROVar.DruidFeral.CombatEvent = function(...)
     local function CheckRakeRip(sName,dGUID,isRemoved)
         if sName == "Rake" then
             if not IROVar.DruidFeral.DotAtMobInfo[dGUID] then
-                IROVar.DruidFeral.DotAtMobInfo[dGUID]={}
+                IROVar.DruidFeral.DotAtMobInfo[dGUID]={0,0}
             end
             IROVar.DruidFeral.DotAtMobInfo[dGUID][1]=isRemoved and 0 or IROVar.DruidFeral.CastEmpowerInfo[1]
         elseif sName == "Rip" then
             if not IROVar.DruidFeral.DotAtMobInfo[dGUID] then
-                IROVar.DruidFeral.DotAtMobInfo[dGUID]={}
+                IROVar.DruidFeral.DotAtMobInfo[dGUID]={0,0}
             end
             IROVar.DruidFeral.DotAtMobInfo[dGUID][2]=isRemoved and 0 or IROVar.DruidFeral.CastEmpowerInfo[2]
         end
@@ -147,8 +200,16 @@ IROVar.DruidFeral.CombatEvent = function(...)
     elseif subevent=="SPELL_AURA_REMOVED" then
         local spellID, spellName = select(12,...)
         if IROVar.DruidFeral.AuraEffectRakeRip[spellName] then
-            IROVar.DruidFeral.PlayerHasAura[spellName]=false
-            CheckCastEmpower(spellName)
+            if spellName=="Sudden Ambush" then
+                --"Sudden Ambush" removed befor "Rake" apple , must check "Rake" as have "Sudden Ambush"
+                C_Timer.After(0.05,function()
+                    IROVar.DruidFeral.PlayerHasAura[spellName]=false
+                    CheckCastEmpower(spellName)
+                end)
+            else
+                IROVar.DruidFeral.PlayerHasAura[spellName]=false
+                CheckCastEmpower(spellName)
+            end
         else
             CheckRakeRip(spellName,destGUID,true)
         end

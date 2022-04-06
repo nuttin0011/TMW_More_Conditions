@@ -60,3 +60,22 @@ elseif cc==nil then
     TMW_ST:UpdateCounter("swdone",3)
 end
 
+
+
+
+TestCDEvent = CreateFrame("Frame")
+TestCDEvent:RegisterEvent("SPELL_UPDATE_COOLDOWN")
+TestCDEvent:SetScript("OnEvent", function(self, event,...)
+    print(GetTime(),event)
+    print("...",...)
+end)
+
+TestRampageEvent = CreateFrame("Frame")
+TestRampageEvent:RegisterEvent("COMBAT_LOG_EVENT_UNFILTERED")
+TestRampageEvent:SetScript("OnEvent", function(self, event)
+    if select(13,CombatLogGetCurrentEventInfo())=="Rampage" then
+        print(GetTime(),"Rampage")
+    end
+end)
+
+

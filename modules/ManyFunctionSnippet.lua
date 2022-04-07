@@ -1,4 +1,4 @@
--- Many Function Version 9.0.5/49
+-- Many Function Version 9.0.5/49b
 -- this file save many function for paste to TMW Snippet LUA
 
 --function IROEnemyCountInRange(nRange) ; return count, nRange = yard e.g. 2 5 8 15 20 30 40 50 200
@@ -32,7 +32,8 @@
 --var IROVar.CastTime2sec,IROVar.CastTime6sec ; cast time in second mod by haste
 --var IROVar.CastTime1_5sec ; cast time in second mod by haste
 --var IROVar.HasteFactor ; multiply by cast time = time to cast , = 100/(100+UnitSpellHaste("player"))
-
+--function AuraUtil.FindAuraByName(auraName, unit, filter) -- return only 1st auraName match
+--function AuraUtil.ForEachAura(unit, filter, [maxCount], func)
 
 if not IROVar then IROVar={} end
 IROVar.Icon = {}

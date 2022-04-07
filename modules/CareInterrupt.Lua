@@ -1,4 +1,4 @@
--- Care Interrupt V 1.85 ICON
+-- Care Interrupt V 1.90 ICON
 -- interrupt Only Important Spell at Specific Mob
 -- IROVar.CareInterrupt(unit e.g. "target") ; return true / false
 -- IROVar and IROVar.CareInterrupt and IROVar.CareInterrupt("target")
@@ -103,13 +103,31 @@ if not IROVar.MobListForInterrupt then
             ["Blighted Sludge-Spewer"]={["Withering Discharge"]=true,},
             ["Bone Magus"]={["Bone Spear"]=true,},
             ["Maniacal Soulbinder"]={["Necrotic Bolt Volley"]=true,},
-            ["Sathel the Accursed"]={["Necromantic Bolt"]=[[return TMW.CNDT.Env.AuraDur("target", "one with death", "HELPFUL")==0]]},
+            ["Sathel the Accursed"]={ --1st boss
+                ["Necromantic Bolt"]=[[return TMW.CNDT.Env.AuraDur("target", "one with death", "HELPFUL")==0]],
+                ["Searing Death"]=true,
+            },
         },
         ["Castle Nathria"]={
             ["Stoneborn Maitre D'"]={["Dinner Bell"]=true}
         },
         ["The Shadowlands"]={
             ["Mawsworn Myrmidon"]={["Horrifying Shout"]=true}
+        },
+        ["Tazavesh the Veiled Market"]={
+            --Tazavesh: Streets of Wonder
+            ["Support Officer"]={["Hard Light Barrier"]=true},
+            ["Interrogation Specialist"]={["Stasis Beam"]=true},
+            ["Veteran Sparkcaster"]={["Scintillate"]=true},
+            ["Portalmancer Zo'honn"]={["Radiant Pulse"]=true},
+            ["Tracker Zo'korss"]={["Beam Splicer"]=true},
+            ["Ancient Core Hound"]={["Ancient Dread"]=true},
+            ["Market Peacekeeper"]={["Phalanx Field"]=true}, -- stun
+            --Tazavesh: So'leah's Gambit
+            ["Hourglass Tidesage"]={["Tidal Burst"]=true},
+            ["Devoted Accomplice"]={["Reinvigorate"]=true},
+            ["Focused Ritualist"]={["Unstable Rift"]=true},
+            ["Murkbrine Scalebinder"]={["Invigorating Fish Stick"]=true},--stun
         },
 
     }

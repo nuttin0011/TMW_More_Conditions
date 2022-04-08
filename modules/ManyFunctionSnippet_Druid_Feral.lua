@@ -29,6 +29,7 @@ IROVar.DruidFeral.AuraEffectRakeRip ={
     ["Berserk"]={true,false,60},
     ["Bloodtalons"]={false,true,30},
     ["Sudden Ambush"]={true,false,60},
+    ["Prowl"]={true,false,60},
 }
 
 function IROVar.DruidFeral.CheckCarnivorousInstinct()
@@ -163,6 +164,9 @@ IROVar.DruidFeral.FEvent:RegisterEvent("PLAYER_REGEN_DISABLED")
 IROVar.DruidFeral.FEvent:SetScript("OnEvent", IROVar.DruidFeral.FOnEvent)
 IROVar.DruidFeral.CheckTalent()
 
+IROVar.DruidFeral.AuraDelay={["Prowl"]=true,["Sudden Ambush"]=true} -- this aura Ramoved befor apply dot
+
+
 IROVar.DruidFeral.CombatEvent = function(...)
     local timestamp, subevent, _, sourceGUID, sourceName, sourceFlags, sourceRaidFlags, destGUID, destName, destFlags, destRaidFlags = ...
     if sourceGUID~=IROVar.playerGUID then return end
@@ -200,9 +204,9 @@ IROVar.DruidFeral.CombatEvent = function(...)
     elseif subevent=="SPELL_AURA_REMOVED" then
         local spellID, spellName = select(12,...)
         if IROVar.DruidFeral.AuraEffectRakeRip[spellName] then
-            if spellName=="Sudden Ambush" then
-                --"Sudden Ambush" removed befor "Rake" apple , must check "Rake" as have "Sudden Ambush"
-                C_Timer.After(0.05,function()
+            if IROVar.DruidFeral.AuraDelay[spellName] then
+                --"Sudden Ambush"+"Prowl" removed befor "Rake" apple , must check "Rake" as have "Sudden Ambush"
+                C_Timer.After(0.1,function()
                     IROVar.DruidFeral.PlayerHasAura[spellName]=false
                     CheckCastEmpower(spellName)
                 end)

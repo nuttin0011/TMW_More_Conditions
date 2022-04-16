@@ -1,4 +1,4 @@
--- Care Interrupt V 1.90 ICON
+-- Care Interrupt V 1.91 ICON
 -- interrupt Only Important Spell at Specific Mob
 -- IROVar.CareInterrupt(unit e.g. "target") ; return true / false
 -- IROVar and IROVar.CareInterrupt and IROVar.CareInterrupt("target")
@@ -114,8 +114,8 @@ if not IROVar.MobListForInterrupt then
         ["The Shadowlands"]={
             ["Mawsworn Myrmidon"]={["Horrifying Shout"]=true}
         },
-        ["Tazavesh the Veiled Market"]={
-            --Tazavesh: Streets of Wonder
+        ["Tazavesh, the Veiled Market"]={
+            --Tazavesh: Streets of Wonder , "Tazavesh, the Veiled Market"
             ["Support Officer"]={["Hard Light Barrier"]=true},
             ["Interrogation Specialist"]={["Stasis Beam"]=true},
             ["Veteran Sparkcaster"]={["Scintillate"]=true},

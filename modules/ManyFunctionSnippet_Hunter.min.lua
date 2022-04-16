@@ -1,2 +1,0 @@
--- Many Function Version Hunter 9.0.5/1
-if not IROVar then IROVar={}end;if not IROVar.Hun then IROVar.Hun={}end;IROVar.Hun.cdBDPS={}function IROVar.Hun.TBreakDPSForBS()local a=GetHaste()if IROVar.Hun.cdBDPS[a]then return IROVar.Hun.cdBDPS[a]end;IROVar.Hun.cdBDPS[a]=.2+select(4,GetSpellInfo("Scare Beast"))*.0014;return IROVar.Hun.cdBDPS[a]end;function IROVar.Hun.BreakDPSForBS()local b=TMW.CNDT.Env.AuraDur("player","thrill of the hunt","HELPFUL")local c=IROVar.Hun.TBreakDPSForBS()local d=TMW.CNDT.Env.CooldownDuration("barbed shot")return b<=c and d<=b end

@@ -1,4 +1,4 @@
--- ZRO Decoder 9.0.5/9b
+-- ZRO Decoder 9.0.5/9d
 -- check Spell GCD
 --[[ e.g.
 IUSC.NumToSpell={}
@@ -13,11 +13,13 @@ place at end of macro
 e.g. /cast [nomod]shadow bolt; \n/run IUSC.SU("30")
 
 Skill use off gcd
-function IUSC.SO(k) --k is string e.g. "33" , "3a"
+function IUSC.SO(k,[t]) --k is string e.g. "33" , "3a" , t is GCD time nil = default
+	-- note feral has 1 sec GCD but in normal/moonkin/bear form GCD = IROVar.CastTime1_5sec
 no any effect.... just keep log.......
 
-function IUSC.After()
+function IUSC.After(Skill ID)
 call this function after macro end
+function IUSC.LastSkillUse() -- Return "Skill Name" or nil
 ]]
 
 -- can copy this to LUA Snippted
@@ -70,6 +72,7 @@ IUSC.NumToSpell={}
 IUSC.NumToID={}
 IUSC.IDToSpell={}
 IUSC.After=function(...) end
+IUSC.LastSU=nil
 local Ping={}
 function Ping.aP()
     Ping.now=(select(4,GetNetStats())/1000)
@@ -79,6 +82,10 @@ function Ping.aP()
     C_Timer.After(7.8,Ping.aP)
 end
 Ping.aP()
+
+function IUSC.LastSkillUse()
+	return IUSC.LastSU
+end
 
 function IUSC.NotReadyToUseSkill()
 	return IUSC.Stage~=1
@@ -282,7 +289,7 @@ function IUSC.CreateCastPluse()
 end
 
 --Skill Use
-function IUSC.SU(k) --k is string e.g. "33" , "3a"
+function IUSC.SU(k,t) --k is string e.g. "33" , "3a" , t=GCD /nil=default
 	local S = IsShiftKeyDown() and 4 or 0
 	local C = IsControlKeyDown() and 1 or 0
 	local A = IsAltKeyDown() and 2 or 0
@@ -309,7 +316,8 @@ function IUSC.SU(k) --k is string e.g. "33" , "3a"
 		s=s..string.rep(" ",IUSC.SkillNameLen-sL)
 		IUSC.printdebug(">>USE: "..s)
 	end
-	IUSC.CreateGCDPluse()
+	IUSC.LastSU=IUSC.NumToSpell[C]
+	IUSC.CreateGCDPluse(t)
 	IUSC.After(IUSC.NumToID[C])
 end
 

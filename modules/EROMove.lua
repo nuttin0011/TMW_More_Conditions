@@ -52,3 +52,59 @@ function stopmove(t)
     EROMoveHandle= C_Timer.NewTimer(t,function() TMW_ST:UpdateCounter("movedir",0) end)
 end
 
+
+
+
+
+
+
+
+
+
+--face
+
+if not EROPointToGo then
+    EROPointToGo=FindNearestPosition()
+end
+
+if EROPointToGo~=0 then
+
+    local targetX=EROPositionList[EROMapName][EROPointToGo][1]
+    local targetY=EROPositionList[EROMapName][EROPointToGo][2]
+    local a = CreateVector2D(0,-1)
+    local aR=-GetPlayerFacing()
+    a:RotateDirection(aR)
+    local pP = C_Map.GetPlayerMapPosition(C_Map.GetBestMapForUnit("player"), "player")
+    local tP = CreateVector2D(targetX/100,targetY/100)
+    tP:Subtract(pP)
+    local ang= Vector2D_CalculateAngleBetween(a.x,a.y,tP.x,tP.y)
+    local length=tP:GetLength()
+
+    if (length>0.0008)and(math.abs(ang)>0.16) then -- about pi/20
+        if ang > 0 then
+            TMW_ST:UpdateCounter("movedir",4)
+            stopmove(math.abs(ang)/5)
+        else
+            TMW_ST:UpdateCounter("movedir",3)
+            stopmove(math.abs(ang)/5)
+        end
+    elseif length>0.0008 then
+        TMW_ST:UpdateCounter("movedir",1)
+        stopmove(0.5)
+    else
+        if IsMounted() then Dismount() end
+        GoNextPoint()
+    end
+
+end
+
+
+
+
+
+
+
+
+
+
+

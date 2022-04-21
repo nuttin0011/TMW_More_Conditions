@@ -1,0 +1,49 @@
+
+-------------- no finish, Find Many Limitation
+if not IROVar then IROVar={} end
+local UnitGUID=UnitGUID
+
+IROVar.UnitGUIDTable={}
+--[[
+    [unitToken] = UnitGUID(unitToken),
+    ....
+]]
+
+IROVar.UnitGUIDTable["player"]=UnitGUID("player")
+
+function IROVar.UnitGUID(unitToken)
+    if not unitToken then return nil end
+    if not IROVar.UnitGUIDTable[unitToken] then
+        IROVar.UnitGUIDTable[unitToken]=UnitGUID(unitToken)
+    end
+    return IROVar.UnitGUIDTable[unitToken]
+end
+
+IROVar.FrameUnitGUID = CreateFrame("Frame")
+IROVar.FrameUnitGUID:RegisterEvent("NAME_PLATE_UNIT_REMOVED")
+IROVar.FrameUnitGUID:RegisterEvent("FORBIDDEN_NAME_PLATE_UNIT_REMOVED")
+IROVar.FrameUnitGUID:RegisterEvent("PLAYER_TARGET_CHANGED")
+IROVar.FrameUnitGUID:RegisterEvent("PLAYER_REGEN_ENABLED")
+--IROVar.FrameUnitGUID:RegisterEvent("PLAYER_REGEN_DISABLED")
+IROVar.FrameUnitGUID:RegisterEvent("UPDATE_MOUSEOVER_UNIT")
+IROVar.FrameUnitGUID:SetScript("OnEvent",function(self,event,arg1,arg2,arg3,...)
+    if event=="NAME_PLATE_UNIT_REMOVED" or event=="FORBIDDEN_NAME_PLATE_UNIT_REMOVED" then
+        if arg1 then
+            IROVar.UnitGUIDTable[arg1]=nil
+        end
+    elseif event=="PLAYER_TARGET_CHANGED" then
+        IROVar.UnitGUIDTable["target"]=nil
+    elseif event=="UPDATE_MOUSEOVER_UNIT" then
+        IROVar.UnitGUIDTable["mouseover"]=nil
+    elseif event=="PLAYER_REGEN_ENABLED" then
+        --out combat
+        local function EmptyTable()
+            if not IROVar.incombat then
+                IROVar.UnitGUIDTable={}
+                C_Timer.After(1,EmptyTable)
+            end
+        end
+        IROVar.UnitGUIDTable={}
+        C_Timer.After(1,EmptyTable)
+    end
+end)

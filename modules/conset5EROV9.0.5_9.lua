@@ -6,19 +6,18 @@ IUSC.NumToID={}
 IUSC.IDToSpell={}
 
 Num= [NumKeyID]..[Mod] in 16 base --> change to 10 base
-e.g. key "30" .. Mod CtrlAlt "03" = "0x3003" = 12291
-
-IUSC.SU(k) -- skill use , k= key name string e.g. num0 = "30" , F10="2a"
-place at end of macro
-e.g. /cast [nomod]shadow bolt; \n/run IUSC.SU("30")
-
-Skill use off gcd
-function IUSC.SO(k,[t]) --k is string e.g. "33" , "3a" , t is GCD time nil = default
+	e.g. key "30" .. Mod CtrlAlt "03" = "0x3003" = 12291
+function IUSC.SU(k,[t]) -- skill use , k= key name string e.g. num0 = "30" , F10="2a", t is GCD time nil = default
 	-- note feral has 1 sec GCD but in normal/moonkin/bear form GCD = IROVar.CastTime1_5sec
-no any effect.... just keep log.......
-
+	-- E.G. in feral spec, /cast Rake \n/run IUSC.SU("30",[t])
+	place at end of macro
+	e.g. "/cast [nomod]shadow bolt; \n/run IUSC.SU("30",IUSC.GCDCD)" , t=t or IUSC.GCDCD by default
+		if u in feral spec and change to Human form "/cast [nomod]Moonfire; \n/run IUSC.SU("31",IROVar.CastTime1_5sec)"
+		use t = IROVar.CastTime1_5sec cause of feral spec GCD=1 sec but in Human form GCD=1.5 * Hastefactor
+function IUSC.SO(k,[t]) --k is string e.g. "33" , "3a" , t is GCD time nil = default
+	no any effect.... just keep log.......
 function IUSC.After(Skill ID)
-call this function after macro end
+	call this function after macro end
 function IUSC.LastSkillUse() -- Return "Skill Name" or nil
 ]]
 
@@ -197,7 +196,6 @@ IUSC.f3:RegisterEvent("UNIT_SPELLCAST_FAILED_QUIET")
 IUSC.f3:RegisterEvent("UNIT_SPELLCAST_SENT")
 IUSC.f3:RegisterEvent("UNIT_SPELLCAST_SUCCEEDED")
 IUSC.f3:SetScript("OnEvent", IUSC.Cast_OnEvent)
-
 
 ------------------------------------------------------------------------------------------------------
 

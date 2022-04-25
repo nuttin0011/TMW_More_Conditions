@@ -1,4 +1,5 @@
--- Many Function Version Warlock 9.0.5/11
+-- Many Function Version Warlock 9.0.5/14
+-- Set Priority to 20
 -- this file save many function for paste to TMW Snippet LUA
 
 --function IROVar.Lock.Pet(PetType) return true/false
@@ -14,7 +15,10 @@
 -- var IROVar.Lock.HavocGUID ; keep HavocGUID
 -- function IROVar.Lock.HasHavoc() -- return unit token,duration,end e.g. "nameplate1" , or nil
 -- function IROVar.GetDemonicCoreStack() -- return stack of Demonic Core
---[[ NOTE
+-- function IROVar.GetDemonicCoreExpireTime() -- return time of Demonic Core expire
+--IROVar.Lock.FromtheShadows.Count ; = count from the shadow
+--IROVar.Lock.FromtheShadows.ExpireTime ; = time of from the shadow expire
+--[[ NOTE:
 GetSpellCount("Implosion") ;Implosion Stack
 UnitPower("player",7) ; SoulShards
 UnitPower("player",7,true) ; SSFragment
@@ -27,6 +31,14 @@ if not IROVar.Lock then IROVar.Lock={} end
 IROVar.Lock.PetActive=nil
 IROVar.Lock.playerGUID=UnitGUID("player")
 IROVar.Lock.SS={}
+IROVar.Lock.DemonicCoreStack=0
+IROVar.Lock.DemonicCoreExpireTime=0
+IROVar.Lock.FromtheShadows={}
+IROVar.Lock.FromtheShadows.Count=0
+IROVar.Lock.FromtheShadows.ExpireTime=0
+IROVar.RegisterIncombatCallBackRun("ResetFTS",function()
+	IROVar.Lock.FromtheShadows.Count=0
+end)
 IROVar.Lock.SS.LockSpellModSS = {
 	["Hand of Gul'dan266"]=-30, --266 = Demo
 	["Shadow Bolt266"]=10, 
@@ -40,26 +52,13 @@ IROVar.Lock.SS.LockSpellModSS = {
 	["Chaos Bolt267"]=-20, -- 267 = des
 	["Incinerate267"]=2
 }
-IROVar.GetDemonicCoreStackTime=0
-IROVar.GetDemonicCoreStackOldValue=0
-IROVar.GetDemonicCoreStack=function()
-	local currentTime=GetTime()
-	if currentTime>IROVar.GetDemonicCoreStackTime then
-		IROVar.GetDemonicCoreStackTime=currentTime
-		for i=1,40 do
-			local name,_,count = UnitBuff("player",i)
-			if name=="Demonic Core" then
-				IROVar.GetDemonicCoreStackOldValue=count
-				return count
-			end
-			if not name then
-				IROVar.GetDemonicCoreStackOldValue=0
-				return 0
-			end
-		end
-	else
-		return IROVar.GetDemonicCoreStackOldValue
-	end
+
+function IROVar.GetDemonicCoreStack()
+	return IROVar.Lock.DemonicCoreStack
+end
+
+function IROVar.GetDemonicCoreExpireTime()
+	return IROVar.Lock.DemonicCoreExpireTime
 end
 
 IROVar.Lock.DreadstalkerTime=0
@@ -69,7 +68,7 @@ IROVar.Lock.Imp.FreezEn=false
 IROVar.Lock.Imp.FreezEnTime=0
 IROVar.Lock.Imp.count=0
 IROVar.Lock.Imp.spawn={}
-IROVar.Lock.HoG={}
+
 
 --[[
 	IROVar.Lock.Imp.spawn = {
@@ -175,8 +174,8 @@ function IROVar.Lock.CheckImpExpire()
 	end
 end
 
-function IROVar.Lock.COMBAT_LOG_EVENT_UNFILTERED_OnEvent()
-    local _,subevent,_,sourceGUID,_,_,_,DesGUID,DesName,_,_,spellID,spellName = CombatLogGetCurrentEventInfo()
+function IROVar.Lock.COMBAT_LOG_EVENT_UNFILTERED_OnEvent(...)
+    local _,subevent,_,sourceGUID,_,_,_,DesGUID,DesName,_,_,spellID,spellName = ...
     if (sourceGUID==IROVar.Lock.playerGUID)  and (subevent=="SPELL_CAST_FAILED") then
 		IROVar.Lock.SS.trust_segment_cast = true
 	end
@@ -216,9 +215,6 @@ function IROVar.Lock.COMBAT_LOG_EVENT_UNFILTERED_OnEvent()
 						PredictDespawnTime=GetTime()+IROVar.CastTime2sec*6
 					}
 					IROVar.Lock.Imp.count=IROVar.Lock.Imp.count+1
-					for k,v in pairs(IROVar.Lock.HoG) do
-						if v=="x" then IROVar.Lock.HoG[k]=DesGUID end
-					end
 				elseif DesName=="Dreadstalker" then
 					IROVar.Lock.DreadstalkerTime=GetTime()
 				elseif DesName=="Vilefiend" then
@@ -232,19 +228,42 @@ function IROVar.Lock.COMBAT_LOG_EVENT_UNFILTERED_OnEvent()
 					IROVar.Lock.Imp.spawn={}
 					IROVar.Lock.Imp.count=0
 				end
-				if spellID==105174 then--Hand of Guldan
-					table.insert(IROVar.Lock.HoG,"x")
-				end
-			elseif (subevent=="SPELL_AURA_APPLIED") and (spellID==265273) then --buff Demonic Power
+			elseif spellID==265273 then --buff Demonic Power
+				if subevent=="SPELL_AURA_APPLIED" then --buff Demonic Power
 				IROVar.Lock.Imp.FreezEn=true
 				IROVar.Lock.Imp.FreezEnTime=GetTime()
 				for _,v in pairs(IROVar.Lock.Imp.spawn) do
 					v.SpawnTime=v.SpawnTime+15
 				end
-			elseif (subevent=="SPELL_AURA_REMOVED") and (spellID==265273) then --buff Demonic Power
-				IROVar.Lock.Imp.FreezEn=false
-				--C_Timer.After(1,function() IROVar.Lock.Imp.FreezEn=false end)
+				elseif subevent=="SPELL_AURA_REMOVED" then --buff Demonic Power
+					IROVar.Lock.Imp.FreezEn=false
+					--C_Timer.After(1,function() IROVar.Lock.Imp.FreezEn=false end)
+				end
+			elseif spellID==264173 then --buff Demonic Core
+				if subevent=="SPELL_AURA_APPLIED" then --buff Demonic Core
+					IROVar.Lock.DemonicCoreStack=1
+					IROVar.Lock.DemonicCoreExpireTime=GetTime()+20
+				elseif subevent=="SPELL_AURA_REMOVED" then
+					IROVar.Lock.DemonicCoreStack=0
+					IROVar.Lock.DemonicCoreExpireTime=0
+				elseif subevent=="SPELL_AURA_APPLIED_DOSE" then
+					IROVar.Lock.DemonicCoreStack=IROVar.Lock.DemonicCoreStack+1
+					IROVar.Lock.DemonicCoreExpireTime=GetTime()+20
+				elseif subevent=="SPELL_AURA_REMOVED_DOSE" then
+					IROVar.Lock.DemonicCoreStack=IROVar.Lock.DemonicCoreStack-1
+				end
+			elseif spellID==270569 then -- Debuff "From the Shadows"
+				if subevent=="SPELL_AURA_APPLIED" then
+					IROVar.Lock.FromtheShadows.Count=IROVar.Lock.FromtheShadows.Count+1
+					IROVar.Lock.FromtheShadows.ExpireTime=GetTime()+12
+				elseif subevent=="SPELL_AURA_REMOVED" then
+					IROVar.Lock.FromtheShadows.Count=IROVar.Lock.FromtheShadows.Count-1
+					IROVar.Lock.FromtheShadows.ExpireTime=0
+				elseif subevent=="SPELL_AURA_REFRESH" then
+					IROVar.Lock.FromtheShadows.ExpireTime=GetTime()+12
+				end
 			end
+
 		end
 		if (not IROVar.Lock.Imp.FreezEn) and IROVar.Lock.Imp.spawn[sourceGUID] and (subevent=="SPELL_CAST_SUCCESS") and (spellID==104318) then --Fel Firebolt
 			IROVar.Lock.Imp.spawn[sourceGUID].FelFireboltCount=IROVar.Lock.Imp.spawn[sourceGUID].FelFireboltCount-1
@@ -260,25 +279,6 @@ function IROVar.Lock.COMBAT_LOG_EVENT_UNFILTERED_OnEvent()
 			IROVar.Lock.Imp.spawn[sourceGUID].PredictDespawnTime=currentTime+(IROVar.CastTime2sec*IROVar.Lock.Imp.spawn[sourceGUID].FelFireboltCount)
 		end
 	end
-end
-
-function IROVar.Lock.GetHoGActiveCount(timePass)
-	timePass=timePass or 0
-	timePass=timePass+GetTime()
-	local count=0
-	for k,v in pairs(IROVar.Lock.HoG) do
-		if v~="x" then
-			local imp=IROVar.Lock.Imp.spawn[v]
-			if imp then
-				if imp.PredictDespawnTime>=timePass then
-					count=count+1
-				end
-			else
-				IROVar.Lock.HoG[k]=nil
-			end
-		end
-	end
-	return count
 end
 
 function IROVar.Lock.GetWildImpCount(FelFireboltRemainAtLeast)
@@ -308,9 +308,8 @@ function IROVar.Lock.GetWildImpCountTimePass(t)
 	return ImpCount
 end
 
-IROVar.Lock.SS.Frame = CreateFrame("Frame")
-IROVar.Lock.SS.Frame:RegisterEvent("COMBAT_LOG_EVENT_UNFILTERED")
-IROVar.Lock.SS.Frame:SetScript("OnEvent", IROVar.Lock.COMBAT_LOG_EVENT_UNFILTERED_OnEvent)
+
+IROVar.Register_COMBAT_LOG_EVENT_UNFILTERED_CALLBACK("warlock",IROVar.Lock.COMBAT_LOG_EVENT_UNFILTERED_OnEvent)
 IROVar.Lock.SS.trust_segment_cast=true
 IROVar.Lock.SS.old_timer_check=0
 IROVar.Lock.SS.old_val=0
@@ -402,219 +401,6 @@ function IROVar.Lock.IsHavocLongerThanCB()
 	if not unitHavoc then return false end
 	local CBCastime=(select(4,GetSpellInfo("chaos bolt")) or math.huge)/1000
 	return (havocDu-CBCastime)>0.3
-end
-
-function IROVar.Lock.IsThisSpellEffectFirstStrike(nSpell)
-	if not IROVar.activeConduits.IsKoraynAndFirstStrike or (not nSpell) then return false end
-	local _, _, _, nSpellcastTime, _, _, _ = GetSpellInfo(nSpell)
-	if not nSpellcastTime then return false end
-	local Sname, _, _, _, endTimeMS = UnitCastingInfo("player")
-	local _,_,FSEndTime=TMW.CNDT.Env.AuraDur("player","first strike")
-
-
-	local currentTime=GetTime()
-	local GCDSt,GCDDu = GetSpellCooldown(TMW.GCDSpell)
-	local GCDFinish = GCDSt+GCDDu
-	local playerCastFinish = currentTime
-	if Sname then
-		playerCastFinish=endTimeMS/1000
-	end
-
-	local preCastTime = math.max(GCDFinish,playerCastFinish)
-	local nSpellCastFinish = preCastTime+(nSpellcastTime/1000)
-
-	if FSEndTime>nSpellCastFinish then return true end
-
-	if IROVar.Lock.GUIDSpell then
-		if not IROVar.GUIDFirstStrike[IROVar.Lock.GUIDSpell] then return true end
-
-		local unitHavoc,_,havocEnd = IROVar.Lock.HasHavoc()
-		if unitHavoc and (havocEnd>playerCastFinish) and (not IROVar.GUIDFirstStrike[IROVar.Lock.HavocGUID])then
-			return true
-		end
-	end
-	return false
-end
-
-if not IROVar then IROVar = {} end
-if not IROVar.Lock then IROVar.Lock = {} end
-
-IROVar.Lock.DemoRotation={}
-IROVar.Lock.DemoRotation.Current={}
-IROVar.Lock.DemoRotation.New={}
-
-IROVar.Lock.DemoRotation.Current["Hand of Gul'dan"]=false
-IROVar.Lock.DemoRotation.Current["Demonbolt"]=false
-IROVar.Lock.DemoRotation.Current["Shadow Bolt"]=false
-IROVar.Lock.DemoRotation.Current["Grimoire: Felguard"]=false
-IROVar.Lock.DemoRotation.Current["Summon Vilefiend"]=false
-IROVar.Lock.DemoRotation.Current["Summon Demonic Tyrant"]=false
-IROVar.Lock.DemoRotation.Current["Call Dreadstalkers"]=false
-IROVar.Lock.DemoRotation.Current["Soul Rot"]=false
-IROVar.Lock.DemoRotation.Current["Demonic Strength"]=false
-IROVar.Lock.DemoRotation.Current["Decimating Bolt"]=false
-IROVar.Lock.DemoRotation.Current["StopCasting"]=false
-
-function IROVar.Lock.DemoRotation.ResetDPSKey()
-	for k,_ in pairs(IROVar.Lock.DemoRotation.Current) do
-		IROVar.Lock.DemoRotation.New[k]=false
-	end
-end
-IROVar.Lock.DemoRotation.ResetDPSKey()
-function IROVar.Lock.DemoRotation.UpdateDPSKey()
-	for k,_ in pairs(IROVar.Lock.DemoRotation.Current) do
-		IROVar.Lock.DemoRotation.Current[k]=IROVar.Lock.DemoRotation.New[k]
-	end
-end
-function IROVar.Lock.DemoRotation.Cast(spell)
-	if not spell then return end
-	if IROVar.Lock.DemoRotation.New[spell]==nil then
-		print('Unknown Spell Name : "'..spell..'"')
-		return
-	end
-	IROVar.Lock.DemoRotation.New[spell]=true
-	IROVar.Lock.DemoRotation.UpdateDPSKey()
-end
-
-function CalculateDemoRotation()
-	local Cast=IROVar.Lock.DemoRotation.Cast
-	IROVar.Lock.DemoRotation.ResetDPSKey()
-	local currentTime=GetTime()
-	local DreadstalkerTimer=IROVar.Lock.DreadstalkerTime+12-currentTime
-	if DreadstalkerTimer<0 then DreadstalkerTimer=100 end
-	local VilefiendTimer=IROVar.Lock.VilefiendTime+15-currentTime
-	if VilefiendTimer<0 then VilefiendTimer=100 end
-	DreadstalkerTimer=math.min(DreadstalkerTimer,VilefiendTimer)
-	--TMW.CNDT.Env.TalentMap["summon vilefiend"]
-	--TMW.CNDT.Env.TalentMap["grimoire: felguard"]
-
-	local CastName,_,_,_,CastEndTimeMs = UnitCastingInfo("player")
-	local CastTime=0
-	if CastName then
-		CastTime=(CastEndTimeMs/1000)-currentTime
-	elseif TMW.GCD>0 then
-		local GCDSt,GCDDu = GetSpellCooldown(TMW.GCDSpell)
-		local GCDFinish = GCDSt+GCDDu
-		CastTime=GCDFinish-currentTime
-	end
-
-	local currentSS=UnitPower("player",7)
-
-	local HoGActive=IROVar.Lock.GetHoGActiveCount()
-
-
-	local CallDSReady=(GetSpellCooldown("Call Dreadstalkers")==0)and CastName~="Call Dreadstalkers"
-	local SummonVFReady=(GetSpellCooldown("Summon Vilefiend")==0)and CastName~="Summon Vilefiend"
-	local GrimoireFGReady=(GetSpellCooldown("Grimoire: Felguard")==0)
-	local SummonDTReady=(GetSpellCooldown("Summon Demonic Tyrant")==0)and CastName~="Summon Demonic Tyrant"
-	local SS=IROVar.Lock.PredictSS()
-	local DCStack=IROVar.GetDemonicCoreStack()
-
-	local TyrantCast=CastTime+IROVar.CastTime2sec
-	local HoGTyrant=CastTime+IROVar.CastTime1_5sec+IROVar.CastTime2sec
-	local DBHoGTyrant=CastTime+(IROVar.CastTime1_5sec*2)+IROVar.CastTime2sec
-
-	if SS>=3 then
-		if GrimoireFGReady then
-			Cast("Grimoire: Felguard") return true
-		elseif SummonVFReady then
-			Cast("Summon Vilefiend") return true
-		elseif CallDSReady then
-			Cast("Call Dreadstalkers") return true
-		end
-	elseif SummonVFReady or GrimoireFGReady or CallDSReady then --SS<=2
-		if DCStack>=1 then
-			Cast("Demonbolt") return true
-		else --DCStack==0
-			Cast("Shadow Bolt") return true
-		end
-	end
-
-	if SummonDTReady then
-		if (DreadstalkerTimer<HoGTyrant) and (DreadstalkerTimer>TyrantCast) then
-			Cast("Summon Demonic Tyrant") return true
-		end
-		if SS<=1 then
-			if DCStack==0 then
-				if DreadstalkerTimer>TyrantCast then
-					Cast("Summon Demonic Tyrant") return true
-				end
-			else --DCStack>=1
-				Cast("Shadow Bolt") return true
-			end
-		end
-		
-	end
-
-	if HoGActive==0 then -- 1st HoG Cast
-		if CastName~="Hand of Gul'dan" then
-			if SS>=3 then
-				Cast("Hand of Gul'dan") return true
-			else
-				if DCStack>=1 then
-					Cast("Demonbolt") return true
-				else --DCStack==0
-					Cast("Shadow Bolt") return true
-				end
-			end
-		else --casting HoG
-			if SS<=1 then
-				if DCStack==0 then
-					Cast("Summon Demonic Tyrant") return true
-				else
-					Cast("Demonbolt") return true
-				end
-			elseif SS==2 then
-				local SBHoGTyrant=CastTime+IROVar.CastTime1_5sec+(IROVar.CastTime2sec*2)
-				if DCStack==0 then
-					if DreadstalkerTimer<(HoGTyrant+0.3) then
-						Cast("Summon Demonic Tyrant") return true
-					elseif DreadstalkerTimer<(SBHoGTyrant+0.3) then
-						Cast("Hand of Gul'dan") return true
-					else
-						Cast("Shadow Bolt") return true
-					end
-				end
-
-			end
-		end
-	end
-
-
-
-
-	if CastName=="Summon Demonic Tyrant" then
-
-		if GetSpellCooldown("Soul Rot")==0 then
-			IROVar.Lock.DemoRotation.Cast("Soul Rot")
-			return
-		elseif GetSpellCooldown("Demonic Strength")==0 then
-			IROVar.Lock.DemoRotation.Cast("Demonic Strength")
-			return
-		elseif currentSS>=1 then
-			IROVar.Lock.DemoRotation.Cast("Hand of Gul'dan")
-			return
-		elseif GetSpellCooldown("Decimating Bolt")==0 then
-			IROVar.Lock.DemoRotation.Cast("Decimating Bolt")
-			return
-		else
-			IROVar.Lock.DemoRotation.Cast("Hand of Gul'dan")
-			return
-		end
-	end
-
-
-	local Imp=IROVar.Lock.GetWildImpCount()
-
-
-
-
-
-	local ImpHoGTyrantCast=IROVar.Lock.GetWildImpCountTimePass(HoGTyrantCast)
-
-
-
-
 end
 
 

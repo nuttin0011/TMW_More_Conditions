@@ -1,4 +1,4 @@
--- ZRO Decoder 9.0.5/9d
+-- ZRO Decoder 9.0.5/9f
 -- check Spell GCD
 --[[ e.g.
 IUSC.NumToSpell={}
@@ -19,6 +19,7 @@ function IUSC.SO(k,[t]) --k is string e.g. "33" , "3a" , t is GCD time nil = def
 function IUSC.After(Skill ID)
 	call this function after macro end
 function IUSC.LastSkillUse() -- Return "Skill Name" or nil
+var IUSC.NextReady -- predict Next Ready for Spell on GCD
 ]]
 
 -- can copy this to LUA Snippted
@@ -54,6 +55,7 @@ IUSC.SkillPress=0
 IUSC.KeepLogOffGCD = function()
 	if IUSC.KeepLogText then IUSC.KeepLogText(true) end
 end
+IUSC.NextReady=GetTime()
 IUSC.Stage=1
 IUSC.GCDCD=1
 IUSC.GCDCDMinus005=IUSC.GCDCD-0.05
@@ -222,6 +224,7 @@ function IUSC.forceReady()
         IUSC.printdebug("^READY\n")
     end
     IUSC.Stage=1
+	IUSC.NextReady=0
 end
 
 function IUSC.CreateGCDPluse(T)
@@ -233,6 +236,7 @@ function IUSC.CreateGCDPluse(T)
     IUSC.GCDPluseActive=true
     IUSC.GCDPluseTimeStamp=GetTime()
     IUSC.GCDPluseNextTick=IUSC.GCDPluseTimeStamp+T
+	IUSC.NextReady=IUSC.GCDPluseNextTick
     IUSC.GCDTickHandle=C_Timer.NewTimer(T,
         function()
             if IUSC.debugmode then
@@ -276,6 +280,7 @@ function IUSC.CreateCastPluse()
 		endTimeMS=endTimeMS-IUSC.SpellTimeStamp
 	end
 	if endTimeMS<0 then endTimeMS=0.1 end
+	IUSC.NextReady=IUSC.SpellTimeStamp+endTimeMS
     IUSC.GCDTickHandle=C_Timer.NewTimer(endTimeMS,
     function()
 		if IUSC.debugmode then
@@ -295,12 +300,17 @@ function IUSC.SU(k,t) --k is string e.g. "33" , "3a" , t=GCD /nil=default
 	S=bit.lshift(tonumber(k,16),8) -- k * 256
 	C=bit.bor(C,S) -- k .. mod
 	if not IsCurrentSpell(IUSC.NumToID[C]) then
-		-- Spell not queue
-		if IUSC.debugmode then
-			IUSC.printdebug("skill "..(IUSC.NumToSpell[C] or "SPELL NOT FOUND").."NOT Q")
+		local newSpellID=select(7,GetSpellInfo(IUSC.NumToSpell[C]))
+		if newSpellID and IsCurrentSpell(newSpellID) then
+			IUSC.NumToID[C]=newSpellID
+		else
+			-- Spell not queue
+			if IUSC.debugmode then
+				IUSC.printdebug("skill "..(IUSC.NumToSpell[C] or "SPELL NOT FOUND").."NOT Q")
+			end
+			IUSC.forceReady()
+			return
 		end
-		IUSC.forceReady()
-		return
 	end
 	--keep log
 	if IUSC.KeepLogText then IUSC.KeepLogText() end

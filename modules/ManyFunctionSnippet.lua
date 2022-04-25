@@ -1,4 +1,5 @@
--- Many Function Version 9.0.5/49b
+-- Many Function Version 9.0.5/51
+-- Set Priority to 1
 -- this file save many function for paste to TMW Snippet LUA
 
 --function IROEnemyCountInRange(nRange) ; return count, nRange = yard e.g. 2 5 8 15 20 30 40 50 200
@@ -27,10 +28,20 @@
 --var IROVar.activeConduits ; dump soulbind to table
 --var IROVar.playerGUID ;
 --var IROVar.incombat ;
---function IROVar.CanUnitProcFirstStrikeConduit(n) ; e.g. n = "target"
+
+--function IROVar.RegisterIncombatCallBackRun(name,callBack)
+--function IROVar.RegisterOutcombatCallBackRun(name,callBack)
+--function IROVar.UnRegisterOutcombatCallBackRun(name)
+--function IROVar.UnRegisterIncombatCallBackRun(name)
+
+--function IROVar.Register_COMBAT_LOG_EVENT_UNFILTERED_CALLBACK(name,callBack)
+    -- note callBack is Function(...) ; ... = CombatLogGetCurrentEventInfo()
+--function IROVar.UnRegister_COMBAT_LOG_EVENT_UNFILTERED_CALLBACK(name)
+
 --var IROVar.Haste ; player Haste
 --var IROVar.CastTime2sec,IROVar.CastTime6sec ; cast time in second mod by haste
 --var IROVar.CastTime1_5sec ; cast time in second mod by haste
+--var IROVar.CastTime0_5sec
 --var IROVar.HasteFactor ; multiply by cast time = time to cast , = 100/(100+UnitSpellHaste("player"))
 --function AuraUtil.FindAuraByName(auraName, unit, filter) -- return only 1st auraName match
 --function AuraUtil.ForEachAura(unit, filter, [maxCount], func)
@@ -46,13 +57,14 @@ IROVar.InterruptSpell = nil
 IROVar.SkillCheckDPSRange = nil
 IROVar.InstanceName = GetInstanceInfo()
 IROVar.activeConduits = {}
-IROVar.activeConduits.IsKoraynAndFirstStrike = false
+
 IROVar.CalculateHaste = function()
     IROVar.Haste = UnitSpellHaste("player")
     IROVar.HasteFactor = 100/(100+IROVar.Haste)
     IROVar.CastTime2sec = 2*IROVar.HasteFactor
     IROVar.CastTime1_5sec = 1.5*IROVar.HasteFactor
     IROVar.CastTime6sec = 6*IROVar.HasteFactor
+    IROVar.CastTime0_5sec = 0.5*IROVar.HasteFactor
 end
 IROVar.CalculateHaste()
 C_Timer.After(2,IROVar.CalculateHaste)
@@ -406,12 +418,6 @@ function IROVar.allBuffByMe(unit,needLowerCaseName)
     return allBuff
 end
 
-IROVar.DontUseCD ={
-    ["Mists of Tirna Scithe"] ={
-        ["Droman Oulfarran"]= true,
-    }
-}
-
 function IROVar.IconSweepCompair(icon,max,min)
     --return max>SweepCD>min
     if not icon then return true end
@@ -495,7 +501,6 @@ IROVar.fconduitOnEvent=function()
     C_Timer.After(0.5,function()
         IROVar.activeConduits=IROVar.DetermineActiveCovenantAndSoulbindAndConduits()
         if not IROVar.activeConduits then IROVar.activeConduits={} end
-        IROVar.activeConduits.IsKoraynAndFirstStrike=(IROVar.activeConduits.soulbindName=="Korayn")and(IROVar.activeConduits["First Strike"]==true)
     end)
 end
 
@@ -513,51 +518,48 @@ IROVar.fconduit:SetScript("OnEvent", IROVar.fconduitOnEvent)
 
 C_Timer.After(1,IROVar.fconduitOnEvent)
 
-IROVar.GUIDFirstStrike={}
---[[
-    reset when Out Combat
-    {
-        [Mob_GUID1]=true,
-        [Mob_GUID2]=true,
-        [Mob_GUID3]=true,
-        ....
-    }
-]]
-IROVar.damageEvent = {
-    ["SPELL_DAMAGE"]=true,
-    ["RANGE_DAMAGE"]=true,
-    ["SWING_DAMAGE"]=true,
-}
 
-function IROVar.CombatEvent()
-    --check "first strike" conduit
-    if not IROVar.activeConduits.IsKoraynAndFirstStrike then return end
-    local _,subevent,_,sourceGUID,_,_,_,destGUID,_,_,_,_,spellName=CombatLogGetCurrentEventInfo()
-    if (sourceGUID==IROVar.playerGUID) and IROVar.damageEvent[subevent] then
-        IROVar.GUIDFirstStrike[destGUID]=true
-    end
-    if (destGUID==IROVar.playerGUID) and IROVar.damageEvent[subevent] then
-        IROVar.GUIDFirstStrike[sourceGUID]=true
-    end
-
+IROVar.incombatCallBackRun={}
+IROVar.outcombatCallBackRun={}
+function IROVar.RegisterIncombatCallBackRun(name,callBack)
+    IROVar.incombatCallBackRun[name]=callBack
 end
-IROVar.cframe =CreateFrame("Frame")
-IROVar.cframe:RegisterEvent("COMBAT_LOG_EVENT_UNFILTERED")
-IROVar.cframe:SetScript("OnEvent",IROVar.CombatEvent)
-
+function IROVar.RegisterOutcombatCallBackRun(name,callBack)
+    IROVar.outcombatCallBackRun[name]=callBack
+end
+function IROVar.UnRegisterOutcombatCallBackRun(name)
+    IROVar.outcombatCallBackRun[name]=nil
+end
+function IROVar.UnRegisterIncombatCallBackRun(name)
+    IROVar.incombatCallBackRun[name]=nil
+end
 IROVar.incombat = UnitAffectingCombat("player")
 IROVar.incombatFrame = CreateFrame("Frame")
 IROVar.incombatFrame:RegisterEvent("PLAYER_REGEN_ENABLED")
 IROVar.incombatFrame:RegisterEvent("PLAYER_REGEN_DISABLED")
 IROVar.incombatFrame:SetScript("OnEvent", function(self, event)
     IROVar.incombat = (event=="PLAYER_REGEN_DISABLED")
-    if event=="PLAYER_REGEN_ENABLED" then IROVar.GUIDFirstStrike={} end
+    if event=="PLAYER_REGEN_DISABLED" then
+        -- In Combat
+        for k,v in pairs(IROVar.incombatCallBackRun) do if v then v() end end
+    else
+        -- Out Combat
+        for k,v in pairs(IROVar.outcombatCallBackRun) do if v then v() end end
+    end
 end)
-
-function IROVar.CanUnitProcFirstStrikeConduit(n)
-    if not IROVar.activeConduits.IsKoraynAndFirstStrike then return false end
-    n=n or "target"
-    local nGUID=UnitGUID(n)
-    if not nGUID then return false end
-    return not IROVar.GUIDFirstStrike[nGUID]
+IROVar.COMBAT_LOG_EVENT_UNFILTERED_CALLBACK={}
+function IROVar.Register_COMBAT_LOG_EVENT_UNFILTERED_CALLBACK(name,callBack)
+    IROVar.COMBAT_LOG_EVENT_UNFILTERED_CALLBACK[name]=callBack
 end
+function IROVar.UnRegister_COMBAT_LOG_EVENT_UNFILTERED_CALLBACK(name)
+    IROVar.COMBAT_LOG_EVENT_UNFILTERED_CALLBACK[name]=nil
+end
+
+function IROVar.COMBAT_LOG_EVENT_UNFILTERED_scrip(...)
+    for k,v in pairs(IROVar.COMBAT_LOG_EVENT_UNFILTERED_CALLBACK) do if v then v(...) end end
+end
+IROVar.COMBAT_LOG_EVENT_UNFILTERED_frame = CreateFrame("Frame")
+IROVar.COMBAT_LOG_EVENT_UNFILTERED_frame:RegisterEvent("COMBAT_LOG_EVENT_UNFILTERED")
+IROVar.COMBAT_LOG_EVENT_UNFILTERED_frame:SetScript("OnEvent", function(self, event, ...)
+    IROVar.COMBAT_LOG_EVENT_UNFILTERED_scrip(CombatLogGetCurrentEventInfo())
+end)

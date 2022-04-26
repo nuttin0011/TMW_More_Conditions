@@ -11,6 +11,7 @@ end
 
 Rotation=IROVar.LockDemoRotation2
 Rotation.TimeLimit=0
+Rotation.DSTime=12
 -- TimeLimit = 12 sec after Cast Dreadstalkers
 -- TimeLimit = 8 GCD after Cast HoG
 -- This Rotation Predict Calculate After Cast Dreadstalkers
@@ -23,7 +24,7 @@ function Rotation.Event_COMBAT_LOG_EVENT_UNFILTERED(...)
     if subevent=="SPELL_CAST_SUCCESS" then
         local spellID, spellName = select(12,...)
         if spellName=="Call Dreadstalkers" then
-            Rotation.TimeLimit=GetTime()+12
+            Rotation.TimeLimit=GetTime()+Rotation.DSTime
         elseif spellName=="Hand of Gul'dan" then
             Rotation.TimeLimit=math.min(Rotation.TimeLimit,GetTime()+(8*IROVar.CastTime1_5sec))
         end
@@ -102,7 +103,7 @@ Rotation.FullRotation["5_0"]={
 Rotation.SubRotation[1]={
     name="Hand of Gul'dan",
     SS=5,
-    SSMax=5, -- add in all item later
+    SSMax=5,
     DC=3,
     imp=11,
     SGCD=25,
@@ -118,6 +119,7 @@ Rotation.SubRotation[2]={
 Rotation.SubRotation[3]={
     name="Hand of Gul'dan",
     SS=4,
+    SSMax=5,
     DC=2,
     imp=8,
     SGCD=19,
@@ -125,6 +127,7 @@ Rotation.SubRotation[3]={
 Rotation.SubRotation[4]={
     name="Demonbolt",
     SS=1,
+    SSMax=3,
     DC=2,
     imp=5,
     SGCD=16,
@@ -132,6 +135,7 @@ Rotation.SubRotation[4]={
 Rotation.SubRotation[5]={
     name="Hand of Gul'dan",
     SS=3,
+    SSMax=5,
     DC=1,
     imp=5,
     SGCD=13,
@@ -139,6 +143,7 @@ Rotation.SubRotation[5]={
 Rotation.SubRotation[6]={
     name="Demonbolt",
     SS=0,
+    SSMax=3,
     DC=1,
     imp=2,
     SGCD=10,
@@ -146,6 +151,7 @@ Rotation.SubRotation[6]={
 Rotation.SubRotation[7]={
     name="Hand of Gul'dan",
     SS=2,
+    SSMax=5,
     DC=0,
     imp=2,
     SGCD=7,
@@ -153,6 +159,7 @@ Rotation.SubRotation[7]={
 Rotation.SubRotation[8]={
     name="Summon Demonic Tyrant",
     SS=0,
+    SSMax=5,
     DC=0,
     imp=0,
     SGCD=4,
@@ -161,6 +168,7 @@ Rotation.SubRotation[8]={
 Rotation.SubRotation[9]={
     name="Hand of Gul'dan",
     SS=5,
+    SSMax=5,
     DC=2,
     imp=9,
     SGCD=19,
@@ -168,6 +176,7 @@ Rotation.SubRotation[9]={
 Rotation.SubRotation[10]={
     name="Demonbolt",
     SS=2,
+    SSMax=3,
     DC=2,
     imp=6,
     SGCD=16,
@@ -175,6 +184,7 @@ Rotation.SubRotation[10]={
 Rotation.SubRotation[11]={
     name="Hand of Gul'dan",
     SS=4,
+    SSMax=5,
     DC=1,
     imp=6,
     SGCD=13,
@@ -182,6 +192,7 @@ Rotation.SubRotation[11]={
 Rotation.SubRotation[12]={
     name="Demonbolt",
     SS=1,
+    SSMax=3,
     DC=1,
     imp=3,
     SGCD=10,
@@ -189,6 +200,7 @@ Rotation.SubRotation[12]={
 Rotation.SubRotation[13]={
     name="Hand of Gul'dan",
     SS=3,
+    SSMax=5,
     DC=0,
     imp=3,
     SGCD=7,
@@ -196,6 +208,7 @@ Rotation.SubRotation[13]={
 Rotation.SubRotation[14]={
     name="Summon Demonic Tyrant",
     SS=0,
+    SSMax=5,
     DC=0,
     imp=0,
     SGCD=4,
@@ -204,6 +217,7 @@ Rotation.SubRotation[14]={
 Rotation.SubRotation[15]={
     name="Hand of Gul'dan",
     SS=5,
+    SSMax=5,
     DC=1,
     imp=8,
     SGCD=20,
@@ -211,6 +225,7 @@ Rotation.SubRotation[15]={
 Rotation.SubRotation[16]={
     name="Demonbolt",
     SS=2,
+    SSMax=3,
     DC=1,
     imp=5,
     SGCD=17,
@@ -218,6 +233,7 @@ Rotation.SubRotation[16]={
 Rotation.SubRotation[17]={
     name="Hand of Gul'dan",
     SS=4,
+    SSMax=5,
     DC=0,
     imp=5,
     SGCD=14,
@@ -225,6 +241,7 @@ Rotation.SubRotation[17]={
 Rotation.SubRotation[18]={
     name="Shadow Bolt",
     SS=1,
+    SSMax=4,
     DC=0,
     imp=2,
     SGCD=11,
@@ -232,6 +249,7 @@ Rotation.SubRotation[18]={
 Rotation.SubRotation[19]={
     name="Hand of Gul'dan",
     SS=2,
+    SSMax=5,
     DC=0,
     imp=2,
     SGCD=7,
@@ -239,6 +257,7 @@ Rotation.SubRotation[19]={
 Rotation.SubRotation[20]={
     name="Summon Demonic Tyrant",
     SS=0,
+    SSMax=5,
     DC=0,
     imp=0,
     SGCD=4,
@@ -247,6 +266,7 @@ Rotation.SubRotation[20]={
 Rotation.SubRotation[21]={
     name="Hand of Gul'dan",
     SS=5,
+    SSMax=5,
     DC=0,
     imp=6,
     SGCD=14,
@@ -254,6 +274,7 @@ Rotation.SubRotation[21]={
 Rotation.SubRotation[22]={
     name="Shadow Bolt",
     SS=2,
+    SSMax=4,
     DC=0,
     imp=3,
     SGCD=11,
@@ -261,6 +282,7 @@ Rotation.SubRotation[22]={
 Rotation.SubRotation[23]={
     name="Hand of Gul'dan",
     SS=3,
+    SSMax=5,
     DC=0,
     imp=3,
     SGCD=7,
@@ -268,6 +290,7 @@ Rotation.SubRotation[23]={
 Rotation.SubRotation[24]={
     name="Summon Demonic Tyrant",
     SS=0,
+    SSMax=5,
     DC=0,
     imp=0,
     SGCD=4,
@@ -276,6 +299,7 @@ Rotation.SubRotation[24]={
 Rotation.SubRotation[25]={
     name="Hand of Gul'dan",
     SS=3,
+    SSMax=5,
     DC=1,
     imp=5,
     SGCD=13,
@@ -283,6 +307,7 @@ Rotation.SubRotation[25]={
 Rotation.SubRotation[26]={
     name="Demonbolt",
     SS=0,
+    SSMax=3,
     DC=1,
     imp=2,
     SGCD=10,
@@ -290,6 +315,7 @@ Rotation.SubRotation[26]={
 Rotation.SubRotation[27]={
     name="Hand of Gul'dan",
     SS=2,
+    SSMax=5,
     DC=0,
     imp=2,
     SGCD=7,
@@ -297,26 +323,11 @@ Rotation.SubRotation[27]={
 Rotation.SubRotation[28]={
     name="Summon Demonic Tyrant",
     SS=0,
+    SSMax=5,
     DC=0,
     imp=0,
     SGCD=4,
 }
-Rotation.SubRotation[29]={
-    name="Error",
-    SS=0,
-    DC=0,
-    imp=0,
-    SGCD=0,
-}
-for i=1,#Rotation.SubRotation do
-    if Rotation.SubRotation[i].name=="Demonbolt" then
-        Rotation.SubRotation[i].SSMax=3
-    elseif Rotation.SubRotation[i].name=="Shadow Bolt" then
-        Rotation.SubRotation[i].SSMax=4
-    else
-        Rotation.SubRotation[i].SSMax=5
-    end
-end
 
 function Rotation.SortSubRotationByImp(subrotation)
     local function CheckDuplicate(skill,subrotationtable)
@@ -371,6 +382,17 @@ function Rotation.SortSubRotationByImp(subrotation)
 end
 
 Rotation.SortedRotation=Rotation.SortSubRotationByImp(Rotation.SubRotation)
+-- insert last subrotation
+table.insert(Rotation.SortedRotation,{
+    name="Error",
+    SS=0,
+    SSMax=5,
+    DC=0,
+    imp=0,
+    SGCD=100,
+})
+Rotation.nSortedRotation=#Rotation.SortedRotation
+
 
 function Rotation.PredictSkillUse(SS,DC,SGCD)
     -- rule 1 : SS enough , DC enough , SGCD enough
@@ -379,10 +401,10 @@ function Rotation.PredictSkillUse(SS,DC,SGCD)
     -- rule 4 : HoG > Demonbolt > Shadow Bolt > Summon Demonic Tyrant
 
     if SGCD<0 then SGCD=0 end
-    local selected=0
+    local selected=Rotation.nSortedRotation
     local SGCDselected=100
     local impSelected=0
-    for i=1,#Rotation.SortedRotation do
+    for i=1,Rotation.nSortedRotation do
         if impSelected>Rotation.SortedRotation[i].imp then
             break
         end
@@ -412,4 +434,16 @@ function Rotation.GetSkill()
         Rotation.SkillUse=Rotation.PredictSkillUse(IROVar.Lock.PredictSS()/10,IROVar.GetDemonicCoreStack(),IROVar.LockDemoRotation2.TimeLimitSubGCD(IUSC.NextReady)-1)
         return Rotation.SkillUse
     end
+end
+
+function Rotation.FixRotation()
+    local z=TMW_ST:GetCounter('wanttyrant')
+    if z==0 then return end
+    print('Fix Rotation')
+    if Rotation.TimeLimit-GetTime()>6*IROVar.CastTime0_5sec then
+        z=4
+    else
+        z=1
+    end
+    TMW_ST:UpdateCounter('wanttyrant',z)
 end

@@ -161,3 +161,13 @@ and PercentCastbar2()
 and IROVar.CareInterrupt("target")
 and ((not NextInterrupter) or NextInterrupter.IsMyTurn())
 
+
+
+
+
+if Rotation.TimeLimit-GetTime()>6*Rotation.CastTime0_5sec then TMW_ST:UpdateCounter("wanttyrant",4) else TMW_ST:UpdateCounter("wanttyrant",1) end
+
+/stopmacro [mod]
+/run local z if Rotation.TimeLimit-GetTime()>6*IROVar.CastTime0_5sec then z=4 else z=1 end TMW_ST:UpdateCounter("wanttyrant",z)
+
+

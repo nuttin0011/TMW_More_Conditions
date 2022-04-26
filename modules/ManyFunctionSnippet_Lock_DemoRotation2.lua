@@ -1,4 +1,4 @@
---Pre Process Lock Demo Rotation2 9.2.0/2
+--Pre Process Lock Demo Rotation2 9.2.0/3
 --Set Priority to 30
 
 --var IROVar.LockDemoRotation2.SortedRotation --
@@ -296,6 +296,13 @@ Rotation.SubRotation[27]={
 }
 Rotation.SubRotation[28]={
     name="Summon Demonic Tyrant",
+    SS=0,
+    DC=0,
+    imp=0,
+    SGCD=4,
+}
+Rotation.SubRotation[29]={
+    name="Error",
     SS=0,
     DC=0,
     imp=0,

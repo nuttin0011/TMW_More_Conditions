@@ -39,7 +39,8 @@
 --function IROVar.UnRegister_COMBAT_LOG_EVENT_UNFILTERED_CALLBACK(name)
 
 --var IROVar.Haste ; player Haste
---var IROVar.CastTime2sec,IROVar.CastTime6sec ; cast time in second mod by haste
+--var IROVar.CastTime2sec ; cast time in second mod by haste
+--var IROVar.CastTime6sec
 --var IROVar.CastTime1_5sec ; cast time in second mod by haste
 --var IROVar.CastTime0_5sec
 --var IROVar.HasteFactor ; multiply by cast time = time to cast , = 100/(100+UnitSpellHaste("player"))

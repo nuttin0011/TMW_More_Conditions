@@ -1,64 +1,63 @@
 
---function NeedSBS()
-(function()
-    local comboCurrent=UnitPower("player", 4)
-    local comboBlank=UnitPowerMax("player", 4)-comboCurrent
-    if comboBlank==0 then return false end
-    local comboGen=1
-    for i=1,30 do
-        local n="nameplate"..i
-        if UnitExists(n) and UnitCanAttack("player", n) and (TMW.CNDT.Env.AuraDur(n, "serrated bone spike", "PLAYER HARMFUL")>0) then
-            comboGen=comboGen+1
-        end
-    end
-    if TMW.CNDT.Env.AuraDur("player", "broadside", "PLAYER HELPFUL")>0.5 then comboGen=comboGen+1 end
-    if TMW.CNDT.Env.AuraDur("player", "shadow blades", "PLAYER HELPFUL")>0.5 then comboGen=comboGen+1 end
+-- ZRODPS Num Dot Setup
+-- Alt + NumDot = /stopcasting
+-- Ctrl + NumDot = /use Healthstone
+-- NumDot = **removed in ZRO DPS**
+-- When press Alt+NumDot "/stopcasting" and "IROStopCasted=true" ll run
+-- that mean if "IROStopCasted==true" u dont press Alt+NumDot again.
+-- and IROStopCasted=nil 0.5 sec after press Alt+Numdot
 
-    if comboCurrent<=1 then
-        return true
+ConsoleExec("screenFlashEdge 0")
+ConsoleExec("doNotFlashLowHealthWarning 1")
+ConsoleExec("Gamma 1")
+local M0='/stopcasting [mod:alt]\n/use [mod:ctrl]Healthstone\n/run IROPressStopCast()'
+
+local function SetNumDotKey()
+    if InCombatLockdown() then
+        C_Timer.After(1,SetNumDotKey)
     else
-        return comboGen<=comboBlank
+        for i =0,9 do
+            SetBindingMacro('NUMPAD'..i,'~!Num'..i)
+        end
+        TMW.CNDT.Env.IRODPSversion()
+        DeleteMacro("~NumDotUsedSkill")
+        DeleteMacro("~NumDotUsedSkill")
+        CreateMacro("~NumDotUsedSkill",460699, M0, true)
+        SetBindingMacro("NUMPADDECIMAL","~NumDotUsedSkill")
+        SaveBindings(GetCurrentBindingSet())
     end
-
-
-    --local targetHasSBS=TMW.CNDT.Env.AuraDur("target", "serrated bone spike", "PLAYER HARMFUL")>0
-    --local en=UnitPower("player", 3)
-    --local currentCharges, maxCharges, cooldownStart, cooldownDuration = GetSpellCharges("Serrated Bone Spike")
-    --local SBSChargeMax = (currentCharges==maxCharges) or ((currentCharges==(maxCharges-1)) and (GetTime()>(cooldownStart+cooldownDuration-5)))
---[[
-    if targetHasSBS then
-        if (comboGen<=comboBlank) and (en<60) then
-            return true
-        end
-        if SBSChargeMax then
-            if comboGen<=comboBlank then
-                return true
-            end
-            if (comboGen>=3) and (comboBlank>=3) then
-                return true
-            end
-        end
+end
+-- Bind +-*/
+local function SetBindingAddSubMulDiv()
+    if InCombatLockdown() then
+        C_Timer.After(1,SetBindingAddSubMulDiv)
     else
-        if comboGen<=comboBlank then
-            return true
-        end
-        if SBSChargeMax and (comboGen>=3) and (comboBlank>=3) then
-            return true
-        end
-    end]]
+        SetBindingMacro("NUMPADMULTIPLY"
+        ,'~!Num12')
+        SetBindingMacro("NUMPADDIVIDE"
+        ,'~!Num13')
+        SetBindingMacro("NUMPADMINUS"
+        ,'~!Num11')
+        SetBindingMacro("NUMPADPLUS"
+        ,'~!Num10')
+        SaveBindings(GetCurrentBindingSet())
+    end
+end
 
-    return false
-end)()
+SetNumDotKey()
+SetBindingAddSubMulDiv()
 
-(function ()-- start Tyrant Rotation by check Vilefiend+Grimoire
-    local td= IROVar.GetDemonicCoreStack()
-    local t1= (GetSpellCooldown("Summon Vilefiend")==0) and IROVar.CastTime2sec or 0
-    local t2= (GetSpellCooldown("Grimoire: Felguard")==0) and IROVar.CastTime2sec or 0
-    local t3= 7+t1+t2+(IROVar.CastTime2sec*td)
-    local st,du=GetSpellCooldown("Summon Demonic Tyrant")
-    local cd=st+du-GetTime()
-    return cd<t3
-end)()
+IROStopCastHandle=C_Timer.NewTimer(0.1,function() end)
+IROPressStopCast=function()
+    if not IsAltKeyDown() then return end
+    IROStopCasted=true
+    IROStopCastHandle:Cancel()
+    IROStopCastHandle=C_Timer.NewTimer(0.5,function()
+            IROStopCasted=nil
+    end)
+end
+
+
 
 
 

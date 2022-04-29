@@ -439,11 +439,12 @@ end
 function Rotation.FixRotation()
     local z=TMW_ST:GetCounter('wanttyrant')
     if z==0 then return end
-    print('Fix Rotation')
-    if Rotation.TimeLimit-GetTime()>6*IROVar.CastTime0_5sec then
+
+    if Rotation.TimeLimit-GetTime()>4*IROVar.CastTime0_5sec then
         z=4
     else
         z=1
     end
+    print('Fix Rotation : go '..z)
     TMW_ST:UpdateCounter('wanttyrant',z)
 end

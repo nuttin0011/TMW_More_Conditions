@@ -1,4 +1,4 @@
--- ZRO Decoder 9.0.5/9g
+-- ZRO Decoder 9.0.5/9h
 -- check Spell GCD
 --[[ e.g.
 IUSC.NumToSpell={}
@@ -294,7 +294,7 @@ end
 --Skill Use
 function IUSC.SU(k,t) --k is string e.g. "33" , "3a" , t=GCD /nil=default
 	if IUSC.Stage~=1 then
-		print("!!ERROR!! use Skill before ready ^^^ IUSC.Stage = "..IUSC.Stage)
+		print(k,"!!ERROR!! use Skill before ready ^^^ IUSC.Stage = "..IUSC.Stage)
 	end
 	local S = IsShiftKeyDown() and 4 or 0
 	local C = IsControlKeyDown() and 1 or 0

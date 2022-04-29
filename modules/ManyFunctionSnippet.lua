@@ -1,4 +1,4 @@
--- Many Function Version 9.0.5/51
+-- Many Function Version 9.0.5/52
 -- Set Priority to 1
 -- this file save many function for paste to TMW Snippet LUA
 
@@ -37,6 +37,11 @@
 --function IROVar.Register_COMBAT_LOG_EVENT_UNFILTERED_CALLBACK(name,callBack)
     -- note callBack is Function(...) ; ... = CombatLogGetCurrentEventInfo()
 --function IROVar.UnRegister_COMBAT_LOG_EVENT_UNFILTERED_CALLBACK(name)
+
+--function IROVar.Register_SPELL_UPDATE_COOLDOWN_scrip_CALLBACK(name,callBack)
+    -- note callBack is Function(GCDEnd) ; GCDEnd = st+du of (GetSpellCooldown(TMW.GCDSpell))
+--function IROVar.UnRegister_SPELL_UPDATE_COOLDOWN_scrip_CALLBACK(name)
+
 
 --var IROVar.Haste ; player Haste
 --var IROVar.CastTime2sec ; cast time in second mod by haste
@@ -563,4 +568,29 @@ IROVar.COMBAT_LOG_EVENT_UNFILTERED_frame = CreateFrame("Frame")
 IROVar.COMBAT_LOG_EVENT_UNFILTERED_frame:RegisterEvent("COMBAT_LOG_EVENT_UNFILTERED")
 IROVar.COMBAT_LOG_EVENT_UNFILTERED_frame:SetScript("OnEvent", function(self, event, ...)
     IROVar.COMBAT_LOG_EVENT_UNFILTERED_scrip(CombatLogGetCurrentEventInfo())
+end)
+
+IROVar.SPELL_UPDATE_COOLDOWN_CALLBACK={}
+
+function IROVar.SPELL_UPDATE_COOLDOWN_scrip()
+    local st,du = GetSpellCooldown(TMW.GCDSpell)
+    local GCDEnd=0
+    if st then
+        GCDEnd=st+du
+    end
+    for k,v in pairs(IROVar.SPELL_UPDATE_COOLDOWN_CALLBACK) do
+        if v then v(GCDEnd) end
+    end
+end
+function IROVar.Register_SPELL_UPDATE_COOLDOWN_scrip_CALLBACK(name,callBack)
+    IROVar.SPELL_UPDATE_COOLDOWN_CALLBACK[name]=callBack
+end
+function IROVar.UnRegister_SPELL_UPDATE_COOLDOWN_scrip_CALLBACK(name)
+    IROVar.SPELL_UPDATE_COOLDOWN_CALLBACK[name]=nil
+end
+IROVar.SPELL_UPDATE_COOLDOWN_frame = CreateFrame("Frame")
+IROVar.SPELL_UPDATE_COOLDOWN_frame:RegisterEvent("SPELL_UPDATE_COOLDOWN")
+IROVar.SPELL_UPDATE_COOLDOWN_frame:RegisterEvent("SPELL_UPDATE_USABLE")
+IROVar.SPELL_UPDATE_COOLDOWN_frame:SetScript("OnEvent", function(self, event, ...)
+    IROVar.SPELL_UPDATE_COOLDOWN_scrip()
 end)

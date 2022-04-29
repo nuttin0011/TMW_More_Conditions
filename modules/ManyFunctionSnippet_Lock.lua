@@ -1,4 +1,4 @@
--- Many Function Version Warlock 9.0.5/14
+-- Many Function Version Warlock 9.0.5/16
 -- Set Priority to 20
 -- this file save many function for paste to TMW Snippet LUA
 
@@ -18,6 +18,8 @@
 -- function IROVar.GetDemonicCoreExpireTime() -- return time of Demonic Core expire
 --IROVar.Lock.FromtheShadows.Count ; = count from the shadow
 --IROVar.Lock.FromtheShadows.ExpireTime ; = time of from the shadow expire
+--function IROVar.GetDSCDEnd() -- return time of CD Dread stalkers end
+--function IROVar.GetTyrantCDEnd() -- return time of CD Tyrant end
 --[[ NOTE:
 GetSpellCount("Implosion") ;Implosion Stack
 UnitPower("player",7) ; SoulShards
@@ -59,6 +61,16 @@ end
 
 function IROVar.GetDemonicCoreExpireTime()
 	return IROVar.Lock.DemonicCoreExpireTime
+end
+
+IROVar.Lock.DSCDEnd=0
+IROVar.Lock.TyrantCDEnd=0
+
+function IROVar.GetDSCDEnd()
+	return IROVar.Lock.DSCDEnd
+end
+function IROVar.GetTyrantCDEnd()
+	return IROVar.Lock.TyrantCDEnd
 end
 
 IROVar.Lock.DreadstalkerTime=0
@@ -403,4 +415,28 @@ function IROVar.Lock.IsHavocLongerThanCB()
 	return (havocDu-CBCastime)>0.3
 end
 
+local function CDend(s)
+	local st,du=GetSpellCooldown(s)
+	if st then
+		return st+du
+	else return 0 end
+end
 
+function IROVar.Lock.SPELL_UPDATE_COOLDOWN_Event(GCDEnd)
+	if IROSpecID==266 then -- Demo Sepc
+		local dSCDEnd=CDend("Call Dreadstalkers")
+		local tyrantCDEnd=CDend("Summon Demonic Tyrant")
+		if GCDEnd>0 then
+			if dSCDEnd>0 and GCDEnd>=dSCDEnd then
+				dSCDEnd=0
+			end
+			if tyrantCDEnd>0 and GCDEnd>=tyrantCDEnd then
+				tyrantCDEnd=0
+			end
+		end
+		IROVar.Lock.DSCDEnd=dSCDEnd
+		IROVar.Lock.TyrantCDEnd=tyrantCDEnd
+	end
+end
+
+IROVar.Register_SPELL_UPDATE_COOLDOWN_scrip_CALLBACK("LockDemo",IROVar.Lock.SPELL_UPDATE_COOLDOWN_Event)

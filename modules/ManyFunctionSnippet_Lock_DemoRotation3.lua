@@ -12,6 +12,9 @@ Rotation3=IROVar.LockDemoRotation3
 
 Rotation3.TimeLimit=math.huge
 Rotation3.DSTime=12
+Rotation3.DecreaseTimeFactor=0
+--DecreaseTimeFactor = 1 , mean DSTime = 12-1 ; HoGTime = (24-2) SGCD
+--DecreaseTimeFactor = 2 , mean DSTime = 12-2 ; HoGTime = (24-4) SGCD
 Rotation3.DSTimeExpire=0
 Rotation3.DSUp=false
 Rotation3.StartRotation=false -- Set to true to start rotation , Set to False after Summon Demonic Tyrant finished
@@ -22,28 +25,67 @@ Rotation3.StartRotation=false -- Set to true to start rotation , Set to False af
 -- default Rotation = DS(12sec) --> HoG(cast 1 GCD, then Imp Despawn 8 GCD after cast HoG finish)
 
 Rotation3.TimeLimitList={}
+Rotation3.ClearTimeLimitListHandle=nil
 -- low value first
 --[1]= GetTime+8*GCD if HoG
 --[2]= GetTime+12sec if DS
 --if < GetTime Set To nil
 function Rotation3.AddTimeLimit(t)
-    local index=1
+    local index=#Rotation3.TimeLimitList+1
     for i=1,#Rotation3.TimeLimitList do
-        if Rotation3.TimeLimitList[i] and Rotation3.TimeLimitList[i]<t then
+        if Rotation3.TimeLimitList[i]<t then
             index=i
+            break
         end
     end
     table.insert(Rotation3.TimeLimitList,index,t)
-
+end
+function Rotation3.TimeLimitList_pop_min(n) -- n is order of time limit, lower first
+    local currentTime=GetTime()
+    for i=#Rotation3.TimeLimitList,1,-1 do
+        if Rotation3.TimeLimitList[i]<currentTime then
+            table.remove(Rotation3.TimeLimitList,i)
+        else
+            break
+        end
+    end
+    n=#Rotation3.TimeLimitList-n+1
+    return Rotation3.TimeLimitList[n]
 end
 
+function Rotation3.ClearTimeLimit_WhenOutCombat()
+    --Clear when OutCombat>20 sec
+    Rotation3.ClearTimeLimitListHandle=C_Timer.NewTimer(20,function()
+        Rotation3.TimeLimitList={}
+    end)
+end
+function Rotation3.Stop_ClearTimeLimitListHandle_WhenInCombat()
+    if Rotation3.ClearTimeLimitListHandle then
+        Rotation3.ClearTimeLimitListHandle:Cancel()
+        Rotation3.ClearTimeLimitListHandle=nil
+    end
+end
+IROVar.RegisterIncombatCallBackRun("Stop_ClearTimeLimitListHandle_WhenInCombat",Rotation3.Stop_ClearTimeLimitListHandle_WhenInCombat)
+IROVar.RegisterOutcombatCallBackRun("ClearTimeLimit_WhenOutCombat",Rotation3.ClearTimeLimit_WhenOutCombat)
 
 function Rotation3.Event_COMBAT_LOG_EVENT_UNFILTERED(...)
     local timestamp, subevent, _, sourceGUID, sourceName, sourceFlags, sourceRaidFlags, destGUID, destName, destFlags, destRaidFlags = ...
     if sourceGUID~=IROVar.playerGUID then return end
     if subevent=="SPELL_CAST_SUCCESS" then
         local spellID, spellName = select(12,...)
-        if spellName=="Call Dreadstalkers" then
+        if Rotation3.StartRotation then
+            if spellName=="Call Dreadstalkers" then
+                Rotation3.DSUp=true
+                local t=Rotation3.DSTime-Rotation3.DecreaseTimeFactor
+                Rotation3.AddTimeLimit(t)
+            elseif spellName=="Hand of Gul'dan" then
+                local t=(24-(2*Rotation3.DecreaseTimeFactor))*IROVar.CastTime0_5sec
+                Rotation3.AddTimeLimit(t)
+            elseif spellName=="Summon Demonic Tyrant" then
+                Rotation3.StopRotationTimer()
+            end
+        end
+        --[[if spellName=="Call Dreadstalkers" then
             Rotation3.DSTimeExpire=GetTime()+Rotation3.DSTime
         end
         if spellName=="Call Dreadstalkers" and Rotation3.StartRotation then
@@ -56,7 +98,7 @@ function Rotation3.Event_COMBAT_LOG_EVENT_UNFILTERED(...)
             Rotation3.TimeLimit=math.min(Rotation3.TimeLimit,GetTime()+(8*IROVar.CastTime1_5sec))
         elseif spellName=="Summon Demonic Tyrant" then
             Rotation3.StopRotationTimer()
-        end
+        end]]
     end
 end
 IROVar.Register_COMBAT_LOG_EVENT_UNFILTERED_CALLBACK("lockRotation3",IROVar.LockDemoRotation3.Event_COMBAT_LOG_EVENT_UNFILTERED)
@@ -508,19 +550,26 @@ function Rotation3.GetSkill(t) -- t=nil or GetTime()
 
     local DSSGCD=Rotation3.DSUp and -1 or Rotation3.Sec_to_SGCD(IROVar.GetDSCDEnd()-t,true)--must round up
     local TyrantSGCD=Rotation3.Sec_to_SGCD(IROVar.GetTyrantCDEnd()-t,true)--must round up
-    local TimeLimitSGCD=Rotation3.Sec_to_SGCD(Rotation3.TimeLimit-t)--must round down
-    local DSTimeExpireSGCD=Rotation3.DSTimeExpire-t
-    if DSTimeExpireSGCD>0 then
-        DSTimeExpireSGCD=Rotation3.Sec_to_SGCD(DSTimeExpireSGCD)
-    else
-        DSTimeExpireSGCD=100
-    end
-    local skill=Rotation3.PredictSkillUse(
+    local SS=IROVar.Lock.PredictSS()/10
+    local DCStack=IROVar.GetDemonicCoreStack()
+    local skill
+    local TimeLimit
+    local TimeLimitSGCD
+    local TLimitIndex=1
+    repeat
+        TimeLimit=Rotation3.TimeLimitList_pop_min(TLimitIndex)
+        TimeLimitSGCD=TimeLimit and Rotation3.Sec_to_SGCD(TimeLimit-t) or 100--must round down
+        skill=Rotation3.PredictSkillUse(
         Rotation3.SubRotation1_WithOut_Duplicate
-        ,IROVar.Lock.PredictSS()/10
-        ,IROVar.GetDemonicCoreStack()
-        ,math.min(TimeLimitSGCD,DSTimeExpireSGCD)
+        ,SS
+        ,DCStack
+        ,TimeLimitSGCD
         ,DSSGCD
         ,TyrantSGCD)
+        if skill=="Error" and TLimitIndex<#Rotation3.TimeLimitList then
+            TLimitIndex=TLimitIndex+1
+        end
+    until skill~="Error" or TLimitIndex>=#Rotation3.TimeLimitList
+
     return skill
 end

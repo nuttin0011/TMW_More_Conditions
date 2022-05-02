@@ -1,4 +1,4 @@
---Pre Process Lock Demo Rotation2 9.2.0/3
+--Pre Process Lock Demo Rotation2 9.2.0/5
 --Set Priority to 30
 
 --var IROVar.LockDemoRotation2.SortedRotation --
@@ -12,21 +12,54 @@ end
 Rotation=IROVar.LockDemoRotation2
 Rotation.TimeLimit=0
 Rotation.DSTime=12
+Rotation.DSTimeLimit=0
 -- TimeLimit = 12 sec after Cast Dreadstalkers
 -- TimeLimit = 8 GCD after Cast HoG
 -- This Rotation Predict Calculate After Cast Dreadstalkers
+Rotation.DecreaseTimeFactor=0
+-- Decrease Time Factor = 1; Mean Rotation.DSTime decrease 1 sec ; HoG Decrease 2 SubGCD
+-- Decrease Time Factor = 2; Mean Rotation.DSTime decrease 2 sec ; HoG Decrease 4 SubGCD
 
 -- default Rotation = DS(12sec) --> HoG(cast 1 GCD, then Imp Despawn 8 GCD after cast HoG finish)
 
+local function GetCDEnd(s)
+    local start,duration = GetSpellCooldown(s)
+    if start then
+        return start+duration
+    end
+    return 0
+end
+
+
+Rotation.CallDSCDEnd=GetCDEnd("Call Dreadstalkers")
+Rotation.TyrantCDEnd=GetCDEnd("Summon Demonic Tyrant")
+IROVar.Register_SPELL_UPDATE_COOLDOWN_scrip_CALLBACK("CallDS",function(GCDEnd)
+    if IROSpecID~=266 then return end
+    local callDSCDEnd=GetCDEnd("Call Dreadstalkers")
+    local tyrantCDEnd=GetCDEnd("Summon Demonic Tyrant")
+    if callDSCDEnd>GCDEnd then Rotation.CallDSCDEnd=callDSCDEnd end
+    if tyrantCDEnd>GCDEnd then Rotation.TyrantCDEnd=tyrantCDEnd end
+end)
+
 function Rotation.Event_COMBAT_LOG_EVENT_UNFILTERED(...)
     local timestamp, subevent, _, sourceGUID, sourceName, sourceFlags, sourceRaidFlags, destGUID, destName, destFlags, destRaidFlags = ...
-    if sourceGUID~=IROVar.playerGUID then return end
+    if (sourceGUID~=IROVar.playerGUID) or (IROSpecID~=266) then return end
     if subevent=="SPELL_CAST_SUCCESS" then
         local spellID, spellName = select(12,...)
         if spellName=="Call Dreadstalkers" then
-            Rotation.TimeLimit=GetTime()+Rotation.DSTime
+            Rotation.TimeLimit=Rotation.TimeLimit+IROVar.CastTime1_5sec
+            Rotation.DSTimeLimit=(GetTime()+Rotation.DSTime-Rotation.DecreaseTimeFactor)
         elseif spellName=="Hand of Gul'dan" then
-            Rotation.TimeLimit=math.min(Rotation.TimeLimit,GetTime()+(8*IROVar.CastTime1_5sec))
+            local HoGFactor=24 -- SubGCD
+            local CallDSCD=Rotation.CallDSCDEnd-GetTime()
+            if CallDSCD<0 then
+                CallDSCD=0
+            end
+            if CallDSCD<9 then
+                HoGFactor=21 -- Call DS < 9sec mean spare time to cast 3 SubGCD
+            end
+            HOGFactor=HoGFactor-(2*Rotation.DecreaseTimeFactor)
+            Rotation.TimeLimit=math.min(Rotation.TimeLimit,GetTime()+(HoGFactor*IROVar.CastTime0_5sec))
         end
     end
 end
@@ -399,7 +432,7 @@ function Rotation.PredictSkillUse(SS,DC,SGCD)
     -- rule 2 : SS not overflow , Shadowbolt: SS<=4 , Demonbolt: SS<=3
     -- rule 3 : lowest SGCD
     -- rule 4 : HoG > Demonbolt > Shadow Bolt > Summon Demonic Tyrant
-
+    SGCD=SGCD-1
     if SGCD<0 then SGCD=0 end
     local selected=Rotation.nSortedRotation
     local SGCDselected=100
@@ -447,4 +480,24 @@ function Rotation.FixRotation()
     end
     print('Fix Rotation : go '..z)
     TMW_ST:UpdateCounter('wanttyrant',z)
+end
+local DStoSGCDPredict={
+    [0]=11,[1]=17,[2]=16,[3]=22,[4]=22
+}
+
+function Rotation.Check_CD_Tyrant_CallDS_Befor_Start_Rotation()
+-- Rotation.DSTimeLimit>5.5 mean Has CallDS up
+    local currentTime=GetTime()
+    local SGCDPredict=DStoSGCDPredict[IROVar.Lock.DemonicCoreStack]
+    local CallDSUP=(Rotation.DSTimeLimit-currentTime)>SGCDPredict*IROVar.CastTime0_5sec
+    local CallDSCDPredict=CallDSUP and 100 or SGCDPredict*IROVar.CastTime0_5sec
+    local CallTyrantCDPredict=(SGCDPredict+(CallDSUP and 0 or 3))*IROVar.CastTime0_5sec
+    return (CallTyrantCDPredict+currentTime>(Rotation.TyrantCDEnd+1)) and
+    (CallDSCDPredict+currentTime>(Rotation.CallDSCDEnd+1))
+end
+
+function Rotation.Predict_NextTime_Start_Rotation()
+    local currentTime=GetTime()
+    local SGCDPredict=DStoSGCDPredict[IROVar.Lock.DemonicCoreStack]
+    return (Rotation.TyrantCDEnd-(currentTime+SGCDPredict*IROVar.CastTime0_5sec))+0.5
 end

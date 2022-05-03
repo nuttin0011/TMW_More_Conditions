@@ -1,4 +1,4 @@
--- Many Function Version 9.0.5/52
+-- Many Function Version 9.0.5/54
 -- Set Priority to 1
 -- this file save many function for paste to TMW Snippet LUA
 
@@ -11,7 +11,7 @@
 --function IROEnemyGroupVVHP(nMultipy) ; return (nMultipy*playerHealth*nG)<EnemyGroupHP
 --function GCDCDTime() ; return GCD length time, = 1.5*(100/(100+UnitSpellHaste("player")))
 --function IsMyInterruptSpellReady() ; true/false
---function TMW.CNDT.Env.CooldownDuration([spellName/Id, e.g. "execute"], [include GCD, true/false]); return CD remain (sec)
+
 --function IROVar.ERO_Old_Val.Check(functionName,input_val_string) ; return Old Val at Same GetTime() , or nil
 --function IROVar.ERO_Old_Val.Update(functionName,input_val_string,result_val) ; update Old_Val at same GetTime()
 --function IROVar.Debug() show some Debug val
@@ -21,7 +21,12 @@
 --function IROVar.allDeBuffByMe(unit) ; return table of debuff
 --function IROVar.allBuffByMe(unit,needLowerCaseName)
 ----*********return table of [Buff name] = Buff time remaining
--- function TMW.CNDT.Env.AuraDur(unit, name, filter) ; return duration,MaxDuration,TimeEnd
+
+--function TMW.CNDT.Env.CooldownDuration([spellName/Id, e.g. "execute"], [include GCD, true/false]); return CD remain (sec)
+--function TMW.CNDT.Env.AuraDur(unit, name, filter) ; return duration,MaxDuration,TimeEnd
+    --unit, e.g. "player"
+    --name, e.g. "arcane brilliance" **** muse be lower case
+    --filter, e.g. "HELPFUL"
 --var IROVar.Icon ; Keep Icon Data from TMW for Use further
 --function IROVar.IsIconShow(icon) ; return true/false
 --function IROVar.IconSweepCompair(icon,max,min) ; return (max > SweepCD > min) (true/false)
@@ -41,7 +46,8 @@
 --function IROVar.Register_SPELL_UPDATE_COOLDOWN_scrip_CALLBACK(name,callBack)
     -- note callBack is Function(GCDEnd) ; GCDEnd = st+du of (GetSpellCooldown(TMW.GCDSpell))
 --function IROVar.UnRegister_SPELL_UPDATE_COOLDOWN_scrip_CALLBACK(name)
-
+--var IROVar.SPELL_UPDATE_COOLDOWN_count = Count Event Call; use to detemin Update CD
+--var IROVar.TickCount005 = Tick Count every 0.05 sec; use to detemin Update CD
 
 --var IROVar.Haste ; player Haste
 --var IROVar.CastTime2sec ; cast time in second mod by haste
@@ -57,6 +63,9 @@ IROVar.Icon = {}
 function IROVar.IsIconShow(icon)
     return icon and icon.attributes.shown and not icon:Update() and icon.attributes.realAlpha > 0
 end
+local GetTime=GetTime
+local GetSpellCooldown=GetSpellCooldown
+
 IROVar.playerGUID = UnitGUID("player")
 IROVar.DebugMode = false
 IROVar.InterruptSpell = nil
@@ -64,7 +73,7 @@ IROVar.SkillCheckDPSRange = nil
 IROVar.InstanceName = GetInstanceInfo()
 IROVar.activeConduits = {}
 
-IROVar.CalculateHaste = function()
+function IROVar.CalculateHaste()
     IROVar.Haste = UnitSpellHaste("player")
     IROVar.HasteFactor = 100/(100+IROVar.Haste)
     IROVar.CastTime2sec = 2*IROVar.HasteFactor
@@ -140,13 +149,15 @@ end
 
 IROVar.ERO_Old_Val = {Timer=0,Old_Val={},
     Check = function(functionName,input_val_string)
-        return ((IROVar.ERO_Old_Val.Timer==GetTime())
+        input_val_string=input_val_string or ""
+        return ((IROVar.ERO_Old_Val.Timer==IROVar.TickCount005)
         and IROVar.ERO_Old_Val.Old_Val[functionName]
         and IROVar.ERO_Old_Val.Old_Val[functionName][input_val_string])
         and IROVar.ERO_Old_Val.Old_Val[functionName][input_val_string] or nil
     end,
     Update = function(functionName,input_val_string,result_val)
-        local currenTimer = GetTime()
+        input_val_string=input_val_string or ""
+        local currenTimer = IROVar.TickCount005
         if IROVar.ERO_Old_Val.Timer < currenTimer then
             IROVar.ERO_Old_Val.Timer = currenTimer
             IROVar.ERO_Old_Val.Old_Val = {}
@@ -209,17 +220,18 @@ function IROEnemyCountInRange(nRange)
     IROVar.ERO_Old_Val.Update("IROEnemyCountInRange",nRange,count)
     return count
 end
+--IROVar.SPELL_UPDATE_COOLDOWN_count
+IROVar.IsMyInterruptSpellReady_UT=-1
 
 function IsMyInterruptSpellReady()
     if not IROVar.InterruptSpell then return false end
-    local currentTime=GetTime()
-    if IROInterruptTier.CDEnd>currentTime then return false end
-    local CD=TMW.CNDT.Env.CooldownDuration(IROVar.InterruptSpell)
-    if CD>0 then
-        IROInterruptTier.CDEnd=CD+currentTime
-        return false
+    if IROVar.IsMyInterruptSpellReady_UT~=IROVar.SPELL_UPDATE_COOLDOWN_count then
+        IROVar.IsMyInterruptSpellReady_UT=IROVar.SPELL_UPDATE_COOLDOWN_count
+        local st,du=GetSpellCooldown(IROVar.InterruptSpell)
+        IROInterruptTier.CDEnd=st+du
     end
-    return true
+    local currentTime=GetTime()
+    return IROInterruptTier.CDEnd<currentTime
 end
 
 function PercentCastbar2(PercentCast, MustInterruptAble,unit, MinTMS,MaxTMS)
@@ -582,6 +594,9 @@ function IROVar.SPELL_UPDATE_COOLDOWN_scrip()
         if v then v(GCDEnd) end
     end
 end
+
+IROVar.SPELL_UPDATE_COOLDOWN_count=0
+
 function IROVar.Register_SPELL_UPDATE_COOLDOWN_scrip_CALLBACK(name,callBack)
     IROVar.SPELL_UPDATE_COOLDOWN_CALLBACK[name]=callBack
 end
@@ -592,5 +607,11 @@ IROVar.SPELL_UPDATE_COOLDOWN_frame = CreateFrame("Frame")
 IROVar.SPELL_UPDATE_COOLDOWN_frame:RegisterEvent("SPELL_UPDATE_COOLDOWN")
 IROVar.SPELL_UPDATE_COOLDOWN_frame:RegisterEvent("SPELL_UPDATE_USABLE")
 IROVar.SPELL_UPDATE_COOLDOWN_frame:SetScript("OnEvent", function(self, event, ...)
+    IROVar.SPELL_UPDATE_COOLDOWN_count=IROVar.SPELL_UPDATE_COOLDOWN_count+1
     IROVar.SPELL_UPDATE_COOLDOWN_scrip()
+end)
+
+IROVar.TickCount005=0
+IROVar.TickCount005_Handle=C_Timer.NewTicker(0.05,function()
+    IROVar.TickCount005=IROVar.TickCount005+1
 end)

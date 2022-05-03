@@ -294,8 +294,10 @@ end
 --Skill Use
 function IUSC.SU(k,t) --k is string e.g. "33" , "3a" , t=GCD /nil=default
 	if IUSC.Stage~=1 then
-		print(GetTime())
-		print(k,"!!!! use Skill before ready ^^^ IUSC.Stage = "..IUSC.Stage)
+		if IUSC.debugmode then
+			print(GetTime())
+			print(k,"!!!! use Skill before ready ^^^ IUSC.Stage = "..IUSC.Stage)
+		end
 		return
 	end
 	local S = IsShiftKeyDown() and 4 or 0

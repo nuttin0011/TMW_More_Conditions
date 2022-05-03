@@ -476,7 +476,7 @@ function Rotation.FixRotation()
     if Rotation.TimeLimit-GetTime()>4*IROVar.CastTime0_5sec then
         z=4
     else
-        z=1
+        z=5
     end
     print('Fix Rotation : go '..z)
     TMW_ST:UpdateCounter('wanttyrant',z)
@@ -484,6 +484,9 @@ end
 local DStoSGCDPredict={
     [0]=11,[1]=17,[2]=16,[3]=22,[4]=22
 }
+for i=0,4 do
+    DStoSGCDPredict[i]=DStoSGCDPredict[i]-1
+end
 
 function Rotation.Check_CD_Tyrant_CallDS_Befor_Start_Rotation()
 -- Rotation.DSTimeLimit>5.5 mean Has CallDS up

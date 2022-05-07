@@ -1,4 +1,4 @@
--- Many Function Version Warlock 9.0.5/16
+-- Many Function Version Warlock 9.0.5/19
 -- Set Priority to 20
 -- this file save many function for paste to TMW Snippet LUA
 
@@ -20,6 +20,8 @@
 --IROVar.Lock.FromtheShadows.ExpireTime ; = time of from the shadow expire
 --function IROVar.GetDSCDEnd() -- return time of CD Dread stalkers end
 --function IROVar.GetTyrantCDEnd() -- return time of CD Tyrant end
+--IROVar.Lock.EradicationChange -- Check Change of Eradication
+--IROVar.Lock.EradicationTargetAuraEnd() -- Check Aura end of target
 --[[ NOTE:
 GetSpellCount("Implosion") ;Implosion Stack
 UnitPower("player",7) ; SoulShards
@@ -54,6 +56,7 @@ IROVar.Lock.SS.LockSpellModSS = {
 	["Chaos Bolt267"]=-20, -- 267 = des
 	["Incinerate267"]=2
 }
+IROVar.Lock.EradicationChange=0
 
 function IROVar.GetDemonicCoreStack()
 	return IROVar.Lock.DemonicCoreStack
@@ -143,7 +146,7 @@ IROVar.Lock.PetTypeBit={
 	["Felguard"]=1,["Succubus"]=2,["Felhunter"]=4,
 	["Voidwalker"]=8,["Imp"]=16,
 	["Wrathguard"]=1,["Shivarra"]=2,["Observer"]=4,
-	["Voidlord"]=8,["Fel Imp"]=16,
+	["Voidlord"]=8,["Fel Imp"]=16,["Incubus"]=2,
 	--nil=128
 }
 function IROVar.Lock.SetupPetEvent()
@@ -198,16 +201,18 @@ function IROVar.Lock.COMBAT_LOG_EVENT_UNFILTERED_OnEvent(...)
 				IROVar.Lock.HavocGUID=DesGUID
 				C_Timer.After(12,function() IROVar.Lock.HavocGUID=nil end)
 			end
-
 			--count infernal
 			if (subevent=="SPELL_CAST_SUCCESS")and(spellName=="Summon Infernal") then
 				IROVar.Lock.Infernal.NextInfernalIs30sec=true
 			end
-			if (subevent=="SPELL_SUMMON")and(spellName=="Summon Infernal") then
+			if (subevent=="SPELL_SUMMON")and(spellName=="Summon Infernal" or spellName=="Blasphemy") then
 				IROVar.Lock.Infernal.Count=IROVar.Lock.Infernal.Count+1
-				local infernalTimer = IROVar.Lock.Infernal.NextInfernalIs30sec and 30 or 10
+				local infernalTimer = IROVar.Lock.Infernal.NextInfernalIs30sec and 30 or (spellName=="Blasphemy" and 8 or 10)
 				IROVar.Lock.Infernal.NextInfernalIs30sec=false
 				C_Timer.After(infernalTimer,function() IROVar.Lock.Infernal.Count=IROVar.Lock.Infernal.Count-1 end)
+			end
+			if spellName=="Eradication" then
+				IROVar.Lock.EradicationChange=IROVar.Lock.EradicationChange+1
 			end
 		end
 	end
@@ -351,7 +356,7 @@ function IROVar.Lock.PredictSS()
 		-- if spell < 0.3 sec befor finish casting
 		IROVar.Lock.SS.trust_segment_cast = (timeUnitlCastFinish)>0.3
 		if IROVar.Lock.SS.trust_segment_cast then
-			local extraSSfromInfernal = IROVar.Lock.Infernal.Count*floor(timeUnitlCastFinish/0.5)
+			local extraSSfromInfernal = IROVar.Lock.Infernal.Count*ceil(timeUnitlCastFinish/0.5)
 			currentSS=currentSS+extraSSfromInfernal
 			if spellName == "Incinerate" then
 				-- check Havoc for double SS generate
@@ -440,3 +445,26 @@ function IROVar.Lock.SPELL_UPDATE_COOLDOWN_Event(GCDEnd)
 end
 
 IROVar.Register_SPELL_UPDATE_COOLDOWN_scrip_CALLBACK("LockDemo",IROVar.Lock.SPELL_UPDATE_COOLDOWN_Event)
+
+IROVar.Lock.PLAYER_TARGET_CHANGED_frame=CreateFrame("Frame")
+IROVar.Lock.PLAYER_TARGET_CHANGED_frame:RegisterEvent("PLAYER_TARGET_CHANGED")
+IROVar.Lock.PLAYER_TARGET_CHANGED_frame:SetScript("OnEvent", function()
+	IROVar.Lock.EradicationChange=IROVar.Lock.EradicationChange+1
+end)
+
+IROVar.Lock.Eradication_Old_Value=0
+IROVar.Lock.Eradication_Old_Value_Change=0
+
+function IROVar.Lock.EradicationTargetAuraEnd()
+	if IROVar.Lock.Eradication_Old_Value_Change==IROVar.Lock.EradicationChange then
+		return IROVar.Lock.Eradication_Old_Value
+	end
+	IROVar.Lock.Eradication_Old_Value_Change=IROVar.Lock.EradicationChange
+	local expire=select(6,AuraUtil.FindAuraByName("Eradication", "target", "PLAYER HARMFUL"))
+	if expire then
+		IROVar.Lock.Eradication_Old_Value=expire
+	else
+		IROVar.Lock.Eradication_Old_Value=0
+	end
+	return IROVar.Lock.Eradication_Old_Value
+end

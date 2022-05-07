@@ -1,5 +1,10 @@
 -- ZRO Decoder 9.0.5/9i
 -- check Spell GCD
+--[[ macro test button
+/run print(IsControlKeyDown() and "Ctrl" or "no Ctrl")
+/run print(IsAltKeyDown() and "Alt" or "no Alt")
+/run print(IsShiftKeyDown() and "Shift" or "no Shift")
+]]
 --[[ e.g.
 IUSC.NumToSpell={}
 IUSC.NumToID={}

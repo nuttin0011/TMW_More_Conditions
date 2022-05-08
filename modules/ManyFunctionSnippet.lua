@@ -57,6 +57,9 @@
 --var IROVar.HasteFactor ; multiply by cast time = time to cast , = 100/(100+UnitSpellHaste("player"))
 --function AuraUtil.FindAuraByName(auraName, unit, filter) -- return only 1st auraName match
 --function AuraUtil.ForEachAura(unit, filter, [maxCount], func)
+--[[  name, icon, count, dispelType, duration, expirationTime, source, isStealable,
+nameplateShowPersonal, spellId, canApplyAura, isBossDebuff, castByPlayer,
+nameplateShowAll, timeMod, ... = UnitAura(unit, index [, filter])  ]]
 
 if not IROVar then IROVar={} end
 IROVar.Icon = {}

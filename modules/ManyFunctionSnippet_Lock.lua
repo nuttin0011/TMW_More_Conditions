@@ -265,6 +265,9 @@ function IROVar.Lock.COMBAT_LOG_EVENT_UNFILTERED_OnEvent(...)
 					IROVar.Lock.DemonicCoreExpireTime=0
 				elseif subevent=="SPELL_AURA_APPLIED_DOSE" then
 					IROVar.Lock.DemonicCoreStack=IROVar.Lock.DemonicCoreStack+1
+					if IROVar.Lock.DemonicCoreStack>4 then
+						IROVar.Lock.DemonicCoreStack=4
+					end
 					IROVar.Lock.DemonicCoreExpireTime=GetTime()+20
 				elseif subevent=="SPELL_AURA_REMOVED_DOSE" then
 					IROVar.Lock.DemonicCoreStack=IROVar.Lock.DemonicCoreStack-1

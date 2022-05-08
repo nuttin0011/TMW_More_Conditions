@@ -1,4 +1,4 @@
---Pre Process Lock Demo Rotation2 9.2.0/5
+--Pre Process Lock Demo Rotation2 9.2.0/6
 --Set Priority to 30
 
 --var IROVar.LockDemoRotation2.SortedRotation --
@@ -17,8 +17,8 @@ Rotation.DSTimeLimit=0
 -- TimeLimit = 8 GCD after Cast HoG
 -- This Rotation Predict Calculate After Cast Dreadstalkers
 Rotation.DecreaseTimeFactor=0
--- Decrease Time Factor = 1; Mean Rotation.DSTime decrease 1 sec ; HoG Decrease 2 SubGCD
--- Decrease Time Factor = 2; Mean Rotation.DSTime decrease 2 sec ; HoG Decrease 4 SubGCD
+-- Decrease Time Factor = 1; Mean Rotation.DSTime decrease 1 sec ; HoG Decrease to min(8 GCD,12-Decrease Time Factor)
+-- Decrease Time Factor = 2; Mean Rotation.DSTime decrease 2 sec ; HoG Decrease to min(8 GCD,12-Decrease Time Factor)
 
 -- default Rotation = DS(12sec) --> HoG(cast 1 GCD, then Imp Despawn 8 GCD after cast HoG finish)
 
@@ -50,15 +50,13 @@ function Rotation.Event_COMBAT_LOG_EVENT_UNFILTERED(...)
             Rotation.TimeLimit=Rotation.TimeLimit+IROVar.CastTime1_5sec
             Rotation.DSTimeLimit=(GetTime()+Rotation.DSTime-Rotation.DecreaseTimeFactor)
         elseif spellName=="Hand of Gul'dan" then
+            local tTemp=(12-Rotation.DecreaseTimeFactor)/IROVar.CastTime0_5sec --seconds to SGCD
             local HoGFactor=24 -- SubGCD
+            HoGFactor=math.min(HoGFactor,tTemp)
             local CallDSCD=Rotation.CallDSCDEnd-GetTime()
-            if CallDSCD<0 then
-                CallDSCD=0
-            end
             if CallDSCD<9 then
-                HoGFactor=21 -- Call DS < 9sec mean spare time to cast 3 SubGCD
+                HoGFactor=HoGFactor-3 -- Call DS < 9sec mean spare time to cast 3 SubGCD
             end
-            HOGFactor=HoGFactor-(2*Rotation.DecreaseTimeFactor)
             Rotation.TimeLimit=math.min(Rotation.TimeLimit,GetTime()+(HoGFactor*IROVar.CastTime0_5sec))
         end
     end

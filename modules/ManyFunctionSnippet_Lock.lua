@@ -24,6 +24,7 @@
 --IROVar.Lock.EradicationChange -- Check Change of Eradication
 --IROVar.Lock.EradicationTargetAuraEnd() -- Check Aura end of target
 --function IROVar.Lock.PredictTimeSS_DesLock(targetSS) -- return time (sec)
+--function IROVar.Lock.CDConflagTwoCharge() time to 2 charge
 --[[ NOTE:
 GetSpellCount("Implosion") ;Implosion Stack
 UnitPower("player",7) ; SoulShards
@@ -59,6 +60,13 @@ IROVar.Lock.SS.LockSpellModSS = {
 	["Incinerate267"]=2
 }
 IROVar.Lock.EradicationChange=0
+
+local function CDend(s)
+	local st,du=GetSpellCooldown(s)
+	if st then
+		return st+du
+	else return 0 end
+end
 
 function IROVar.GetDemonicCoreStack()
 	return IROVar.Lock.DemonicCoreStack
@@ -117,10 +125,12 @@ IROVar.Lock.JustRunPetCheck=0
 IROVar.Lock.HavocGUID = nil
 IROVar.Lock.HavocCDEndTime = 0
 
-IROVar.Register_SPELL_UPDATE_COOLDOWN_scrip_CALLBACK("HavocCD",function()
+IROVar.Register_SPELL_UPDATE_COOLDOWN_scrip_CALLBACK("HavocCD",function(GCDEnd)
 	if IROSpecID==267 then --Des Spec
-		local st,du = GetSpellCooldown("Havoc")
-		IROVar.Lock.HavocCDEndTime = st+du
+		IROVar.Lock.HavocCDEndTime = CDend("Havoc")
+		if IROVar.Lock.HavocCDEndTime<=GCDEnd then
+			IROVar.Lock.HavocCDEndTime=0
+		end
 	end
 end)
 
@@ -427,12 +437,10 @@ function IROVar.Lock.IsHavocLongerThanCB()
 	return (havocDu-CBCastime)>0.3
 end
 
-local function CDend(s)
-	local st,du=GetSpellCooldown(s)
-	if st then
-		return st+du
-	else return 0 end
-end
+IROVar.Lock.ConflagCD_Old_Value={
+	[1]=2,[2]=2,[3]=GetTime(),[4]=10,[5]=1,
+}
+IROVar.Lock.Conflag2ChargeCDEnd=GetTime()
 
 function IROVar.Lock.SPELL_UPDATE_COOLDOWN_Event(GCDEnd)
 	if IROSpecID==266 then -- Demo Sepc
@@ -448,6 +456,11 @@ function IROVar.Lock.SPELL_UPDATE_COOLDOWN_Event(GCDEnd)
 		end
 		IROVar.Lock.DSCDEnd=dSCDEnd
 		IROVar.Lock.TyrantCDEnd=tyrantCDEnd
+	elseif IROSpecID==267 then -- Des Spec
+		IROVar.Lock.ConflagCD_Old_Value={GetSpellCharges("Conflagrate")}
+		local c,m,s,d = unpack(IROVar.Lock.ConflagCD_Old_Value)
+		if c==m then IROVar.Lock.Conflag2ChargeCDEnd=0 end
+		IROVar.Lock.Conflag2ChargeCDEnd=((m-c-1)*d)+(s+d)
 	end
 end
 
@@ -476,10 +489,34 @@ function IROVar.Lock.EradicationTargetAuraEnd()
 	return IROVar.Lock.Eradication_Old_Value
 end
 
-function IROVar.Lock.PredictTimeSS_DesLock(targetSS) -- return time (sec)
+function IROVar.Lock.PredictTimeSS_DesLock(targetSS) -- return time to target SS (sec)
 	local currentSS=IROVar.Lock.PredictSS()
 	targetSS=targetSS-currentSS
 	if targetSS<=0 then return 0 end
 	local t= targetSS / (1+ (IROVar.Lock.Infernal.Count * 2 ) + (1/(IROVar.HasteFactor)))
 	return t
+end
+
+function IROVar.Lock.CDConflagTwoCharge()
+	local t=IROVar.Lock.Conflag2ChargeCDEnd-GetTime()
+	if t<=0 then return 0 end
+	return t
+end
+
+function IROVar.Lock.ConflagChargeTime()
+	return IROVar.Lock.ConflagCD_Old_Value[4] or 0
+end
+--[[
+1)rotation(SGCD) Havoc(3) --> CB(6) --> 1st Conflag(3) --> CB(4.2) --> 2nd Conflag
+ = 16.2 GCD after cast Havoc
+2)Extented Rotation Havoc(3) --> CB(6) --> CB(6) --> 1st Conflag(3) --> CB(4.2) --> 2nd Conflag
+ = 22.2 GCD after cast Havoc
+]]
+function IROVar.Lock.TimeToNeed2ndConflag(r) -- time to 2nd Conflag conpare to GetTime()
+	-- if r == true  mean use Rotation 2 = 22.2 SGCD
+	local H=IROVar.Lock.HavocCDEndTime
+	local t=(r and 22.2 or 16.2)*IROVar.CastTime0_5sec
+	local currentTime=GetTime()
+	if H==0 or H<=currentTime then return currentTime+t end
+	return H+t
 end

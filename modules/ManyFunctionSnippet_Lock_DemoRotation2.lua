@@ -78,7 +78,7 @@ function Rotation.TimeLimitSubGCD(time) -- time to calculate , nil=GetTime()
     if val then return val end
     local t=Rotation.TimeLimit - time
     if t<0 then return 0 end
-    val =math.floor(t/IROVar.CastTime0_5sec)
+    val =t/IROVar.CastTime0_5sec
     IROVar.ERO_Old_Val.Update("TimeLimitSubGCD",time,val)
     return val
 end
@@ -480,7 +480,7 @@ function Rotation.FixRotation()
     TMW_ST:UpdateCounter('wanttyrant',z)
 end
 local DStoSGCDPredict={
-    [0]=11,[1]=17,[2]=16,[3]=22,[4]=22
+    [0]=10,[1]=16,[2]=15,[3]=21,[4]=21
 }
 for i=0,4 do
     DStoSGCDPredict[i]=DStoSGCDPredict[i]-1

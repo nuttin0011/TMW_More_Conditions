@@ -1,4 +1,4 @@
--- Many Function Version Warlock 9.0.5/19
+-- Many Function Version Warlock 9.0.5/21
 -- Set Priority to 20
 -- this file save many function for paste to TMW Snippet LUA
 
@@ -13,7 +13,8 @@
 -- 	use /run IROVar.Lock.GUIDImmolate=UnitGUID("target") after use macro cast immolate
 -- 	use /run IROVar.Lock.GUIDSpell=UnitGUID("target") after use macro cast spell
 -- var IROVar.Lock.HavocGUID ; keep HavocGUID
--- function IROVar.Lock.HasHavoc() -- return unit token,duration,end e.g. "nameplate1" , or nil
+-- function IROVar.Lock.HasHavoc() -- return UnitGUID , or nil
+-- var IROVar.Lock.HavocCDEnd() ; return HavocCD end time
 -- function IROVar.GetDemonicCoreStack() -- return stack of Demonic Core
 -- function IROVar.GetDemonicCoreExpireTime() -- return time of Demonic Core expire
 --IROVar.Lock.FromtheShadows.Count ; = count from the shadow
@@ -22,6 +23,7 @@
 --function IROVar.GetTyrantCDEnd() -- return time of CD Tyrant end
 --IROVar.Lock.EradicationChange -- Check Change of Eradication
 --IROVar.Lock.EradicationTargetAuraEnd() -- Check Aura end of target
+--function IROVar.Lock.PredictTimeSS_DesLock(targetSS) -- return time (sec)
 --[[ NOTE:
 GetSpellCount("Implosion") ;Implosion Stack
 UnitPower("player",7) ; SoulShards
@@ -45,7 +47,7 @@ IROVar.RegisterIncombatCallBackRun("ResetFTS",function()
 end)
 IROVar.Lock.SS.LockSpellModSS = {
 	["Hand of Gul'dan266"]=-30, --266 = Demo
-	["Shadow Bolt266"]=10, 
+	["Shadow Bolt266"]=10,
 	["Call Dreadstalkers266"]=-20,
 	["Summon Vilefiend266"]=-10,
 	["Nether Portal266"]=-10,
@@ -113,21 +115,22 @@ IROVar.Lock.PetCheckTimer=6 --ll check 6 sec for sure
 IROVar.Lock.PetActiveOldVal=-1
 IROVar.Lock.JustRunPetCheck=0
 IROVar.Lock.HavocGUID = nil
+IROVar.Lock.HavocCDEndTime = 0
 
-function IROVar.Lock.HasHavoc() -- return unit token,duration,end e.g. "nameplate1" , or nil
-	if not IROVar.Lock.HavocGUID then return nil end
-	local havocDu=0
-	local havocEnd=0
-	for i=1,40 do
-		local nn="nameplate"..i
-		if UnitExists(nn) and UnitCanAttack("player", nn) then
-			havocDu,_,havocEnd=TMW.CNDT.Env.AuraDur(nn,"havoc","PLAYER HARM")
-			if havocDu>0 then
-				return nn,havocDu,havocEnd
-			end
-		end
+IROVar.Register_SPELL_UPDATE_COOLDOWN_scrip_CALLBACK("HavocCD",function()
+	if IROSpecID==267 then --Des Spec
+		local st,du = GetSpellCooldown("Havoc")
+		IROVar.Lock.HavocCDEndTime = st+du
 	end
-	return nil
+end)
+
+function IROVar.Lock.HavocCDEnd()
+	return IROVar.Lock.HavocCDEndTime
+end
+
+
+function IROVar.Lock.HasHavoc() -- return UnitGUID , TimeStamp or nil
+	return IROVar.Lock.HavocGUID,IROVar.Lock.HavocTimeStamp
 end
 
 function IROVar.Lock.Pet(PetType)
@@ -199,6 +202,7 @@ function IROVar.Lock.COMBAT_LOG_EVENT_UNFILTERED_OnEvent(...)
 			--keep Havoc GUID
 			if (subevent=="SPELL_CAST_SUCCESS")and(spellName=="Havoc") then
 				IROVar.Lock.HavocGUID=DesGUID
+				IROVar.Lock.HavocTimeStamp=GetTime()
 				C_Timer.After(12,function() IROVar.Lock.HavocGUID=nil end)
 			end
 			--count infernal
@@ -363,8 +367,8 @@ function IROVar.Lock.PredictSS()
 			currentSS=currentSS+extraSSfromInfernal
 			if spellName == "Incinerate" then
 				-- check Havoc for double SS generate
-				local unitHavoc,havocDu = IROVar.Lock.HasHavoc()
-				if unitHavoc and (havocDu>0.1+timeUnitlCastFinish) then
+				local unitHavoc,havocStamp = IROVar.Lock.HasHavoc()
+				if unitHavoc and (12-(currentTime-havocStamp)>0.1+timeUnitlCastFinish) then
 					currentSS = currentSS + 4
 				else
 					currentSS = currentSS + 2
@@ -470,4 +474,12 @@ function IROVar.Lock.EradicationTargetAuraEnd()
 		IROVar.Lock.Eradication_Old_Value=0
 	end
 	return IROVar.Lock.Eradication_Old_Value
+end
+
+function IROVar.Lock.PredictTimeSS_DesLock(targetSS) -- return time (sec)
+	local currentSS=IROVar.Lock.PredictSS()
+	targetSS=targetSS-currentSS
+	if targetSS<=0 then return 0 end
+	local t= targetSS / (1+ (IROVar.Lock.Infernal.Count * 2 ) + (1/(IROVar.HasteFactor)))
+	return t
 end

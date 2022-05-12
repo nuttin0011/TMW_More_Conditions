@@ -1,4 +1,4 @@
--- ZRO Decoder 9.0.5/9i
+-- ZRO Decoder 9.0.5/9j
 -- check Spell GCD
 --[[ macro test button
 /run print(IsControlKeyDown() and "Ctrl" or "no Ctrl")
@@ -334,7 +334,7 @@ function IUSC.SU(k,t) --k is string e.g. "33" , "3a" , t=GCD /nil=default
 		local sL=string.len(s)
 		IUSC.SkillNameLen=math.max(IUSC.SkillNameLen,sL)
 		s=s..string.rep(" ",IUSC.SkillNameLen-sL)
-		IUSC.printdebug(">>USE: "..s)
+		IUSC.printdebug(">>"..IUSC.SkillPressStampTime.." USE: "..s)
 	end
 	IUSC.LastSU=IUSC.NumToSpell[C]
 	IUSC.CreateGCDPluse(t)

@@ -79,3 +79,13 @@ TestRampageEvent:SetScript("OnEvent", function(self, event)
 end)
 
 
+(function()
+    local HavocCD=IROVar.Lock.HavocCDEnd()-GetTime()
+    if HavocCD<0 then HavocCD=0 end
+    local c,m,s,d=GetSpellCharges("conflagrate")
+    local t=d
+    if c<m then
+        t=(s+d-GetTime())+d
+    end
+    return HavocCD>t
+end)()

@@ -1,4 +1,4 @@
--- Many Function Version Warlock 9.0.5/21
+-- Many Function Version Warlock 9.0.5/22
 -- Set Priority to 20
 -- this file save many function for paste to TMW Snippet LUA
 
@@ -30,6 +30,7 @@ GetSpellCount("Implosion") ;Implosion Stack
 UnitPower("player",7) ; SoulShards
 UnitPower("player",7,true) ; SSFragment
 ]]
+--var IROVar.Lock.SS.JustUpdateSS = true when SS just update 0.5 GCD ago
 
 
 if not IROVar then IROVar={} end
@@ -59,6 +60,23 @@ IROVar.Lock.SS.LockSpellModSS = {
 	["Chaos Bolt267"]=-20, -- 267 = des
 	["Incinerate267"]=2
 }
+
+IROVar.Lock.SS.JustUpdateSS=false
+IROVar.Lock.SS.JustUpdateSSHandle=nil
+IROVar.Lock.SS.FSSUpdateEvent=CreateFrame("Frame")
+IROVar.Lock.SS.FSSUpdateEvent:RegisterEvent("UNIT_POWER_UPDATE")
+IROVar.Lock.SS.FSSUpdateEvent:RegisterEvent("UNIT_POWER_FREQUENT")
+IROVar.Lock.SS.FSSUpdateEvent:SetScript("OnEvent",function(self,event,unit,powertype)
+	if unit~="player" or powertype~="SOUL_SHARDS" then return end
+	if not IROVar.Lock.SS.JustUpdateSSHandle then
+		IROVar.Lock.SS.JustUpdateSS=true
+		IROVar.Lock.SS.JustUpdateSSHandle=C_Timer.NewTimer(IROVar.CastTime0_5sec,function()
+			IROVar.Lock.SS.JustUpdateSS=false
+			IROVar.Lock.SS.JustUpdateSSHandle=nil
+		end)
+	end
+end)
+
 IROVar.Lock.EradicationChange=0
 
 local function CDend(s)
@@ -314,6 +332,9 @@ function IROVar.Lock.COMBAT_LOG_EVENT_UNFILTERED_OnEvent(...)
 		end
 	end
 end
+
+
+
 
 function IROVar.Lock.GetWildImpCount(FelFireboltRemainAtLeast)
 	if IROVar.Lock.Imp.count==0 then return 0 end

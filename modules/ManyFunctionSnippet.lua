@@ -1,4 +1,4 @@
--- Many Function Version 9.0.5/54
+-- Many Function Version 9.0.5/55
 -- Set Priority to 1
 -- this file save many function for paste to TMW Snippet LUA
 
@@ -76,6 +76,7 @@ IROVar.SkillCheckDPSRange = nil
 IROVar.InstanceName = GetInstanceInfo()
 IROVar.activeConduits = {}
 
+
 function IROVar.CalculateHaste()
     IROVar.Haste = UnitSpellHaste("player")
     IROVar.HasteFactor = 100/(100+IROVar.Haste)
@@ -97,15 +98,18 @@ for k,v in pairs(IROUsedSkillControl.ClassType) do
 end
 IROInterruptTier.CDEnd=0
 
-function IROVar.UpdateHaste(self,event,unittoken)
-    if unittoken=="player" then
-        IROVar.CalculateHaste()
-    end
-end
-
+--IROVar.FireCri=GetSpellCritChance(3)
 IROVar.fhaste = CreateFrame("Frame")
 IROVar.fhaste:RegisterEvent("UNIT_SPELL_HASTE")
-IROVar.fhaste:SetScript("OnEvent", IROVar.UpdateHaste)
+--IROVar.fhaste:RegisterEvent("COMBAT_RATING_UPDATE")
+IROVar.fhaste:SetScript("OnEvent", function(self,event,unittoken)
+    if event=="UNIT_SPELL_HASTE" and unittoken=="player" then
+        IROVar.CalculateHaste()
+    end
+--[[    if event=="COMBAT_RATING_UPDATE" then
+        IROVar.FireCri=GetSpellCritChance(3)
+    end]]
+end)
 
 function IROVar.Debug()
     IROVar.DebugMode=not IROVar.DebugMode

@@ -23,14 +23,14 @@
 --function IROVar.GetTyrantCDEnd() -- return time of CD Tyrant end
 --IROVar.Lock.EradicationChange -- Check Change of Eradication
 --IROVar.Lock.EradicationTargetAuraEnd() -- Check Aura end of target
---function IROVar.Lock.PredictTimeSS_DesLock(targetSS) -- return time (sec)
 --function IROVar.Lock.CDConflagTwoCharge() time to 2 charge
+--function IROVar.Lock.PredictSS_ByTime_Des(t) ; return SSFragment / 10 SSFragment = 1 SS
 --[[ NOTE:
 GetSpellCount("Implosion") ;Implosion Stack
 UnitPower("player",7) ; SoulShards
 UnitPower("player",7,true) ; SSFragment
 ]]
---var IROVar.Lock.SS.JustUpdateSS = true when SS just update 0.5 GCD ago
+
 
 
 if not IROVar then IROVar={} end
@@ -61,13 +61,10 @@ IROVar.Lock.SS.LockSpellModSS = {
 	["Incinerate267"]=2
 }
 
+--[[ not use now
 IROVar.Lock.SS.JustUpdateSS=false
 IROVar.Lock.SS.JustUpdateSSHandle=nil
-IROVar.Lock.SS.FSSUpdateEvent=CreateFrame("Frame")
-IROVar.Lock.SS.FSSUpdateEvent:RegisterEvent("UNIT_POWER_UPDATE")
-IROVar.Lock.SS.FSSUpdateEvent:RegisterEvent("UNIT_POWER_FREQUENT")
-IROVar.Lock.SS.FSSUpdateEvent:SetScript("OnEvent",function(self,event,unit,powertype)
-	if unit~="player" or powertype~="SOUL_SHARDS" then return end
+function IROVar.Lock.SS.UpdateJustUpdateSS()
 	if not IROVar.Lock.SS.JustUpdateSSHandle then
 		IROVar.Lock.SS.JustUpdateSS=true
 		IROVar.Lock.SS.JustUpdateSSHandle=C_Timer.NewTimer(IROVar.CastTime0_5sec,function()
@@ -75,7 +72,15 @@ IROVar.Lock.SS.FSSUpdateEvent:SetScript("OnEvent",function(self,event,unit,power
 			IROVar.Lock.SS.JustUpdateSSHandle=nil
 		end)
 	end
+end
+IROVar.Lock.SS.FSSUpdateEvent=CreateFrame("Frame")
+IROVar.Lock.SS.FSSUpdateEvent:RegisterEvent("UNIT_POWER_UPDATE")
+IROVar.Lock.SS.FSSUpdateEvent:RegisterEvent("UNIT_POWER_FREQUENT")
+IROVar.Lock.SS.FSSUpdateEvent:SetScript("OnEvent",function(self,event,unit,powertype)
+	if unit~="player" or powertype~="SOUL_SHARDS" then return end
+	IROVar.Lock.SS.UpdateJustUpdateSS()
 end)
+]]
 
 IROVar.Lock.EradicationChange=0
 
@@ -142,6 +147,7 @@ IROVar.Lock.PetActiveOldVal=-1
 IROVar.Lock.JustRunPetCheck=0
 IROVar.Lock.HavocGUID = nil
 IROVar.Lock.HavocCDEndTime = 0
+IROVar.Lock.ImmolateChange=-1
 
 IROVar.Register_SPELL_UPDATE_COOLDOWN_scrip_CALLBACK("HavocCD",function(GCDEnd)
 	if IROSpecID==267 then --Des Spec
@@ -220,10 +226,17 @@ function IROVar.Lock.CheckImpExpire()
 	end
 end
 
+IROVar.Lock.InternalExpireTime={}
+
 function IROVar.Lock.COMBAT_LOG_EVENT_UNFILTERED_OnEvent(...)
     local _,subevent,_,sourceGUID,_,_,_,DesGUID,DesName,_,_,spellID,spellName = ...
-    if (sourceGUID==IROVar.Lock.playerGUID)  and (subevent=="SPELL_CAST_FAILED") then
+    if (sourceGUID==IROVar.Lock.playerGUID) and (subevent=="SPELL_CAST_FAILED") then
 		IROVar.Lock.SS.trust_segment_cast = true
+	end
+	if (sourceGUID==IROVar.Lock.playerGUID) and (subevent=="SPELL_CAST_SUCCESS") and IROVar.Lock.JustStage4 then
+		-- use to chesk Interrupt Shadow Bolt at Stage 4
+		-- 1st cast SB dont interrupt
+		IROVar.Lock.JustStage4=false
 	end
 	if IROSpecID==267 then -- Des spec
 		if (sourceGUID==IROVar.Lock.playerGUID) then
@@ -241,10 +254,25 @@ function IROVar.Lock.COMBAT_LOG_EVENT_UNFILTERED_OnEvent(...)
 				IROVar.Lock.Infernal.Count=IROVar.Lock.Infernal.Count+1
 				local infernalTimer = IROVar.Lock.Infernal.NextInfernalIs30sec and 30 or (spellName=="Blasphemy" and 8 or 10)
 				IROVar.Lock.Infernal.NextInfernalIs30sec=false
+				do
+					local N=1
+					for i=1,#IROVar.Lock.InternalExpireTime do
+						if infernalTimer>=IROVar.Lock.InternalExpireTime[i] then
+							N=i
+							break
+						elseif i==#IROVar.Lock.InternalExpireTime then
+							N=#IROVar.Lock.InternalExpireTime+1
+						end
+					end
+					table.insert(IROVar.Lock.InternalExpireTime,N,infernalTimer+GetTime())
+				end
 				C_Timer.After(infernalTimer,function() IROVar.Lock.Infernal.Count=IROVar.Lock.Infernal.Count-1 end)
 			end
 			if spellName=="Eradication" then
 				IROVar.Lock.EradicationChange=IROVar.Lock.EradicationChange+1
+			end
+			if (subevent=="SPELL_CAST_SUCCESS")and(spellName=="Immolate") then
+				IROVar.Lock.ImmolateChange=IROVar.Lock.ImmolateChange+1
 			end
 		end
 	end
@@ -480,8 +508,9 @@ function IROVar.Lock.SPELL_UPDATE_COOLDOWN_Event(GCDEnd)
 	elseif IROSpecID==267 then -- Des Spec
 		IROVar.Lock.ConflagCD_Old_Value={GetSpellCharges("Conflagrate")}
 		local c,m,s,d = unpack(IROVar.Lock.ConflagCD_Old_Value)
-		if c==m then IROVar.Lock.Conflag2ChargeCDEnd=0 end
-		IROVar.Lock.Conflag2ChargeCDEnd=((m-c-1)*d)+(s+d)
+		if c==m then IROVar.Lock.Conflag2ChargeCDEnd=0 else
+			IROVar.Lock.Conflag2ChargeCDEnd=((m-c-1)*d)+(s+d)
+		end
 	end
 end
 
@@ -510,12 +539,88 @@ function IROVar.Lock.EradicationTargetAuraEnd()
 	return IROVar.Lock.Eradication_Old_Value
 end
 
-function IROVar.Lock.PredictTimeSS_DesLock(targetSS) -- return time to target SS (sec)
-	local currentSS=IROVar.Lock.PredictSS()
-	targetSS=targetSS-currentSS
-	if targetSS<=0 then return 0 end
-	local t= targetSS / (1+ (IROVar.Lock.Infernal.Count * 2 ) + (1/(IROVar.HasteFactor)))
-	return t
+IROVar.FireCri=GetSpellCritChance(3)
+IROVar.fCri=CreateFrame("Frame")
+IROVar.fCri:RegisterEvent("COMBAT_RATING_UPDATE")
+IROVar.fCri:SetScript("OnEvent", function()
+    IROVar.FireCri=GetSpellCritChance(3)
+end)
+--[[
+	no Havoc
+	input Number of Immolate Immo
+	input Number of Infernal Infe
+	input average time of Infernal InfeT
+	input Conflagrate charges time ConfC
+
+	ss gen
+	t sec pass
+	cir = 35% = 0.35
+	1 incinerate Gen= t/4SGCD * (2+Cri)
+	2 Immolate Gen= Immo * t/GCD * Cri/2
+	3 Conflag Gen= t/ConfC * 5
+	4 Infernal Gen= Infe * t*2 ;  * t/InfeT ; InfeT <= t
+	ss=t/4SGCD * (2+Cri) + Immo * t/GCD * Cri/2 + t/ConfC * 5 + Infe * t*2
+	ss=t((2+Cri)/4SGCD + Immo/GCD*Cri/2 + 5/ConfC + 2*Infe)
+	t=ss / ((2+Cri)/4SGCD + Immo*Cri/2GCD + 5/ConfC + 2*Infe)
+
+	if t>InfeT
+	t2 = InfeT
+	t3 = t-InfeT
+	t4 = t3*(1+2+3+4)/(1+2+3)
+	ans = t2+t4
+]]
+--[[
+function IROVar.Lock.PredictTimeToReachSS_DesLock(targetSS) -- return time to target SS (sec)
+	local SS=IROVar.Lock.PredictSS()
+	--************** Not finish Yet ********************
+end]]
+
+IROVar.Lock.ImmolateChange_Old=0
+IROVar.Lock.Immolate_TargetEnd=0
+IROVar.Lock.Immolate_FocusEnd=0
+
+function IROVar.Lock.GetNImmolate() -- return number of Immolate
+	local currentTime=GetTime()
+	local N=0
+	if IROVar.Lock.ImmolateChange_Old~=IROVar.Lock.ImmolateChange then
+		IROVar.Lock.ImmolateChange_Old=IROVar.Lock.ImmolateChange
+		IROVar.Lock.Immolate_TargetEnd=select(3,TMW.CNDT.Env.AuraDur("target","immolate","PLAYER HARMFUL"))
+		IROVar.Lock.Immolate_FocusEnd=select(3,TMW.CNDT.Env.AuraDur("focus","immolate","PLAYER HARMFUL"))
+	end
+	N=(IROVar.Lock.Immolate_TargetEnd>currentTime and 1 or 0)+(IROVar.Lock.Immolate_FocusEnd>currentTime and 1 or 0)
+	return N
+end
+
+function IROVar.Lock.GetSSFromInfernal(t) -- return SS fragment from infernal t sec pass
+	if  #IROVar.Lock.InternalExpireTime==0 then return 0 end
+	local currentTime=GetTime()
+	local SS=0
+	for k,v in pairs(IROVar.Lock.InternalExpireTime) do
+		if v and v<currentTime then
+			IROVar.Lock.InternalExpireTime[i]=nil******
+		else
+			local t3=IROVar.Lock.InternalExpireTime[i]-currentTime
+			if t3>t then t3=t end
+			SS=SS+(t3*2)
+		end
+	end
+	return SS
+end
+
+function IROVar.Lock.PredictSS_ByTime_Des(t) -- predict SS fragment t sec pass ; assume DPSing
+	t=t or 0
+	local SS=IROVar.Lock.PredictSS()
+	if t<=0 then return SS end
+
+	local Immo=IROVar.Lock.GetNImmolate()
+	local Cri=IROVar.FireCri/100
+	local SSImmo=Immo*(t/IROVar.CastTime1_5sec)*Cri/2
+	local SSInfe=IROVar.Lock.GetSSFromInfernal(t)
+	local SSIncinerate=t/(IROVar.CastTime2sec)*(2+Cri)
+	local SSConflag=t/IROVar.Lock.ConflagChargeTime()*5
+	SS=SS+SSImmo+SSInfe+SSIncinerate+SSConflag
+	return SS
+
 end
 
 function IROVar.Lock.CDConflagTwoCharge()
@@ -525,7 +630,7 @@ function IROVar.Lock.CDConflagTwoCharge()
 end
 
 function IROVar.Lock.ConflagChargeTime()
-	return IROVar.Lock.ConflagCD_Old_Value[4] or 0
+	return IROVar.Lock.ConflagCD_Old_Value[4] or 10
 end
 --[[
 1)rotation(SGCD) Havoc(3) --> CB(6) --> 1st Conflag(3) --> CB(4.2) --> 2nd Conflag

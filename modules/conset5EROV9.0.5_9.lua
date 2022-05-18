@@ -1,4 +1,4 @@
--- ZRO Decoder 9.0.5/9j
+-- ZRO Decoder 9.0.5/9K
 -- check Spell GCD
 --[[ macro test button
 /run print(IsControlKeyDown() and "Ctrl" or "no Ctrl")
@@ -79,12 +79,14 @@ IUSC.NumToID={}
 IUSC.IDToSpell={}
 IUSC.After=function(...) end
 IUSC.LastSU=nil
-local Ping={}
+IUSC.Ping={}
+local Ping=IUSC.Ping
 function Ping.aP()
     Ping.now=(select(4,GetNetStats())/1000)
-	--Ping.nowPlus=math.min(0.8,Ping.now+0.2)
+	--Ping.nowPlus=math.min(0.5,Ping.now+0.25)
 	Ping.nowPlus=math.min(0.8,Ping.now*2)
 	--Ping.nowMul=Ping.now*2
+	--/dump IUSC.Ping.nowPlus
     C_Timer.After(7.8,Ping.aP)
 end
 Ping.aP()
@@ -100,7 +102,7 @@ end
 function IUSC.Haste_Event(Self,Event,Arg1)
 	if(Arg1=="player")and(not IUSC.spec1secGCD[IUSC.PlayerSpec])then
         IUSC.GCDCD = math.max(0.5,1.5*(100/(100+UnitSpellHaste("player"))))
-		IUSC.GCDCDMinus005=IUSC.GCDCD-0.08
+		IUSC.GCDCDMinus005=IUSC.GCDCD-0.05
 		--IUSC.GCDCDMinus02=IUSC.GCDCD-0.2
 		IUSC.GCDCDMinus02=IUSC.GCDCD-Ping.nowPlus
 	end
@@ -118,7 +120,7 @@ function IUSC.SpecChanged()
 	else
 		IUSC.GCDCD=math.max(0.5,1.5*(100/(100+UnitSpellHaste("player"))))
 	end
-	IUSC.GCDCDMinus005=IUSC.GCDCD-0.08
+	IUSC.GCDCDMinus005=IUSC.GCDCD-0.05
 	--IUSC.GCDCDMinus02=IUSC.GCDCD-0.2
 	IUSC.GCDCDMinus02=IUSC.GCDCD-Ping.nowPlus
 	IUSC.PlayerSpec=spec
@@ -442,6 +444,7 @@ function enMiniIROcode(IROcode1,IROcode2,IROcode3)
 	return "ff"..miniIROCode3..miniIROCode2..miniIROCode1
 end
 
+
 IUSC.ClassType={
 	--[specID]={interruptTier,interruptSpellName,DPSCheckSkill,Range,Role,CastType}
 	[71] = {'B','Pummel','Pummel','Melee','DPS','InstanceCast'} -- Arm
@@ -481,3 +484,4 @@ IUSC.ClassType={
 	,[251] = {'B','Mind Freeze','Death Strike','Melee','DPS','InstanceCast'} -- frost
 	,[252] = {'B','Mind Freeze','Death Strike','Melee','DPS','InstanceCast'} -- unholy
 }
+

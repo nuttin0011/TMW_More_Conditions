@@ -25,6 +25,8 @@
 --IROVar.Lock.EradicationTargetAuraEnd() -- Check Aura end of target
 --function IROVar.Lock.CDConflagTwoCharge() time to 2 charge
 --function IROVar.Lock.PredictSS_ByTime_Des(t) ; return SSFragment / 10 SSFragment = 1 SS
+--var IROVar.Lock.CBCount ; count chaos bolt ; IROVar.Lock.CBCount_Old = 0
+--var IROVar.Lock.CBHCount ; count chaos bolt in Havoc ; IROVar.Lock.CBHCount_Old = 0
 --[[ NOTE:
 GetSpellCount("Implosion") ;Implosion Stack
 UnitPower("player",7) ; SoulShards
@@ -47,6 +49,10 @@ IROVar.Lock.FromtheShadows.ExpireTime=0
 IROVar.RegisterIncombatCallBackRun("ResetFTS",function()
 	IROVar.Lock.FromtheShadows.Count=0
 end)
+IROVar.Lock.CBCount=0
+IROVar.Lock.CBCount_Old=0
+IROVar.Lock.CBHCount=0
+IROVar.Lock.CBHCount_Old=0
 IROVar.Lock.SS.LockSpellModSS = {
 	["Hand of Gul'dan266"]=-30, --266 = Demo
 	["Shadow Bolt266"]=10,
@@ -227,6 +233,18 @@ function IROVar.Lock.CheckImpExpire()
 end
 
 IROVar.Lock.InternalExpireTime={}
+function IROVar.Lock.PushInternalExpireTime(time)
+	--big to small
+	local N=#IROVar.Lock.InternalExpireTime+1
+	for i=1, #IROVar.Lock.InternalExpireTime do
+		if time>IROVar.Lock.InternalExpireTime[i] then
+			N=i
+			break
+		end
+	end
+	table.insert(IROVar.Lock.InternalExpireTime,N,time)
+end
+
 
 function IROVar.Lock.COMBAT_LOG_EVENT_UNFILTERED_OnEvent(...)
     local _,subevent,_,sourceGUID,_,_,_,DesGUID,DesName,_,_,spellID,spellName = ...
@@ -254,18 +272,7 @@ function IROVar.Lock.COMBAT_LOG_EVENT_UNFILTERED_OnEvent(...)
 				IROVar.Lock.Infernal.Count=IROVar.Lock.Infernal.Count+1
 				local infernalTimer = IROVar.Lock.Infernal.NextInfernalIs30sec and 30 or (spellName=="Blasphemy" and 8 or 10)
 				IROVar.Lock.Infernal.NextInfernalIs30sec=false
-				do
-					local N=1
-					for i=1,#IROVar.Lock.InternalExpireTime do
-						if infernalTimer>=IROVar.Lock.InternalExpireTime[i] then
-							N=i
-							break
-						elseif i==#IROVar.Lock.InternalExpireTime then
-							N=#IROVar.Lock.InternalExpireTime+1
-						end
-					end
-					table.insert(IROVar.Lock.InternalExpireTime,N,infernalTimer+GetTime())
-				end
+				IROVar.Lock.PushInternalExpireTime(infernalTimer+GetTime())
 				C_Timer.After(infernalTimer,function() IROVar.Lock.Infernal.Count=IROVar.Lock.Infernal.Count-1 end)
 			end
 			if spellName=="Eradication" then
@@ -273,6 +280,12 @@ function IROVar.Lock.COMBAT_LOG_EVENT_UNFILTERED_OnEvent(...)
 			end
 			if (subevent=="SPELL_CAST_SUCCESS")and(spellName=="Immolate") then
 				IROVar.Lock.ImmolateChange=IROVar.Lock.ImmolateChange+1
+			end
+			if (subevent=="SPELL_CAST_SUCCESS")and(spellName=="Chaos Bolt") then
+				IROVar.Lock.CBCount=IROVar.Lock.CBCount+1
+				if IROVar.Lock.HasHavoc() then
+					IROVar.Lock.CBHCount=IROVar.Lock.CBHCount+1
+				end
 			end
 		end
 	end
@@ -595,9 +608,10 @@ function IROVar.Lock.GetSSFromInfernal(t) -- return SS fragment from infernal t 
 	if  #IROVar.Lock.InternalExpireTime==0 then return 0 end
 	local currentTime=GetTime()
 	local SS=0
-	for k,v in pairs(IROVar.Lock.InternalExpireTime) do
-		if v and v<currentTime then
-			IROVar.Lock.InternalExpireTime[i]=nil******
+	local N=#IROVar.Lock.InternalExpireTime
+	for i=N,1,-1 do
+		if IROVar.Lock.InternalExpireTime[i]<currentTime then
+			IROVar.Lock.InternalExpireTime[i]=nil
 		else
 			local t3=IROVar.Lock.InternalExpireTime[i]-currentTime
 			if t3>t then t3=t end
@@ -607,20 +621,30 @@ function IROVar.Lock.GetSSFromInfernal(t) -- return SS fragment from infernal t 
 	return SS
 end
 
-function IROVar.Lock.PredictSS_ByTime_Des(t) -- predict SS fragment t sec pass ; assume DPSing
-	t=t or 0
-	local SS=IROVar.Lock.PredictSS()
-	if t<=0 then return SS end
+function IROVar.Lock.PredictSSGen_ByTime_Des(totalTime,tIdle) -- predict SS fragment t sec pass ; assume DPSing
+	--[[
+		totalTime = tDPS+tIdle
+		tIdel = Time Idel
+		tDPS = Time to assume DPSing
+		E.G. time = 10 sec, Cast Cataclysm 2 sec, chaos bolt 3 sec, etc 10 sec
+		IROVar.Lock.PredictSS_ByTime_Des(10,5) ; cause Cataclysm+chaos bolt not Gen SS
+	]]
+		totalTime=totalTime or 0
+		if totalTime<=0 then return 0 end
+		tIdle=tIdle or 0
+		local tDPS=totalTime-tIdle
+		local Immo=IROVar.Lock.GetNImmolate()
+		local Cri=IROVar.FireCri/100
+		local SSImmo=Immo*(totalTime/IROVar.CastTime1_5sec)*Cri/2
+		local SSConflag=tDPS/IROVar.Lock.ConflagChargeTime()
+		local SSIncinerate=(tDPS-(SSConflag*IROVar.CastTime1_5sec))/(IROVar.CastTime2sec)*(2+Cri)
+		SSConflag=SSConflag*5
+		local SSInfe=IROVar.Lock.GetSSFromInfernal(totalTime)
+		return SSImmo+SSInfe+SSIncinerate+SSConflag
+	end
 
-	local Immo=IROVar.Lock.GetNImmolate()
-	local Cri=IROVar.FireCri/100
-	local SSImmo=Immo*(t/IROVar.CastTime1_5sec)*Cri/2
-	local SSInfe=IROVar.Lock.GetSSFromInfernal(t)
-	local SSIncinerate=t/(IROVar.CastTime2sec)*(2+Cri)
-	local SSConflag=t/IROVar.Lock.ConflagChargeTime()*5
-	SS=SS+SSImmo+SSInfe+SSIncinerate+SSConflag
-	return SS
-
+function IROVar.Lock.PredictSS_ByTime_Des(totalTime,tIdle) -- predict SS fragment t sec pass ; assume DPSing
+	return IROVar.Lock.PredictSS()+IROVar.Lock.PredictSSGen_ByTime_Des(totalTime,tIdle)
 end
 
 function IROVar.Lock.CDConflagTwoCharge()

@@ -633,6 +633,7 @@ function IROVar.Lock.PredictSSGen_ByTime_Des(totalTime,tIdle) -- predict SS frag
 		if totalTime<=0 then return 0 end
 		tIdle=tIdle or 0
 		local tDPS=totalTime-tIdle
+		if tDPS<0 then tDPS=0 end
 		local Immo=IROVar.Lock.GetNImmolate()
 		local Cri=IROVar.FireCri/100
 		local SSImmo=Immo*(totalTime/IROVar.CastTime1_5sec)*Cri/2

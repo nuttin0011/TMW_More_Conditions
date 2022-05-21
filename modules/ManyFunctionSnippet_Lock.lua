@@ -53,6 +53,7 @@ IROVar.Lock.CBCount=0
 IROVar.Lock.CBCount_Old=0
 IROVar.Lock.CBHCount=0
 IROVar.Lock.CBHCount_Old=0
+IROVar.Lock.HavocTimeStamp=GetTime()
 IROVar.Lock.SS.LockSpellModSS = {
 	["Hand of Gul'dan266"]=-30, --266 = Demo
 	["Shadow Bolt266"]=10,
@@ -637,7 +638,7 @@ function IROVar.Lock.PredictSSGen_ByTime_Des(totalTime,tIdle) -- predict SS frag
 		local Immo=IROVar.Lock.GetNImmolate()
 		local Cri=IROVar.FireCri/100
 		local SSImmo=Immo*(totalTime/IROVar.CastTime1_5sec)*Cri/2
-		local SSConflag=tDPS/IROVar.Lock.ConflagChargeTime()
+		local SSConflag=math.floor(tDPS/IROVar.Lock.ConflagChargeTime())
 		local SSIncinerate=(tDPS-(SSConflag*IROVar.CastTime1_5sec))/(IROVar.CastTime2sec)*(2+Cri)
 		SSConflag=SSConflag*5
 		local SSInfe=IROVar.Lock.GetSSFromInfernal(totalTime)

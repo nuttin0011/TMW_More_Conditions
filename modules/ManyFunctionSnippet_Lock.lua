@@ -23,10 +23,15 @@
 --function IROVar.GetTyrantCDEnd() -- return time of CD Tyrant end
 --IROVar.Lock.EradicationChange -- Check Change of Eradication
 --IROVar.Lock.EradicationTargetAuraEnd() -- Check Aura end of target
---function IROVar.Lock.CDConflagTwoCharge() time to 2 charge
---function IROVar.Lock.PredictSS_ByTime_Des(t) ; return SSFragment / 10 SSFragment = 1 SS
 --var IROVar.Lock.CBCount ; count chaos bolt ; IROVar.Lock.CBCount_Old = 0
 --var IROVar.Lock.CBHCount ; count chaos bolt in Havoc ; IROVar.Lock.CBHCount_Old = 0
+--function IROVar.Lock.TimeToNeed2ndConflag(r)
+--function IROVar.Lock.ConflagChargeTime()
+--function IROVar.Lock.CDConflagTwoCharge()
+--function IROVar.Lock.PredictSS_ByTime_Des(totalTime,tIdle)
+--function IROVar.Lock.PredictSSGen_ByTime_Des(totalTime,tIdle)
+--function IROVar.Lock.GetSSFromInfernal(t)
+--function IROVar.Lock.GetSSFromImmolate(t)
 --[[ NOTE:
 GetSpellCount("Implosion") ;Implosion Stack
 UnitPower("player",7) ; SoulShards
@@ -622,6 +627,12 @@ function IROVar.Lock.GetSSFromInfernal(t) -- return SS fragment from infernal t 
 	return SS
 end
 
+function IROVar.Lock.GetSSFromImmolate(t)
+	local Immo=IROVar.Lock.GetNImmolate()
+	local Cri=IROVar.FireCri/100
+	return Immo*(t/IROVar.CastTime1_5sec)*Cri/2
+end
+
 function IROVar.Lock.PredictSSGen_ByTime_Des(totalTime,tIdle) -- predict SS fragment t sec pass ; assume DPSing
 	--[[
 		totalTime = tDPS+tIdle
@@ -635,9 +646,8 @@ function IROVar.Lock.PredictSSGen_ByTime_Des(totalTime,tIdle) -- predict SS frag
 		tIdle=tIdle or 0
 		local tDPS=totalTime-tIdle
 		if tDPS<0 then tDPS=0 end
-		local Immo=IROVar.Lock.GetNImmolate()
 		local Cri=IROVar.FireCri/100
-		local SSImmo=Immo*(totalTime/IROVar.CastTime1_5sec)*Cri/2
+		local SSImmo=IROVar.Lock.GetSSFromImmolate(totalTime)
 		local SSConflag=math.floor(tDPS/IROVar.Lock.ConflagChargeTime())
 		local SSIncinerate=(tDPS-(SSConflag*IROVar.CastTime1_5sec))/(IROVar.CastTime2sec)*(2+Cri)
 		SSConflag=SSConflag*5

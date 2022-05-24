@@ -633,7 +633,7 @@ function IROVar.Lock.GetSSFromImmolate(t)
 	return Immo*(t/IROVar.CastTime1_5sec)*Cri/2
 end
 
-function IROVar.Lock.PredictSSGen_ByTime_Des(totalTime,tIdle) -- predict SS fragment t sec pass ; assume DPSing
+function IROVar.Lock.PredictSSGen_ByTime_Des(totalTime,tIdle) -- predict SS Gen fragment t sec pass ; assume DPSing
 	--[[
 		totalTime = tDPS+tIdle
 		tIdel = Time Idel

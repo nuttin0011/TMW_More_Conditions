@@ -32,6 +32,7 @@
 --function IROVar.Lock.PredictSSGen_ByTime_Des(totalTime,tIdle)
 --function IROVar.Lock.GetSSFromInfernal(t)
 --function IROVar.Lock.GetSSFromImmolate(t)
+--var IROVar.Lock.CurrentCast = CurrentCast
 --[[ NOTE:
 GetSpellCount("Implosion") ;Implosion Stack
 UnitPower("player",7) ; SoulShards
@@ -43,6 +44,7 @@ UnitPower("player",7,true) ; SSFragment
 if not IROVar then IROVar={} end
 if not IROVar.Lock then IROVar.Lock={} end
 
+IROVar.Lock.CurrentCast=nil
 IROVar.Lock.PetActive=nil
 IROVar.Lock.playerGUID=UnitGUID("player")
 IROVar.Lock.SS={}
@@ -102,6 +104,16 @@ local function CDend(s)
 		return st+du
 	else return 0 end
 end
+
+function IROVar.FixDemonicCoreStack()
+	local name, _, count=AuraUtil.FindAuraByName("Demonic Core", "player", "PLAYER HELPFUL")
+	if name then
+		IROVar.Lock.DemonicCoreStack=count
+	else
+		IROVar.Lock.DemonicCoreStack=0
+	end
+end
+C_Timer.NewTicker(3.2,IROVar.FixDemonicCoreStack)
 
 function IROVar.GetDemonicCoreStack()
 	return IROVar.Lock.DemonicCoreStack
@@ -539,6 +551,12 @@ IROVar.Lock.PLAYER_TARGET_CHANGED_frame=CreateFrame("Frame")
 IROVar.Lock.PLAYER_TARGET_CHANGED_frame:RegisterEvent("PLAYER_TARGET_CHANGED")
 IROVar.Lock.PLAYER_TARGET_CHANGED_frame:SetScript("OnEvent", function()
 	IROVar.Lock.EradicationChange=IROVar.Lock.EradicationChange+1
+end)
+
+IROVar.Lock.CURRENT_SPELL_CAST_CHANGED_frame=CreateFrame("Frame")
+IROVar.Lock.CURRENT_SPELL_CAST_CHANGED_frame:RegisterEvent("CURRENT_SPELL_CAST_CHANGED")
+IROVar.Lock.CURRENT_SPELL_CAST_CHANGED_frame:SetScript("OnEvent", function()
+	IROVar.Lock.CurrentCast=select(1,UnitCastingInfo("player"))
 end)
 
 IROVar.Lock.Eradication_Old_Value=0

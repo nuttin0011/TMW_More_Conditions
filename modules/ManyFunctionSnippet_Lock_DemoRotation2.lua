@@ -377,7 +377,7 @@ function Rotation.SortSubRotationByImp(subrotation)
 
     local function SpellValue(t)
         if t=="Hand of Gul'dan" then return 3
-        elseif t=="Demonbolt" then return 2
+        elseif t=="Demonbolt" then return 4
         elseif t=="Shadow Bolt" then return 1
         else return 0
         end
@@ -486,16 +486,45 @@ for i=0,4 do
     DStoSGCDPredict[i]=DStoSGCDPredict[i]-1
 end
 
+Rotation.Adjust=3
+
 function Rotation.Check_CD_Tyrant_CallDS_Befor_Start_Rotation()
--- Rotation.DSTimeLimit>5.5 mean Has CallDS up
+    --Wilfred's Sigil of Superior Summoning Off
+    -- Rotation.DSTimeLimit>5.5 mean Has CallDS up
     local currentTime=GetTime()
     local SGCDPredict=DStoSGCDPredict[IROVar.Lock.DemonicCoreStack]
     local CallDSUP=(Rotation.DSTimeLimit-currentTime)>SGCDPredict*IROVar.CastTime0_5sec
     local CallDSCDPredict=CallDSUP and 100 or SGCDPredict*IROVar.CastTime0_5sec
     local CallTyrantCDPredict=(SGCDPredict+(CallDSUP and 0 or 3))*IROVar.CastTime0_5sec
-    return (CallTyrantCDPredict+currentTime>(Rotation.TyrantCDEnd+1)) and
+    return (CallTyrantCDPredict+currentTime+Rotation.Adjust>(Rotation.TyrantCDEnd+1)) and
     (CallDSCDPredict+currentTime>(Rotation.CallDSCDEnd+1))
 end
+
+Rotation.GFGCDEnd=GetCDEnd("Grimoire: Felguard")
+Rotation.GFGUpdate=-1
+
+function Rotation.Check_CD_Tyrant_CallDS_Befor_Start_Rotation2()
+    --Wilfred's Sigil of Superior Summoning On
+    -- Rotation.DSTimeLimit>5.5 mean Has CallDS up
+        local currentTime=GetTime()
+        local SGCDPredict=DStoSGCDPredict[IROVar.Lock.DemonicCoreStack]
+        local CallDSUP=(Rotation.DSTimeLimit-currentTime)>SGCDPredict*IROVar.CastTime0_5sec
+        local CallDSCDPredict=CallDSUP and 100 or SGCDPredict*IROVar.CastTime0_5sec
+        local CallTyrantCDPredict=(SGCDPredict+(CallDSUP and 0 or 3))*IROVar.CastTime0_5sec
+        local GFG=TMW.CNDT.Env.TalentMap["grimoire: felguard"]
+        local GFGAddOn=0
+        if GFG then
+            if Rotation.GFGUpdate~=IROVar.SPELL_UPDATE_COOLDOWN_count then
+                Rotation.GFGUpdate=IROVar.SPELL_UPDATE_COOLDOWN_count
+                Rotation.GFGCDEnd=GetCDEnd("Grimoire: Felguard")
+            end
+            if Rotation.GFGCDEnd<(currentTime+15) then
+                GFGAddOn=IROVar.HasteFactor*3.5
+            end
+        end
+        return (CallTyrantCDPredict+currentTime+GFGAddOn+Rotation.Adjust>(Rotation.TyrantCDEnd-5)) and
+        (CallDSCDPredict+currentTime>(Rotation.CallDSCDEnd+1))
+    end
 
 function Rotation.Predict_NextTime_Start_Rotation()
     local currentTime=GetTime()

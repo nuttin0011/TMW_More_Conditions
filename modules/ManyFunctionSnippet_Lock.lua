@@ -33,6 +33,8 @@
 --function IROVar.Lock.GetSSFromInfernal(t)
 --function IROVar.Lock.GetSSFromImmolate(t)
 --var IROVar.Lock.CurrentCast = CurrentCast
+--var IROVar.Lock.DemonicCallingBuff = DemonicCallingBuff
+--var IROVar.Lock.DemonicCallingTimeOut = DemonicCallingTimeOut
 --[[ NOTE:
 GetSpellCount("Implosion") ;Implosion Stack
 UnitPower("player",7) ; SoulShards
@@ -50,6 +52,7 @@ IROVar.Lock.playerGUID=UnitGUID("player")
 IROVar.Lock.SS={}
 IROVar.Lock.DemonicCoreStack=0
 IROVar.Lock.DemonicCoreExpireTime=0
+IROVar.Lock.DemonicCallingBuff=false
 IROVar.Lock.FromtheShadows={}
 IROVar.Lock.FromtheShadows.Count=0
 IROVar.Lock.FromtheShadows.ExpireTime=0
@@ -372,6 +375,16 @@ function IROVar.Lock.COMBAT_LOG_EVENT_UNFILTERED_OnEvent(...)
 					IROVar.Lock.FromtheShadows.ExpireTime=0
 				elseif subevent=="SPELL_AURA_REFRESH" then
 					IROVar.Lock.FromtheShadows.ExpireTime=GetTime()+12
+				end
+			elseif spellID==205146 then--Buff Demonic Calling
+				if subevent=="SPELL_AURA_APPLIED" then
+					IROVar.Lock.DemonicCallingBuff=true
+					IROVar.Lock.DemonicCallingTimeOut=GetTime()+20
+				elseif subevent=="SPELL_AURA_REMOVED" then
+					IROVar.Lock.DemonicCallingBuff=false
+				elseif subevent=="SPELL_AURA_REFRESH" then
+					IROVar.Lock.DemonicCallingBuff=true
+					IROVar.Lock.DemonicCallingTimeOut=GetTime()+20
 				end
 			end
 

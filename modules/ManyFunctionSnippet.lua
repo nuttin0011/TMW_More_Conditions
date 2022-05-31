@@ -1,4 +1,4 @@
--- Many Function Version 9.0.5/55
+-- Many Function Version 9.0.5/56
 -- Set Priority to 1
 -- this file save many function for paste to TMW Snippet LUA
 
@@ -60,6 +60,15 @@
 --[[  name, icon, count, dispelType, duration, expirationTime, source, isStealable,
 nameplateShowPersonal, spellId, canApplyAura, isBossDebuff, castByPlayer,
 nameplateShowAll, timeMod, ... = UnitAura(unit, index [, filter])  ]]
+--[[
+    function IROVar.CounterSetUpdate(CounterSet)
+    CounterSet = {
+        ["counterName1"]=Value1,
+        ["counterName2"]=Value2,
+        ....
+    }
+]]
+
 
 if not IROVar then IROVar={} end
 IROVar.Icon = {}
@@ -75,6 +84,12 @@ IROVar.InterruptSpell = nil
 IROVar.SkillCheckDPSRange = nil
 IROVar.InstanceName = GetInstanceInfo()
 IROVar.activeConduits = {}
+
+function IROVar.CounterSetUpdate(c)
+    for k,v in pairs(c) do
+        TMW_ST:UpdateCounter(k,v)
+    end
+end
 
 
 function IROVar.CalculateHaste()

@@ -1,4 +1,4 @@
--- Many Function Version Warlock 9.0.5/22
+-- Many Function Version Warlock 9.0.5/23
 -- Set Priority to 20
 -- this file save many function for paste to TMW Snippet LUA
 
@@ -41,11 +41,17 @@ UnitPower("player",7) ; SoulShards
 UnitPower("player",7,true) ; SSFragment
 ]]
 
+--IROVar.Lock.NetherPortal.Up=true
+--IROVar.Lock.NetherPortal.Time=GetTime()
+--function IROVar.Lock.NetherPortal.Duration()
 
 
 if not IROVar then IROVar={} end
 if not IROVar.Lock then IROVar.Lock={} end
 
+IROVar.Lock.NetherPortal={}
+IROVar.Lock.NetherPortal.Up=false
+IROVar.Lock.NetherPortal.Time=0
 IROVar.Lock.CurrentCast=nil
 IROVar.Lock.PetActive=nil
 IROVar.Lock.playerGUID=UnitGUID("player")
@@ -98,6 +104,12 @@ IROVar.Lock.SS.FSSUpdateEvent:SetScript("OnEvent",function(self,event,unit,power
 	IROVar.Lock.SS.UpdateJustUpdateSS()
 end)
 ]]
+
+function IROVar.Lock.NetherPortal.Duration()
+	if not IROVar.Lock.NetherPortal.Up then return 0 end
+	return GetTime()-IROVar.Lock.NetherPortal.Time
+end
+
 
 IROVar.Lock.EradicationChange=0
 
@@ -338,6 +350,10 @@ function IROVar.Lock.COMBAT_LOG_EVENT_UNFILTERED_OnEvent(...)
 					end
 					IROVar.Lock.Imp.spawn={}
 					IROVar.Lock.Imp.count=0
+				elseif spellID==267217 then --Nether Portal
+					IROVar.Lock.NetherPortal.Up=true
+					IROVar.Lock.NetherPortal.Time=GetTime()
+					C_Timer.After(15,function() IROVar.Lock.NetherPortal.Up=false end)
 				end
 			elseif spellID==265273 then --buff Demonic Power
 				if subevent=="SPELL_AURA_APPLIED" then --buff Demonic Power

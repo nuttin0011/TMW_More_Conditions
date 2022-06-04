@@ -1,9 +1,10 @@
---Pre Process Lock Demo Rotation2 9.2.0/6
+--Pre Process Lock Demo Rotation2 9.2.0/7
 --Set Priority to 30
 
 --var IROVar.LockDemoRotation2.SortedRotation --
 --function IROVar.LockDemoRotation2.PredictSkillUse(SS,DC,SGCD)
 --function IROVar.LockDemoRotation2.TimeLimitSubGCD(time) -- time to calculate , nil=GetTime()
+--Rotation.GetTimeLimit()
 
 if not IROVar.LockDemoRotation2 then
     IROVar.LockDemoRotation2={}
@@ -30,6 +31,11 @@ local function GetCDEnd(s)
     return 0
 end
 
+function Rotation.GetTimeLimit()
+    local t=Rotation.TimeLimit- GetTime()
+    if t<0 then t=0 end
+    return t
+end
 
 Rotation.CallDSCDEnd=GetCDEnd("Call Dreadstalkers")
 Rotation.TyrantCDEnd=GetCDEnd("Summon Demonic Tyrant")

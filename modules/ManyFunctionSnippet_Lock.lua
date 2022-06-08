@@ -44,7 +44,7 @@ UnitPower("player",7,true) ; SSFragment
 --IROVar.Lock.NetherPortal.Up=true
 --IROVar.Lock.NetherPortal.Time=GetTime()
 --function IROVar.Lock.NetherPortal.Duration()
-
+--IROVar.Lock.JustHoG ; HoG recenly casted
 
 if not IROVar then IROVar={} end
 if not IROVar.Lock then IROVar.Lock={} end
@@ -354,6 +354,9 @@ function IROVar.Lock.COMBAT_LOG_EVENT_UNFILTERED_OnEvent(...)
 					IROVar.Lock.NetherPortal.Up=true
 					IROVar.Lock.NetherPortal.Time=GetTime()
 					C_Timer.After(15,function() IROVar.Lock.NetherPortal.Up=false end)
+				elseif spellID==105174 then -- hand of gudal
+					IROVar.Lock.JustHoG=true
+					C_Timer.After(0.4,function() IROVar.Lock.JustHoG=false end)
 				end
 			elseif spellID==265273 then --buff Demonic Power
 				if subevent=="SPELL_AURA_APPLIED" then --buff Demonic Power
@@ -420,9 +423,6 @@ function IROVar.Lock.COMBAT_LOG_EVENT_UNFILTERED_OnEvent(...)
 		end
 	end
 end
-
-
-
 
 function IROVar.Lock.GetWildImpCount(FelFireboltRemainAtLeast)
 	if IROVar.Lock.Imp.count==0 then return 0 end

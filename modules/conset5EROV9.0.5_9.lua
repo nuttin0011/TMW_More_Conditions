@@ -1,4 +1,4 @@
--- ZRO Decoder 9.0.5/9K
+-- ZRO Decoder 9.0.5/9L
 -- check Spell GCD
 --[[ macro test button
 /run print(IsControlKeyDown() and "Ctrl" or "no Ctrl")
@@ -21,7 +21,8 @@ function IUSC.SU(k,[t]) -- skill use , k= key name string e.g. num0 = "30" , F10
 		use t = IROVar.CastTime1_5sec cause of feral spec GCD=1 sec but in Human form GCD=1.5 * Hastefactor
 function IUSC.SO(k,[t]) --k is string e.g. "33" , "3a" , t is GCD time nil = default
 	no any effect.... just keep log.......
-function IUSC.After(Skill ID)
+function IUSC.AfterSU(Skill ID)
+function IUSC.AfterSO(Skill ID)
 	call this function after macro end
 function IUSC.LastSkillUse() -- Return "Skill Name" or nil
 var IUSC.NextReady -- predict Next Ready for Spell on GCD
@@ -77,7 +78,8 @@ IUSC.spec1secGCD = {
 IUSC.NumToSpell={}
 IUSC.NumToID={}
 IUSC.IDToSpell={}
-IUSC.After=function(...) end
+IUSC.AfterSO=function(...) end
+IUSC.AfterSU=function(...) end
 IUSC.LastSU=nil
 IUSC.Ping={}
 local Ping=IUSC.Ping
@@ -340,7 +342,7 @@ function IUSC.SU(k,t) --k is string e.g. "33" , "3a" , t=GCD /nil=default
 	end
 	IUSC.LastSU=IUSC.NumToSpell[C]
 	IUSC.CreateGCDPluse(t)
-	IUSC.After(IUSC.NumToID[C])
+	IUSC.AfterSU(IUSC.NumToID[C])
 end
 
 --Skill use off gcd
@@ -353,7 +355,7 @@ function IUSC.SO(k) --k is string e.g. "33" , "3a"
 	C=bit.bor(C,S) -- k .. mod
 	--print("skill offGCD use : ",IUSC.NumToSpell[C] or "none",IUSC.NumToID[C] or 0)
 	if IUSC.KeepLogText then IUSC.KeepLogText(true) end
-	IUSC.After(IUSC.NumToID[C])
+	IUSC.AfterSO(IUSC.NumToID[C])
 end
 
 -- this function Change Normal IROcode --> miniIROCode

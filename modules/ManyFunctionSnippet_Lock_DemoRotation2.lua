@@ -459,7 +459,7 @@ function Rotation.PredictSkillUse(SS,DC,SGCD)
     return Rotation.SortedRotation[selected].name
 end
 
-Rotation.SkillUse=Rotation.PredictSkillUse(IROVar.Lock.PredictSS()/10,IROVar.GetDemonicCoreStack(),IROVar.LockDemoRotation2.TimeLimitSubGCD(IUSC.NextReady)-1)
+Rotation.SkillUse=Rotation.PredictSkillUse(IROVar.Lock.PredictSS()/10,IROVar.GetDemonicCoreStack(),IROVar.LockDemoRotation2.TimeLimitSubGCD(IUSC.NextReady)-0.5)
 Rotation.SkillUseLastTime=GetTime()
 
 function Rotation.GetSkill()
@@ -468,7 +468,7 @@ function Rotation.GetSkill()
         return Rotation.SkillUse
     else
         Rotation.SkillUseLastTime=currentTime
-        Rotation.SkillUse=Rotation.PredictSkillUse(IROVar.Lock.PredictSS()/10,IROVar.GetDemonicCoreStack(),IROVar.LockDemoRotation2.TimeLimitSubGCD(IUSC.NextReady)-1)
+        Rotation.SkillUse=Rotation.PredictSkillUse(IROVar.Lock.PredictSS()/10,IROVar.GetDemonicCoreStack(),IROVar.LockDemoRotation2.TimeLimitSubGCD(IUSC.NextReady)-0.5)
         return Rotation.SkillUse
     end
 end
@@ -492,7 +492,7 @@ for i=0,4 do
     DStoSGCDPredict[i]=DStoSGCDPredict[i]-1
 end
 
-Rotation.Adjust=3
+Rotation.Adjust=0
 
 function Rotation.Check_CD_Tyrant_CallDS_Befor_Start_Rotation()
     --Wilfred's Sigil of Superior Summoning Off

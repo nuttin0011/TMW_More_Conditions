@@ -1,4 +1,4 @@
--- Many Function Version 9.0.5/56
+-- Many Function Version 9.0.5/57
 -- Set Priority to 1
 -- this file save many function for paste to TMW Snippet LUA
 
@@ -68,6 +68,9 @@ nameplateShowAll, timeMod, ... = UnitAura(unit, index [, filter])  ]]
         ....
     }
 ]]
+
+--function IROVar.TargetCastBar(percenCheck ; nil = 0.6 , DontCheckCantKick ; nil = false) ; return true/false
+    --DontCheckCantKick = true mean kick even notInterruptible (for Stun)
 
 
 if not IROVar then IROVar={} end
@@ -637,3 +640,140 @@ IROVar.TickCount005=0
 IROVar.TickCount005_Handle=C_Timer.NewTicker(0.05,function()
     IROVar.TickCount005=IROVar.TickCount005+1
 end)
+
+IROVar.CastBar={}
+IROVar.CastBar.Casting=nil
+IROVar.CastBar.Channeling=nil
+IROVar.CastBar.Calculated={}
+--kick mean interrupt
+--IROVar.CastBar.Calculated[percent]={}
+--IROVar.CastBar.Calculated[percent][1]=0 --start Kick
+--IROVar.CastBar.Calculated[percent][2]=0 --end Kick
+IROVar.CastBar.Spell=nil
+IROVar.CastBar.SpellId=nil
+IROVar.CastBar.CantKick=false
+--name, text, texture, startTimeMS, endTimeMS, isTradeSkill, castID, notInterruptible, spellId = UnitCastingInfo(unit)
+--name, text, texture, startTimeMS, endTimeMS, isTradeSkill, notInterruptible, spellId = UnitChannelInfo(unit)
+function IROVar.CastBar.CheckCasting()
+    local C={UnitCastingInfo("target")}
+    if C[1] then IROVar.CastBar.Casting=C
+    else IROVar.CastBar.Casting=nil
+    end
+end
+
+function IROVar.CastBar.CheckChanneling()
+    local C={UnitChannelInfo("target")}
+    if C[1] then IROVar.CastBar.Channeling=C
+    else IROVar.CastBar.Channeling=nil
+    end
+end
+
+
+function IROVar.CastBar.ResetKick()
+    IROVar.CastBar.CantKick=false
+    IROVar.CastBar.Spell=nil
+    IROVar.CastBar.SpellId=nil
+    IROVar.CastBar.Calculated={}
+end
+
+function IROVar.CastBar.CheckSpellInfo()
+    local notInterruptible = false
+    local spell = nil
+    local SpellId = nil
+    if IROVar.CastBar.Casting then
+        notInterruptible=IROVar.CastBar.Casting[8]
+        spell=IROVar.CastBar.Casting[1]
+        SpellId=IROVar.CastBar.Casting[9]
+    elseif IROVar.CastBar.Channeling then
+        notInterruptible=IROVar.CastBar.Channeling[7]
+        spell=IROVar.CastBar.Channeling[1]
+        SpellId=IROVar.CastBar.Channeling[8]
+    end
+    IROVar.CastBar.CantKick=notInterruptible
+    IROVar.CastBar.Spell=spell
+    IROVar.CastBar.SpellId=SpellId
+end
+
+function IROVar.CastBar.CalculateInterruptTimer(percenC)
+    -- minC = dont interrupt before this time
+    -- percenC = interrupt after this percent of the cast time
+    -- maxC = dont interrupt after endCastTime-max time
+    local maxC=0.2
+    percenC=percenC or 0.6
+    local startI = 0
+    local endI = 0
+    if IROVar.CastBar.Casting then
+        local startTime=IROVar.CastBar.Casting[4]/1000
+        local endCastTime=IROVar.CastBar.Casting[5]/1000
+        local castTime=endCastTime-startTime
+        local castTimePercent=castTime*percenC
+        startI=castTimePercent+startTime
+        endI=endCastTime-maxC
+    elseif IROVar.CastBar.Channeling then
+        local startTime=IROVar.CastBar.Channeling[4]/1000
+        local endCastTime=IROVar.CastBar.Channeling[5]/1000
+        local castTime=endCastTime-startTime
+        if castTime>=1 then
+            startI=startTime+0.8
+            endI=endCastTime-maxC
+        end
+    end
+    IROVar.CastBar.Calculated[percenC]={startI,endI}
+end
+
+IROVar.CastBar.CastFrame=CreateFrame("Frame")
+IROVar.CastBar.CastFrame:RegisterEvent("UNIT_SPELLCAST_START")
+IROVar.CastBar.CastFrame:RegisterEvent("UNIT_SPELLCAST_CHANNEL_START")
+IROVar.CastBar.CastFrame:RegisterEvent("PLAYER_TARGET_CHANGED")
+IROVar.CastBar.CastFrame:SetScript("OnEvent",function(self,event,arg1,...)
+    if event=="UNIT_SPELLCAST_START" and arg1=="target" then
+        IROVar.CastBar.Channeling=nil
+        IROVar.CastBar.CheckCasting()
+        IROVar.CastBar.ResetKick()
+        IROVar.CastBar.CheckSpellInfo()
+    elseif event=="UNIT_SPELLCAST_CHANNEL_START" and arg1=="target" then
+        IROVar.CastBar.Casting=nil
+        IROVar.CastBar.CheckChanneling()
+        IROVar.CastBar.ResetKick()
+        IROVar.CastBar.CheckSpellInfo()
+    elseif event=="PLAYER_TARGET_CHANGED" then
+        IROVar.CastBar.CheckCasting()
+        IROVar.CastBar.CheckChanneling()
+        IROVar.CastBar.ResetKick()
+        IROVar.CastBar.CheckSpellInfo()
+    end
+end)
+
+IROVar.CastBar.CastFrame2=CreateFrame("Frame")
+IROVar.CastBar.CastFrame2:RegisterEvent("UNIT_SPELLCAST_FAILED_QUIET")
+IROVar.CastBar.CastFrame2:RegisterEvent("UNIT_SPELLCAST_CHANNEL_STOP")
+IROVar.CastBar.CastFrame2:RegisterEvent("UNIT_SPELLCAST_STOP")
+IROVar.CastBar.CastFrame2:SetScript("OnEvent",function(self,event,arg1,...)
+    if arg1=="target" then
+        IROVar.CastBar.Casting=nil
+        IROVar.CastBar.Channeling=nil
+        IROVar.CastBar.ResetKick()
+    end
+end)
+
+function IROVar.TargetCastBar(percenCheck,DontCheckCantKick)
+    percenCheck=percenCheck or 0.6
+    --DontCheckCantKick = true mean kick even notInterruptible (for Stun)
+
+    if not IROVar.CastBar.Calculated[percenCheck] then
+        IROVar.CastBar.CalculateInterruptTimer(percenCheck)
+    end
+    local startKick=IROVar.CastBar.Calculated[percenCheck][1]
+    local endKick=IROVar.CastBar.Calculated[percenCheck][2]
+
+    if not DontCheckCantKick then
+        if IROVar.CastBar.CantKick then
+            return false
+        end
+        local currentTime=GetTime()
+        return currentTime>=startKick and currentTime<=endKick
+    else
+        local currentTime=GetTime()
+        return currentTime>=startKick and currentTime<=endKick
+    end
+end

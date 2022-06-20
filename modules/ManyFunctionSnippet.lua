@@ -646,14 +646,11 @@ IROVar.CastBar.Casting=nil
 IROVar.CastBar.Channeling=nil
 IROVar.CastBar.Calculated={}
 --kick mean interrupt
---IROVar.CastBar.Calculated[percent]={}
 --IROVar.CastBar.Calculated[percent][1]=0 --start Kick
 --IROVar.CastBar.Calculated[percent][2]=0 --end Kick
 IROVar.CastBar.Spell=nil
 IROVar.CastBar.SpellId=nil
 IROVar.CastBar.CantKick=false
---name, text, texture, startTimeMS, endTimeMS, isTradeSkill, castID, notInterruptible, spellId = UnitCastingInfo(unit)
---name, text, texture, startTimeMS, endTimeMS, isTradeSkill, notInterruptible, spellId = UnitChannelInfo(unit)
 function IROVar.CastBar.CheckCasting()
     local C={UnitCastingInfo("target")}
     if C[1] then IROVar.CastBar.Casting=C
@@ -667,7 +664,6 @@ function IROVar.CastBar.CheckChanneling()
     else IROVar.CastBar.Channeling=nil
     end
 end
-
 
 function IROVar.CastBar.ResetKick()
     IROVar.CastBar.CantKick=false
@@ -759,21 +755,14 @@ end)
 function IROVar.TargetCastBar(percenCheck,DontCheckCantKick)
     percenCheck=percenCheck or 0.6
     --DontCheckCantKick = true mean kick even notInterruptible (for Stun)
-
     if not IROVar.CastBar.Calculated[percenCheck] then
         IROVar.CastBar.CalculateInterruptTimer(percenCheck)
     end
     local startKick=IROVar.CastBar.Calculated[percenCheck][1]
     local endKick=IROVar.CastBar.Calculated[percenCheck][2]
-
-    if not DontCheckCantKick then
-        if IROVar.CastBar.CantKick then
+    if not DontCheckCantKick and IROVar.CastBar.CantKick then
             return false
-        end
-        local currentTime=GetTime()
-        return currentTime>=startKick and currentTime<=endKick
-    else
-        local currentTime=GetTime()
-        return currentTime>=startKick and currentTime<=endKick
     end
+    local currentTime=GetTime()
+    return currentTime>=startKick and currentTime<=endKick
 end

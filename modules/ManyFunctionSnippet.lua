@@ -357,12 +357,27 @@ function IROTargetVVHP(nMultipy,unit)
     return (nMultipy*playerHealth)<targetHealth
 end
 
+IROVar.IROEnemyGroupVVHPOldVal={}
+IROVar.IROEnemyGroupVVHPRun=false
 function IROEnemyGroupVVHP(nMultipy)
+    IROVar.IROEnemyGroupVVHPRun=true
     nMultipy=nMultipy or 3
+    if IROVar.IROEnemyGroupVVHPOldVal[nMultipy] then
+        return IROVar.IROEnemyGroupVVHPOldVal[nMultipy]
+    end
     local playerHealth=SumPartyHP()
     local EnemyGroupHP=SumHPMobinCombat()
-    return (nMultipy*playerHealth)<EnemyGroupHP
+    local ans=(nMultipy*playerHealth)<EnemyGroupHP
+    IROVar.IROEnemyGroupVVHPOldVal[nMultipy]=ans
+    IROVar.IROEnemyGroupVVHPRun=false
+    return ans
 end
+C_Timer.NewTicker(0.5,function()
+    if not IROVar.IROEnemyGroupVVHPRun then
+        IROVar.IROEnemyGroupVVHPOldVal={}
+    end
+end)
+
 
 
 

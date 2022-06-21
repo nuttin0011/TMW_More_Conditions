@@ -1,4 +1,4 @@
---Next Interrupter!!!! V 2.8
+--Next Interrupter!!!! V 2.9
 --WORK Only counter interruptCounterName=1
 
 InterruptCounterName = "wantinterrupt"
@@ -125,9 +125,9 @@ if not NextInterrupter.Setuped then
         nUnit=nUnit or "target"
         local uGUID=UnitGUID(nUnit)
         return (not NextInterrupter.Enabled)
-        or (not NextInterrupter.ITable[uGUID])
-        or (next(NextInterrupter.ITable[uGUID])==nil)
-        or (NextInterrupter.ITable[uGUID][1]==NextInterrupter.Name)
+            or (not NextInterrupter.ITable[uGUID])
+            or (next(NextInterrupter.ITable[uGUID])==nil)
+            or (NextInterrupter.ITable[uGUID][1]==NextInterrupter.Name)
     end
     NextInterrupter.Enable = function()
         if NextInterrupter.HasDebugAddon then
@@ -144,10 +144,10 @@ if not NextInterrupter.Setuped then
         NextInterrupter.Enabled=false
         NextInterrupter.SendISM(false)
     end
-    NextInterrupter.CheckAndSendISM = function()
+    NextInterrupter.CanIInterrupt = function()
+        if UnitIsDead("player") then return false end
         local SReady=GetSpellCooldown(NextInterrupter.SpellName) == 0
         local nUnit = "target"
-        local tGUID=(UnitGUID(nUnit) or "0")
         local canInterrupt= SReady and (IsSpellInRange(NextInterrupter.SpellName, nUnit)==1)
         if canInterrupt and NextInterrupter.isWarlock then
             local iSpell=GetSpellInfo(NextInterrupter.SpellName)
@@ -158,6 +158,12 @@ if not NextInterrupter.Setuped then
             local isBS = TMW.CNDT.Env.AuraDur("player", "bladestorm", "PLAYER HELPFUL")
             if isBS>0.1 then canInterrupt=false end
         end
+        return canInterrupt
+    end
+    NextInterrupter.CheckAndSendISM = function()
+        local nUnit = "target"
+        local tGUID=(UnitGUID(nUnit) or "0")
+        local canInterrupt=NextInterrupter.CanIInterrupt()
         local willSend = false
         if tGUID~=NextInterrupter.TargetGUID then
             if (NextInterrupter.canInterrupt~=canInterrupt) or canInterrupt then willSend = true end
@@ -170,20 +176,7 @@ if not NextInterrupter.Setuped then
         if NextInterrupter.HasDebugAddon then NextInterrupter.AddDebugTextLog("//SendedISM : "..GetTime()) end
         local nUnit = "target"
         local tGUID=(UnitGUID(nUnit) or "0")
-        local canInterrupt = ForceInterruptStatus
-        if canInterrupt == nil then
-            if NextInterrupter.SpellName == '' then canInterrupt=false
-            else canInterrupt=(GetSpellCooldown(NextInterrupter.SpellName) == 0) and (IsSpellInRange(NextInterrupter.SpellName, nUnit)==1) end
-            if canInterrupt and NextInterrupter.isWarlock then
-                local iSpell=GetSpellInfo(NextInterrupter.SpellName)
-                if (iSpell~='Axe Toss')and(iSpell~='Spell Lock') then
-                canInterrupt=false end
-            end
-            if canInterrupt and NextInterrupter.isWarrior then
-                local isBS = TMW.CNDT.Env.AuraDur("player", "bladestorm", "PLAYER HELPFUL")
-                if isBS>0.1 then canInterrupt=false end
-            end
-        end
+        local canInterrupt = ForceInterruptStatus or NextInterrupter.CanIInterrupt()
         NextInterrupter.canInterrupt=canInterrupt
         NextInterrupter.TargetGUID=tGUID
         local SendType = IsInGroup(LE_PARTY_CATEGORY_INSTANCE) and "INSTANCE_CHAT" or (IsInRaid() and "RAID" or (IsInGroup() and "PARTY" or "WHISPER"))
@@ -252,7 +245,7 @@ if not NextInterrupter.Setuped then
                 NextInterrupter.updateTree(true)
             else
                 NextInterrupter.AddDebugTextLog(GetTime().." Table Not Change")
-        end end
+            end end
     end
     --Update all variable for 1st time
     NextInterrupter.updateSpec()
@@ -266,14 +259,13 @@ if not NextInterrupter.Setuped then
     C_ChatInfo.RegisterAddonMessagePrefix(NextInterrupter.AddonMessagePrefix)
     --Set to Check Target Every 0.112 sec
     NextInterrupter.C_TimerHandle = C_Timer.NewTicker(0.112, function()
-            local cc=TMW_ST:GetCounter(InterruptCounterName)
-            if cc==1 then
-                if not NextInterrupter.Enabled then NextInterrupter.Enable() end
-                NextInterrupter.CheckAndSendISM()
-            else
-                if NextInterrupter.Enabled then NextInterrupter.Disable() end
-            end
+        local cc=TMW_ST:GetCounter(InterruptCounterName)
+        if cc==1 then
+            if not NextInterrupter.Enabled then NextInterrupter.Enable() end
+            NextInterrupter.CheckAndSendISM()
+        else
+            if NextInterrupter.Enabled then NextInterrupter.Disable() end
+        end
     end)
     NextInterrupter.Setuped=true
 end
-

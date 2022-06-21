@@ -1,4 +1,4 @@
---Next Interrupter!!!! V 2.9
+--Next Interrupter!!!! V 2.10
 --WORK Only counter interruptCounterName=1
 
 InterruptCounterName = "wantinterrupt"
@@ -62,7 +62,7 @@ if not NextInterrupter.Setuped then
         [251] = {'B','Mind Freeze'}, -- frost
         [252] = {'B','Mind Freeze'}, -- unholy
     }
-    NextInterrupter.SyncCode = function()
+    function NextInterrupter.SyncCode()
         local mul=0
         local function SumStr(s)
             if not s then return 0 end
@@ -88,7 +88,7 @@ if not NextInterrupter.Setuped then
         end
         return size..checksum
     end
-    NextInterrupter.CompareTable = function(a,b)
+    function NextInterrupter.CompareTable(a,b)
         local function subcompare(aa,bb)
             if (not aa) or (not bb) then return false end
             local equal=true
@@ -107,7 +107,7 @@ if not NextInterrupter.Setuped then
         if eq then eq=subcompare(b,a) end
         return eq
     end
-    NextInterrupter.updateSpec = function()
+    function NextInterrupter.updateSpec()
         NextInterrupter.SpecID=GetSpecializationInfo(GetSpecialization())
         if not NextInterrupter.interruptTier[NextInterrupter.SpecID] then
             NextInterrupter.Tier="F"
@@ -121,7 +121,7 @@ if not NextInterrupter.Setuped then
         NextInterrupter.isWarlock=(NextInterrupter.SpecID>=265)and(NextInterrupter.SpecID<=267)
         NextInterrupter.isWarrior=(NextInterrupter.SpecID>=71)and(NextInterrupter.SpecID<=73)
     end
-    NextInterrupter.IsMyTurn = function(nUnit)
+    function NextInterrupter.IsMyTurn(nUnit)
         nUnit=nUnit or "target"
         local uGUID=UnitGUID(nUnit)
         return (not NextInterrupter.Enabled)
@@ -129,7 +129,7 @@ if not NextInterrupter.Setuped then
             or (next(NextInterrupter.ITable[uGUID])==nil)
             or (NextInterrupter.ITable[uGUID][1]==NextInterrupter.Name)
     end
-    NextInterrupter.Enable = function()
+    function NextInterrupter.Enable()
         if NextInterrupter.HasDebugAddon then
             NextInterrupter.AddDebugTextLog("*** NextInterrupter.Enable : "..GetTime())
         end
@@ -137,14 +137,14 @@ if not NextInterrupter.Setuped then
         NextInterrupter.updateSpec()
         NextInterrupter.SendISM()
     end
-    NextInterrupter.Disable = function()
+    function NextInterrupter.Disable()
         if NextInterrupter.HasDebugAddon then
             NextInterrupter.AddDebugTextLog("*** NextInterrupter.Disable : "..GetTime())
         end
         NextInterrupter.Enabled=false
         NextInterrupter.SendISM(false)
     end
-    NextInterrupter.CanIInterrupt = function()
+    function NextInterrupter.CanIInterrupt()
         if UnitIsDead("player") then return false end
         local SReady=GetSpellCooldown(NextInterrupter.SpellName) == 0
         local nUnit = "target"
@@ -160,7 +160,7 @@ if not NextInterrupter.Setuped then
         end
         return canInterrupt
     end
-    NextInterrupter.CheckAndSendISM = function()
+    function NextInterrupter.CheckAndSendISM()
         local nUnit = "target"
         local tGUID=(UnitGUID(nUnit) or "0")
         local canInterrupt=NextInterrupter.CanIInterrupt()
@@ -172,7 +172,7 @@ if not NextInterrupter.Setuped then
         end
         if willSend then NextInterrupter.SendISM(canInterrupt) end
     end
-    NextInterrupter.SendISM = function(ForceInterruptStatus)
+    function NextInterrupter.SendISM(ForceInterruptStatus)
         if NextInterrupter.HasDebugAddon then NextInterrupter.AddDebugTextLog("//SendedISM : "..GetTime()) end
         local nUnit = "target"
         local tGUID=(UnitGUID(nUnit) or "0")
@@ -186,7 +186,7 @@ if not NextInterrupter.Setuped then
         if NextInterrupter.HasDebugAddon then NextInterrupter.AddDebugTextLog(">>>> "..SendType..' : "'..SendMessage..'"')end
         C_ChatInfo.SendAddonMessage(Prefix, SendMessage, SendType,SendTarget)
     end
-    NextInterrupter.AddonMessageEvent = function(_, event, m1, m2)
+    function NextInterrupter.AddonMessageEvent(_, event, m1, m2)
         if (event=="PLAYER_REGEN_DISABLED") and NextInterrupter.Enabled then NextInterrupter.SendISM() end--froce send
         if event~="CHAT_MSG_ADDON" then return end
         if m1 ~= NextInterrupter.AddonMessagePrefix then return end
@@ -257,8 +257,8 @@ if not NextInterrupter.Setuped then
     NextInterrupter.AddonMFrame:RegisterEvent("PLAYER_REGEN_DISABLED")
     NextInterrupter.AddonMFrame:SetScript("OnEvent", NextInterrupter.AddonMessageEvent)
     C_ChatInfo.RegisterAddonMessagePrefix(NextInterrupter.AddonMessagePrefix)
-    --Set to Check Target Every 0.112 sec
-    NextInterrupter.C_TimerHandle = C_Timer.NewTicker(0.112, function()
+
+    function NextInterrupter.CheckTarget()
         local cc=TMW_ST:GetCounter(InterruptCounterName)
         if cc==1 then
             if not NextInterrupter.Enabled then NextInterrupter.Enable() end
@@ -266,6 +266,13 @@ if not NextInterrupter.Setuped then
         else
             if NextInterrupter.Enabled then NextInterrupter.Disable() end
         end
-    end)
+    end
+    NextInterrupter.fCheck=CreateFrame("Frame")
+    NextInterrupter.fCheck:RegisterEvent("SPELL_UPDATE_COOLDOWN")
+    NextInterrupter.fCheck:RegisterEvent("SPELL_UPDATE_USABLE")
+    NextInterrupter.fCheck:RegisterEvent("PLAYER_TARGET_CHANGED")
+    NextInterrupter.fCheck:SetScript("OnEvent", NextInterrupter.CheckTarget)
+    --Set to Check Target Every 0.34 sec
+    NextInterrupter.C_TimerHandle = C_Timer.NewTicker(0.32, NextInterrupter.CheckTarget)
     NextInterrupter.Setuped=true
 end

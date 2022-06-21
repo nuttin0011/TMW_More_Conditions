@@ -272,7 +272,7 @@ if not NextInterrupter.Setuped then
     NextInterrupter.fCheck:RegisterEvent("SPELL_UPDATE_USABLE")
     NextInterrupter.fCheck:RegisterEvent("PLAYER_TARGET_CHANGED")
     NextInterrupter.fCheck:SetScript("OnEvent", NextInterrupter.CheckTarget)
-    --Set to Check Target Every 0.34 sec
+    --Set to Check Target Every 0.32 sec
     NextInterrupter.C_TimerHandle = C_Timer.NewTicker(0.32, NextInterrupter.CheckTarget)
     NextInterrupter.Setuped=true
 end

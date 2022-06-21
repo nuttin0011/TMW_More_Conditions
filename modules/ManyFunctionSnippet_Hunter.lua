@@ -1,4 +1,4 @@
--- Many Function Version Hunter 9.2.5/3
+-- Many Function Version Hunter 9.2.5/4
 -- this file save many function for paste to TMW Snippet LUA
 
 --function IROVar.Hun.TBreakDPSForBS() ; return Break Time for Shoot Barbed shot
@@ -9,6 +9,7 @@ if not IROVar then IROVar={} end
 if not IROVar.Hun then IROVar.Hun={} end
 
 IROVar.Hun.AimedShotActive=false
+IROVar.Hun.BarbedFullCD=select(4,GetSpellCharges("barbed shot"))
 
 local function CDend(s)
 	local st,du=GetSpellCooldown(s)
@@ -39,11 +40,11 @@ function IROVar.Hun.CombatLog_OnEvent(...)
         if spellID==257946 then --Thrill of the Hunt
             if subevent=="SPELL_AURA_APPLIED" then
                 IROVar.Hun.TotHBuffEnd=GetTime()+8
-            end
-            if subevent=="SPELL_AURA_APPLIED_DOSE" then
+            elseif subevent=="SPELL_AURA_APPLIED_DOSE" then
                 IROVar.Hun.TotHBuffEnd=GetTime()+8
-            end
-            if subevent=="SPELL_AURA_REMOVED" then
+            elseif subevent=="SPELL_AURA_REFRESH" then
+                IROVar.Hun.TotHBuffEnd=GetTime()+8
+            elseif subevent=="SPELL_AURA_REMOVED" then
                 IROVar.Hun.TotHBuffEnd=0
             end
         end
@@ -66,7 +67,7 @@ IROVar.Hun.cdBDPS={}
 function IROVar.Hun.TBreakDPSForBS()
     local h=IROVar.Haste
     if IROVar.Hun.cdBDPS[h] then return IROVar.Hun.cdBDPS[h] end
-    IROVar.Hun.cdBDPS[h]=.4+IROVar.CastTime1_5sec*1.1 -- 0.4+(GCD*1.1)
+    IROVar.Hun.cdBDPS[h]=IROVar.CastTime1_5sec+IROVar.Hun.GetTimeVeryEndBS()
     return IROVar.Hun.cdBDPS[h]
 end
 
@@ -92,3 +93,31 @@ function IROVar.Hun.BreakDPSForBS()
 end
 
 
+IROVar.Hun.fhaste = CreateFrame("Frame")
+IROVar.Hun.fhaste:RegisterEvent("UNIT_SPELL_HASTE")
+IROVar.Hun.fhaste:RegisterEvent("PLAYER_REGEN_DISABLED")
+IROVar.Hun.fhaste:SetScript("OnEvent", function(self,event,unittoken)
+    if event=="PLAYER_REGEN_DISABLED" or
+    (event=="UNIT_SPELL_HASTE" and unittoken=="player") then
+        IROVar.Hun.BarbedFullCD=select(4,GetSpellCharges("barbed shot"))
+    end
+end)
+
+IROVar.Hun.ShootBSInTimeOld={}
+
+function IROVar.Hun.GetTimeVeryEndBS()
+    local H=IROVar.Hun.BarbedFullCD
+    local H2=IROVar.Hun.ShootBSInTimeOld[H]
+    if not H2 then
+        H2=(H<9.5) and 1.1 or ((H>10.3) and .6 or (((10.3-H)*.625)+.6))
+        IROVar.Hun.ShootBSInTimeOld[H]=H2
+    end
+    return H2
+end
+
+function IROVar.Hun.ShootBSInTime()
+    if IROVar.Hun.GetBarbedCDRemain()>0.3 then return false end
+    local TotHDu=IROVar.Hun.GetTotHDur()
+    if TotHDu<0.2 then return false end
+    return TotHDu<=IROVar.Hun.GetTimeVeryEndBS()
+end

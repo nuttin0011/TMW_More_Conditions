@@ -1,4 +1,4 @@
--- Many Function Version 9.0.5/58
+-- Many Function Version 9.0.5/60
 -- Set Priority to 1
 -- this file save many function for paste to TMW Snippet LUA
 
@@ -73,6 +73,11 @@ nameplateShowAll, timeMod, ... = UnitAura(unit, index [, filter])  ]]
     --DontCheckCantKick = true mean kick even notInterruptible (for Stun)
 
 --function IROVar.Range(unit) ; return range
+--IROVar.ignoreName = {Mob Name = true} ; ignore mob name
+--IROVar.TargetName = TargetName;
+    --e.g. "IROVar and (not IROVar.ignoreName[IROVar.TargetName])"
+--function IROVar.CompareTable(a,b) ; return true|false
+
 
 if not IROVar then IROVar={} end
 IROVar.Icon = {}
@@ -338,8 +343,7 @@ function SumPartyHP()
     return sHP
 end
 
-
-local ignoreName={
+IROVar.ignoreName={
     ["Spiteful Shade"]=true,
     ["Slithering Ooze"]=true,
 }
@@ -350,7 +354,7 @@ function SumHPMobinCombat()
     local nn
     for ii =1,30 do
         nn='nameplate'..ii
-        if UnitExists(nn) and (not ignoreName[UnitName(nn)]) and UnitCanAttack("player",nn)
+        if UnitExists(nn) and (not IROVar.ignoreName[UnitName(nn)]) and UnitCanAttack("player",nn)
         and (UnitAffectingCombat(nn) or IsItemInRange(IROVar.ItemNameToCheck8,nn))
         then
             sumhp=sumhp+ UnitHealth(nn)
@@ -755,6 +759,8 @@ function IROVar.CastBar.CalculateInterruptTimer(percenC)
     IROVar.CastBar.Calculated[percenC]={startI,endI}
 end
 
+IROVar.TargetName=UnitName("target")
+
 IROVar.CastBar.CastFrame=CreateFrame("Frame")
 IROVar.CastBar.CastFrame:RegisterEvent("UNIT_SPELLCAST_START")
 IROVar.CastBar.CastFrame:RegisterEvent("UNIT_SPELLCAST_CHANNEL_START")
@@ -771,6 +777,7 @@ IROVar.CastBar.CastFrame:SetScript("OnEvent",function(self,event,arg1,...)
         IROVar.CastBar.ResetKick()
         IROVar.CastBar.CheckSpellInfo()
     elseif event=="PLAYER_TARGET_CHANGED" then
+        IROVar.TargetName=UnitName("target")
         IROVar.CastBar.CheckCasting()
         IROVar.CastBar.CheckChanneling()
         IROVar.CastBar.ResetKick()
@@ -804,3 +811,25 @@ function IROVar.TargetCastBar(percenCheck,DontCheckCantKick)
     local currentTime=GetTime()
     return currentTime>=startKick and currentTime<=endKick
 end
+
+function IROVar.CompareTable(a,b)
+    local function subcompare(aa,bb)
+        if (not aa) or (not bb) then return false end
+        local equal=true
+        for k,v in pairs(aa) do
+            if type(v)=="table" then
+                equal=IROVar.CompareTable(v,bb[k])
+                if not equal then break end
+            elseif (equal) and (v~=bb[k]) then
+                equal=false
+                break
+            end
+        end
+        return equal
+    end
+    local eq = subcompare(a,b)
+    if eq then eq=subcompare(b,a) end
+    return eq
+end
+
+

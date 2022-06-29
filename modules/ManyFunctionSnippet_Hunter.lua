@@ -1,9 +1,11 @@
--- Many Function Version Hunter 9.2.5/4
+-- Many Function Version Hunter 9.2.5/6
 -- this file save many function for paste to TMW Snippet LUA
 
 --function IROVar.Hun.TBreakDPSForBS() ; return Break Time for Shoot Barbed shot
 --function IROVar.Hun.BreakDPSForBS() ; return True/false
 --var IROVar.Hun.AimedShotActive ; true = cast Aimed Shoot + after success 0.4 GCD sec
+--var IROVar.Hun.CSCountAfterKC ; Cobra Shot Count After Kill Command
+--var IROVar.Hun.MD.nameMacro="~!Num0" ; name Macro for MD to tank set to [nomod] num0
 
 if not IROVar then IROVar={} end
 if not IROVar.Hun then IROVar.Hun={} end
@@ -20,7 +22,7 @@ end
 
 IROVar.Hun.TotHBuffEnd=0 --Thrill of the Hunt buff end time
 IROVar.Hun.BarbedCDEnd=CDend("barbed shot") --Barbed shot CD end time
-
+IROVar.Hun.CSCountAfterKC=0
 
 function IROVar.Hun.CombatLog_OnEvent(...)
     local _,subevent,_,sourceGUID,_,_,_,DesGUID,DesName,_,_,spellID,spellName = ...
@@ -46,6 +48,12 @@ function IROVar.Hun.CombatLog_OnEvent(...)
                 IROVar.Hun.TotHBuffEnd=GetTime()+8
             elseif subevent=="SPELL_AURA_REMOVED" then
                 IROVar.Hun.TotHBuffEnd=0
+            end
+        elseif subevent=="SPELL_CAST_SUCCESS" then
+            if spellName=="Kill Command" then
+                IROVar.Hun.CSCountAfterKC=0
+            elseif spellName=="Cobra Shot" then
+                IROVar.Hun.CSCountAfterKC=IROVar.Hun.CSCountAfterKC+1
             end
         end
 
@@ -121,3 +129,85 @@ function IROVar.Hun.ShootBSInTime()
     if TotHDu<0.2 then return false end
     return TotHDu<=IROVar.Hun.GetTimeVeryEndBS()
 end
+
+function IROVar.Hun.GetTankPosition()
+    if IsInRaid() then
+        for i=1,40 do
+            local n="raid"..i
+            if UnitExists(n) and UnitGroupRolesAssigned(n)=="TANK" then
+                return n
+            end
+        end
+    elseif IsInGroup() then
+        for i=1,4 do
+            local n="party"..i
+            if UnitExists(n) and UnitGroupRolesAssigned(n)=="TANK" then
+                return n
+            end
+        end
+    end
+    return "pet"
+end
+
+function IROVar.Hun.SetMDMacro()
+    local macroName=IROVar.Hun.MD.nameMacro
+    if InCombatLockdown() then
+        --print("incombat cant edit macro")
+        IROVar.Hun.MD.EditingMacro=false
+        return
+    end
+    --[[
+        GROUP_ROSTER_UPDATE
+        /cast bla bla bla;
+        /cast [@focus,nomod,exists,help,nodead][nomod,@pet,exists,nodead,help]Misdirection
+    ]]
+    local TankName=IROVar.Hun.GetTankPosition()
+    if IROVar.Hun.MD.TankName==TankName then
+        --print("TankName unchanged",TankName)
+        IROVar.Hun.MD.EditingMacro=false
+        return
+    end
+    local text1="nomod,@"
+    local text2=",exists,nodead,help]Misdirection"
+    local _,macroIcon,macrobody=GetMacroInfo(macroName)
+    local pointEdit=string.find(macrobody,text1)
+    IROVar.Hun.MD.TankName=TankName
+    if pointEdit then
+        macrobody=string.sub(macrobody,1,pointEdit-1)..text1..TankName..text2
+    else
+        --print("Cannot find : ",text1)
+    end
+    EditMacro(macroName,macroName,macroIcon,macrobody)
+    --print("Tank : ",TankName,UnitName(TankName))
+    do
+        --DEBUG!!
+        local MB=GetMacroBody(macroName)
+        print(MB==macrobody and "/////Edit Macro susccess" or "/////Edit Macro FAIL!!!!!!!!!")
+        print("Tank : ",TankName,UnitName(TankName))
+        print("Macro Name : ",string.sub(MB,string.find(MB,"nomod,@")+7,string.find(MB,",exists,nodead,help")-1))
+    end
+    IROVar.Hun.MD.EditingMacro=false
+end
+
+IROVar.Hun.MD={}
+IROVar.Hun.MD.EditingMacro=false
+IROVar.Hun.MD.TankName="pet"
+IROVar.Hun.MD.nameMacro="~!Num0"
+IROVar.Hun.MD.EventFrame=CreateFrame("Frame")
+IROVar.Hun.MD.EventFrame:RegisterEvent("GROUP_ROSTER_UPDATE")
+function IROVar.Hun.MD.EventCallBack()
+    if InCombatLockdown() then
+        C_Timer.After(1,IROVar.Hun.MD.EventCallBack)
+    elseif IROVar.Hun.MD.nameMacro then
+        --print("ROSTER_UPDATE")
+        if not IROVar.Hun.MD.EditingMacro then
+            --print("not EditingMacro")
+            IROVar.Hun.MD.EditingMacro=true
+            C_Timer.After(0.2,IROVar.Hun.SetMDMacro)
+        end
+    end
+end
+
+IROVar.Hun.MD.EventFrame:SetScript("OnEvent",IROVar.Hun.MD.EventCallBack)
+
+C_Timer.After(3,IROVar.Hun.MD.EventCallBack)

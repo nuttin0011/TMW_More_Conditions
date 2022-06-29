@@ -1,6 +1,7 @@
--- Care Interrupt V 1.91 ICON
+-- Care Interrupt V 2.0 ICON
 -- interrupt Only Important Spell at Specific Mob
 -- IROVar.CareInterrupt(unit e.g. "target") ; return true / false
+-- IROVar.CareInterruptLV2(unit e.g. "target") ; return true / false ; interrupt only in list
 -- IROVar and IROVar.CareInterrupt and IROVar.CareInterrupt("target")
 
 -- Combo %Cast+Care Interrupt+Smart Interrupt
@@ -131,7 +132,7 @@ if not IROVar.MobListForInterrupt then
         },
 
     }
-    IROVar.CareInterrupt = function(nUnit)
+    function IROVar.CareInterrupt(nUnit)
         if not IROVar.MobListForInterrupt[IROVar.InstanceName] then
             return true
         end
@@ -143,7 +144,22 @@ if not IROVar.MobListForInterrupt then
         if not SName then SName = UnitChannelInfo(nUnit) end
         if not SName then return false end
         if not IROVar.MobListForInterrupt[IROVar.InstanceName][MobName][SName] then return false end
-        return (IROVar.MobListForInterrupt[IROVar.InstanceName][MobName][SName]==true) and true or
+        return (IROVar.MobListForInterrupt[IROVar.InstanceName][MobName][SName]==true) or
+            loadstring(IROVar.MobListForInterrupt[IROVar.InstanceName][MobName][SName])()
+    end
+
+    function IROVar.CareInterruptLV2(nUnit)
+        if not IROVar.MobListForInterrupt[IROVar.InstanceName] then
+            return false
+        end
+        local MobName=UnitName(nUnit)
+        if not MobName then return false end
+        if not IROVar.MobListForInterrupt[IROVar.InstanceName][MobName] then return false end
+        local SName = UnitCastingInfo(nUnit)
+        if not SName then SName = UnitChannelInfo(nUnit) end
+        if not SName then return false end
+        if not IROVar.MobListForInterrupt[IROVar.InstanceName][MobName][SName] then return false end
+        return (IROVar.MobListForInterrupt[IROVar.InstanceName][MobName][SName]==true) or
             loadstring(IROVar.MobListForInterrupt[IROVar.InstanceName][MobName][SName])()
     end
 end

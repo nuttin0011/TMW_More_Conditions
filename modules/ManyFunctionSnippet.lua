@@ -1,4 +1,4 @@
--- Many Function Version 9.0.5/57
+-- Many Function Version 9.0.5/58
 -- Set Priority to 1
 -- this file save many function for paste to TMW Snippet LUA
 
@@ -72,6 +72,7 @@ nameplateShowAll, timeMod, ... = UnitAura(unit, index [, filter])  ]]
 --function IROVar.TargetCastBar(percenCheck ; nil = 0.6 , DontCheckCantKick ; nil = false) ; return true/false
     --DontCheckCantKick = true mean kick even notInterruptible (for Stun)
 
+--function IROVar.Range(unit) ; return range
 
 if not IROVar then IROVar={} end
 IROVar.Icon = {}
@@ -195,8 +196,8 @@ IROVar.ERO_Old_Val = {Timer=0,Old_Val={},
 }
 
 local ItemRangeCheck2 = {
-    [2] =37727, -- Ruby Acorn
-    [3] =42732, -- Everfrost Razor
+    --[2] =37727, -- Ruby Acorn -- not work
+    --[3] =42732, -- Everfrost Razor -- not work
     [4] =129055, -- Shoe Shine Kit
     [5] =8149, -- Voodoo Charm
     [7] =61323, -- Ruby Seeds
@@ -220,7 +221,23 @@ local ItemRangeCheck2 = {
     [150] =46954, -- Flaming Spears
     [200] =75208, -- Rancher's Lariat
 }
+local ItemRangeCheckOrder = {}
+for i=1,200 do
+    if ItemRangeCheck2[i] then
+        table.insert(ItemRangeCheckOrder,i)
+    end
+end
+
 IROVar.ItemNameToCheck8 = "item:34368"
+
+function IROVar.Range(unit)
+    for i=1,#ItemRangeCheckOrder do
+        if IsItemInRange("item:"..ItemRangeCheck2[ItemRangeCheckOrder[i]],unit) then
+            return ItemRangeCheckOrder[i-1] or 0
+        end
+    end
+    return 300
+end
 
 function IROEnemyCountInRange(nRange)
     nRange = nRange or 8
@@ -321,6 +338,11 @@ function SumPartyHP()
     return sHP
 end
 
+
+local ignoreName={
+    ["Spiteful Shade"]=true,
+    ["Slithering Ooze"]=true,
+}
 function SumHPMobinCombat()
     local Old_Val=IROVar.ERO_Old_Val.Check("SumHPMobinCombat","")
     if Old_Val then return Old_Val end
@@ -328,8 +350,8 @@ function SumHPMobinCombat()
     local nn
     for ii =1,30 do
         nn='nameplate'..ii
-        if UnitExists(nn) and UnitCanAttack("player", nn)
-        and (UnitAffectingCombat(nn) or IsItemInRange(IROVar.ItemNameToCheck8, nn))
+        if UnitExists(nn) and (not ignoreName[UnitName(nn)]) and UnitCanAttack("player",nn)
+        and (UnitAffectingCombat(nn) or IsItemInRange(IROVar.ItemNameToCheck8,nn))
         then
             sumhp=sumhp+ UnitHealth(nn)
         end
@@ -363,6 +385,7 @@ function IROEnemyGroupVVHP(nMultipy)
     IROVar.IROEnemyGroupVVHPRun=true
     nMultipy=nMultipy or 3
     if IROVar.IROEnemyGroupVVHPOldVal[nMultipy] then
+        IROVar.IROEnemyGroupVVHPRun=false
         return IROVar.IROEnemyGroupVVHPOldVal[nMultipy]
     end
     local playerHealth=SumPartyHP()

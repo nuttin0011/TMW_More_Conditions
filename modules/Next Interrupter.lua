@@ -1,4 +1,4 @@
---Next Interrupter!!!! V 2.10
+--Next Interrupter!!!! V 2.10b
 --WORK Only counter interruptCounterName=1
 
 InterruptCounterName = "wantinterrupt"
@@ -87,25 +87,6 @@ if not NextInterrupter.Setuped then
             end
         end
         return size..checksum
-    end
-    function NextInterrupter.CompareTable(a,b)
-        local function subcompare(aa,bb)
-            if (not aa) or (not bb) then return false end
-            local equal=true
-            for k,v in pairs(aa) do
-                if type(v)=="table" then
-                    equal=NextInterrupter.CompareTable(v,bb[k])
-                    if not equal then break end
-                elseif (equal) and (v~=bb[k]) then
-                    equal=false
-                    break
-                end
-            end
-            return equal
-        end
-        local eq = subcompare(a,b)
-        if eq then eq=subcompare(b,a) end
-        return eq
     end
     function NextInterrupter.updateSpec()
         NextInterrupter.SpecID=GetSpecializationInfo(GetSpecialization())

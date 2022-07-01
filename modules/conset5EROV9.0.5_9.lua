@@ -1,4 +1,4 @@
--- ZRO Decoder 9.0.5/9L
+-- ZRO Decoder 9.0.5/9M
 -- check Spell GCD
 --[[ macro test button
 /run print(IsControlKeyDown() and "Ctrl" or "no Ctrl")
@@ -452,9 +452,9 @@ IUSC.ClassType={
 	[71] = {'B','Pummel','Pummel','Melee','DPS','InstanceCast'} -- Arm
 	,[72] = {'B','Pummel','Pummel','Melee','DPS','InstanceCast'} -- fury
 	,[73] = {'A','Pummel','Pummel','Melee','Tank','InstanceCast'} -- Protection
-	,[265] = {'D','Command Demon','Corruption','Range','DPS','Caster'} -- Aff [Spell Lock]
-	,[266] = {'D','Command Demon','Corruption','Range','DPS','Caster'} -- Demo
-	,[267] = {'D','Command Demon','Corruption','Range','DPS','Caster'} -- Dest
+	,[265] = {'D','Spell Lock','Corruption','Range','DPS','Caster'} -- Aff 'Spell Lock' 119910
+	,[266] = {'D','Axe Toss','Corruption','Range','DPS','Caster'} -- Demo 'Axe Toss'119914
+	,[267] = {'D','Spell Lock','Corruption','Range','DPS','Caster'} -- Dest
 	,[262] = {'C','Wind Shear','Lightning Bolt','Range','DPS','Caster'} -- Element
 	,[263] = {'B','Wind Shear','primal strike','Melee','DPS','InstanceCast'} -- Enha
 	,[264] = {'D','Wind Shear','Lightning Bolt','Range','Healer','Caster'} -- Resto

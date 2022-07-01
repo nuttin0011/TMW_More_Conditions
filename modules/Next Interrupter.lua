@@ -1,4 +1,4 @@
---Next Interrupter!!!! V 2.10b
+--Next Interrupter!!!! V 2.3
 --WORK Only counter interruptCounterName=1
 
 InterruptCounterName = "wantinterrupt"
@@ -10,6 +10,7 @@ InterruptCounterName = "wantinterrupt"
 TMW_ST:UpdateCounter(InterruptCounterName,1)
 if not NextInterrupter then NextInterrupter={} end
 if not NextInterrupter.Setuped then
+    NextInterrupter.Watch="target"
     NextInterrupter.Setuped=false
     NextInterrupter.SpecID=nil
     NextInterrupter.Tier=nil
@@ -28,9 +29,9 @@ if not NextInterrupter.Setuped then
         [71] = {'B','Pummel'}, -- Arm
         [72] = {'B','Pummel'}, -- fury
         [73] = {'A','Pummel'}, -- Protection
-        [265] = {'D','Command Demon'}, -- Aff [Spell Lock]
-        [266] = {'D','Command Demon'}, -- Demo
-        [267] = {'D','Command Demon'}, -- Dest
+        [265] = {'D','Spell Lock'}, -- Aff 'Spell Lock'119910
+        [266] = {'D','Axe Toss'}, -- Demo 'Command Demon' 'Axe Toss'119914
+        [267] = {'D','Spell Lock'}, -- Dest 'Spell Lock'119910
         [262] = {'C','Wind Shear'}, -- Element
         [263] = {'B','Wind Shear'}, -- Enha
         [264] = {'D','Wind Shear'}, -- Resto
@@ -96,6 +97,8 @@ if not NextInterrupter.Setuped then
         else
             NextInterrupter.Tier=NextInterrupter.interruptTier[NextInterrupter.SpecID][1]
             NextInterrupter.SpellName=NextInterrupter.interruptTier[NextInterrupter.SpecID][2]
+            local spellID=select(7,GetSpellInfo(NextInterrupter.interruptTier[NextInterrupter.SpecID][2]))
+            NextInterrupter.SpellID=spellID or 0
         end
         NextInterrupter.PlayerName=UnitName("player")..'-'..GetRealmName()
         NextInterrupter.Name=NextInterrupter.Tier..'-'..NextInterrupter.PlayerName
@@ -127,9 +130,9 @@ if not NextInterrupter.Setuped then
     end
     function NextInterrupter.CanIInterrupt()
         if UnitIsDead("player") then return false end
-        local SReady=GetSpellCooldown(NextInterrupter.SpellName) == 0
-        local nUnit = "target"
-        local canInterrupt= SReady and (IsSpellInRange(NextInterrupter.SpellName, nUnit)==1)
+        --local SReady=GetSpellCooldown(NextInterrupter.SpellName) == 0
+        local SReady=IsMyInterruptSpellReady()
+        local canInterrupt= SReady and (IsSpellInRange(NextInterrupter.SpellName, NextInterrupter.Watch)==1)
         if canInterrupt and NextInterrupter.isWarlock then
             local iSpell=GetSpellInfo(NextInterrupter.SpellName)
             if (iSpell~='Axe Toss')and(iSpell~='Spell Lock') then
@@ -142,8 +145,7 @@ if not NextInterrupter.Setuped then
         return canInterrupt
     end
     function NextInterrupter.CheckAndSendISM()
-        local nUnit = "target"
-        local tGUID=(UnitGUID(nUnit) or "0")
+        local tGUID=(UnitGUID(NextInterrupter.Watch) or "0")
         local canInterrupt=NextInterrupter.CanIInterrupt()
         local willSend = false
         if tGUID~=NextInterrupter.TargetGUID then
@@ -155,8 +157,7 @@ if not NextInterrupter.Setuped then
     end
     function NextInterrupter.SendISM(ForceInterruptStatus)
         if NextInterrupter.HasDebugAddon then NextInterrupter.AddDebugTextLog("//SendedISM : "..GetTime()) end
-        local nUnit = "target"
-        local tGUID=(UnitGUID(nUnit) or "0")
+        local tGUID=(UnitGUID(NextInterrupter.Watch) or "0")
         local canInterrupt = ForceInterruptStatus or NextInterrupter.CanIInterrupt()
         NextInterrupter.canInterrupt=canInterrupt
         NextInterrupter.TargetGUID=tGUID
@@ -253,7 +254,57 @@ if not NextInterrupter.Setuped then
     NextInterrupter.fCheck:RegisterEvent("SPELL_UPDATE_USABLE")
     NextInterrupter.fCheck:RegisterEvent("PLAYER_TARGET_CHANGED")
     NextInterrupter.fCheck:SetScript("OnEvent", NextInterrupter.CheckTarget)
-    --Set to Check Target Every 0.32 sec
-    NextInterrupter.C_TimerHandle = C_Timer.NewTicker(0.32, NextInterrupter.CheckTarget)
+    --Set to Check Target Every 0.47 sec
+    NextInterrupter.C_TimerHandle = C_Timer.NewTicker(0.47, NextInterrupter.CheckTarget)
     NextInterrupter.Setuped=true
+
+    function NextInterrupter.ChangeWatch(nUnit)
+        if UnitCastingInfo(nUnit) or UnitChannelInfo(nUnit) then
+            NextInterrupter.Watch=nUnit
+            NextInterrupter.CheckTarget()
+        else
+            NextInterrupter.Watch="target"
+            NextInterrupter.CheckTarget()
+        end
+    end
+
+    NextInterrupter.fStopCast=CreateFrame("Frame")
+    NextInterrupter.fStopCast:RegisterEvent("UNIT_SPELLCAST_STOP")
+    NextInterrupter.fStopCast:RegisterEvent("UNIT_SPELLCAST_CHANNEL_STOP")
+    NextInterrupter.fStopCast:RegisterEvent("UNIT_SPELLCAST_FAILED_QUIET")
+    --NextInterrupter.fStopCast:RegisterEvent("UNIT_SPELLCAST_SUCCEEDED")
+    NextInterrupter.fStopCast:SetScript("OnEvent", function(self,event,arg1,arg2,arg3)
+        if arg1~="target" and arg1==NextInterrupter.Watch then
+            NextInterrupter.Watch="target"
+            NextInterrupter.CheckTarget()
+        end
+    end)
+
+    IROVar.Register_COMBAT_LOG_EVENT_UNFILTERED_CALLBACK("NextInterrupter",function(...)
+        local timestamp, subevent, _, sourceGUID, sourceName, sourceFlags,
+        sourceRaidFlags, destGUID, destName, destFlags, destRaidFlags, spellId, spellName
+        =...
+        if subevent=="SPELL_CAST_SUCCESS" and spellName==NextInterrupter.SpellName then
+            C_Timer.After(0.04,function()
+                NextInterrupter.Watch="target"
+                NextInterrupter.CheckTarget()
+            end)
+        end
+    end)
+
 end
+
+--[[
+UNIT_SPELLCAST_STOP
+    arg1 UnitToken
+    arg2 CastID
+    arg3 SpellID
+UNIT_SPELLCAST_CHANNEL_STOP
+    arg1 UnitToken
+    arg2 nil
+    arg3 SpellID
+UNIT_SPELLCAST_FAILED_QUIET
+    arg1 UnitToken
+    arg2 CastID
+    arg3 SpellID
+]]

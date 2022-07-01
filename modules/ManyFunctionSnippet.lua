@@ -1,4 +1,4 @@
--- Many Function Version 9.0.5/60
+-- Many Function Version 9.0.5/64
 -- Set Priority to 1
 -- this file save many function for paste to TMW Snippet LUA
 
@@ -48,6 +48,7 @@
 --function IROVar.UnRegister_SPELL_UPDATE_COOLDOWN_scrip_CALLBACK(name)
 --var IROVar.SPELL_UPDATE_COOLDOWN_count = Count Event Call; use to detemin Update CD
 --var IROVar.TickCount005 = Tick Count every 0.05 sec; use to detemin Update CD
+--var IROVar.TargetChangeCount=0;
 
 --var IROVar.Haste ; player Haste
 --var IROVar.CastTime2sec ; cast time in second mod by haste
@@ -69,7 +70,8 @@ nameplateShowAll, timeMod, ... = UnitAura(unit, index [, filter])  ]]
     }
 ]]
 
---function IROVar.TargetCastBar(percenCheck ; nil = 0.6 , DontCheckCantKick ; nil = false) ; return true/false
+--function IROVar.TargetCastBar(percenCheck ; nil = 0.6 , DontCheckCantKick ; nil = false
+    --, Spell ; nil = any spell ; can be Spell Name or SpellID) ; return true/false
     --DontCheckCantKick = true mean kick even notInterruptible (for Stun)
 
 --function IROVar.Range(unit) ; return range
@@ -77,6 +79,7 @@ nameplateShowAll, timeMod, ... = UnitAura(unit, index [, filter])  ]]
 --IROVar.TargetName = TargetName;
     --e.g. "IROVar and (not IROVar.ignoreName[IROVar.TargetName])"
 --function IROVar.CompareTable(a,b) ; return true|false
+--function IROVar.IsDecurseInGroup() ; reutnr true|false
 
 
 if not IROVar then IROVar={} end
@@ -120,7 +123,6 @@ IROInterruptTier = {}
 for k,v in pairs(IROUsedSkillControl.ClassType) do
     IROInterruptTier[k]=v
 end
-IROInterruptTier.CDEnd=0
 
 --IROVar.FireCri=GetSpellCritChance(3)
 IROVar.fhaste = CreateFrame("Frame")
@@ -266,19 +268,6 @@ function IROEnemyCountInRange(nRange)
     end
     IROVar.ERO_Old_Val.Update("IROEnemyCountInRange",nRange,count)
     return count
-end
---IROVar.SPELL_UPDATE_COOLDOWN_count
-IROVar.IsMyInterruptSpellReady_UT=-1
-
-function IsMyInterruptSpellReady()
-    if not IROVar.InterruptSpell then return false end
-    if IROVar.IsMyInterruptSpellReady_UT~=IROVar.SPELL_UPDATE_COOLDOWN_count then
-        IROVar.IsMyInterruptSpellReady_UT=IROVar.SPELL_UPDATE_COOLDOWN_count
-        local st,du=GetSpellCooldown(IROVar.InterruptSpell)
-        IROInterruptTier.CDEnd=st+du
-    end
-    local currentTime=GetTime()
-    return IROInterruptTier.CDEnd<currentTime
 end
 
 function PercentCastbar2(PercentCast, MustInterruptAble,unit, MinTMS,MaxTMS)
@@ -759,6 +748,7 @@ function IROVar.CastBar.CalculateInterruptTimer(percenC)
     IROVar.CastBar.Calculated[percenC]={startI,endI}
 end
 
+IROVar.TargetChangeCount=0
 IROVar.TargetName=UnitName("target")
 
 IROVar.CastBar.CastFrame=CreateFrame("Frame")
@@ -777,6 +767,7 @@ IROVar.CastBar.CastFrame:SetScript("OnEvent",function(self,event,arg1,...)
         IROVar.CastBar.ResetKick()
         IROVar.CastBar.CheckSpellInfo()
     elseif event=="PLAYER_TARGET_CHANGED" then
+        IROVar.TargetChangeCount=IROVar.TargetChangeCount+1
         IROVar.TargetName=UnitName("target")
         IROVar.CastBar.CheckCasting()
         IROVar.CastBar.CheckChanneling()
@@ -797,8 +788,12 @@ IROVar.CastBar.CastFrame2:SetScript("OnEvent",function(self,event,arg1,...)
     end
 end)
 
-function IROVar.TargetCastBar(percenCheck,DontCheckCantKick)
+function IROVar.TargetCastBar(percenCheck,DontCheckCantKick,Spell)
+    if Spell and Spell~=IROVar.CastBar.SpellId and Spell~=IROVar.CastBar.Spell then
+        return false
+    end
     percenCheck=percenCheck or 0.6
+    --Spell = nil ; mean any spell ; can be ID and Name
     --DontCheckCantKick = true mean kick even notInterruptible (for Stun)
     if not IROVar.CastBar.Calculated[percenCheck] then
         IROVar.CastBar.CalculateInterruptTimer(percenCheck)
@@ -832,4 +827,82 @@ function IROVar.CompareTable(a,b)
     return eq
 end
 
+--IROVar.SPELL_UPDATE_COOLDOWN_count
+IROInterruptTier.CDEnd=0
+IROVar.Register_SPELL_UPDATE_COOLDOWN_scrip_CALLBACK("IsMyInterruptSpellReady",function(GCDCDEnd)
+    local st,du=GetSpellCooldown(IROVar.InterruptSpell)
+    IROInterruptTier.CDEnd=st+du
+end)
 
+function IsMyInterruptSpellReady()
+    if not IROVar.InterruptSpell then return false end
+    return IROInterruptTier.CDEnd<=GetTime()
+end
+
+--UnitGroupRolesAssigned(n)
+--TANK, HEALER, DAMAGER, NONE
+--className, classFilename, classId = UnitClass(unit)
+--[[
+1	Warrior	WARRIOR	
+2	Paladin	PALADIN	
+3	Hunter	HUNTER	
+4	Rogue	ROGUE	
+5	Priest	PRIEST	
+6	Death Knight	DEATHKNIGHT	Added in 3.0.2
+7	Shaman	SHAMAN	
+8	Mage	MAGE	
+9	Warlock	WARLOCK	
+10	Monk	MONK	Added in 4.0.1
+11	Druid	DRUID	
+12	Demon Hunter	DEMONHUNTER	Added in 7.0.3
+]]
+local classDecurse =
+{
+    ["MAGE"]={["DAMAGER"]=true,["NONE"]=true},
+    ["SHAMAN"]={["HEALER"]=true},
+    ["DRUID"]={["HEALER"]=true},
+}
+IROVar.isDecurseInGroup=false
+
+function IROVar.IsDecurseCheck()
+    local function DecurseClass(UnitToken)
+        local _,class=UnitClass(UnitToken)
+        if classDecurse[class] then
+            return classDecurse[class][UnitGroupRolesAssigned(UnitToken)]
+        end
+        return false
+    end
+    IROVar.isDecurseInGroup=false
+    if DecurseClass("player") then
+        IROVar.isDecurseInGroup=true
+        return
+    end
+    if IsInRaid() then
+        for i=1,40 do
+            local n="raid"..i
+            if UnitExists(n) and DecurseClass(n) then
+                IROVar.isDecurseInGroup=true
+                return
+            end
+        end
+    elseif IsInGroup() then
+        for i=1,4 do
+            local n="party"..i
+            if UnitExists(n) and DecurseClass(n) then
+                IROVar.isDecurseInGroup=true
+                return
+            end
+        end
+    end
+end
+
+IROVar.IsDecurseF=CreateFrame("Frame")
+IROVar.IsDecurseF:RegisterEvent("GROUP_ROSTER_UPDATE")
+IROVar.IsDecurseF:SetScript("OnEvent",function()
+    IROVar.IsDecurseCheck()
+end)
+C_Timer.NewTicker(6,IROVar.IsDecurseCheck,10)
+
+function IROVar.IsDecurseInGroup()
+    return IROVar.isDecurseInGroup
+end

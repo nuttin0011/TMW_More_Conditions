@@ -1,4 +1,4 @@
--- OK Stuned V 1.6 ICON + ZeroSI + VVCare
+-- OK Stuned V 2.0 ICON + ZeroSI + VVCare
 -- interrupt Only Important Spell at Specific Mob
 -- IROVar.OKStuned(unit e.g. "target") ; return true / false
 -- IROVar and IROVar.OKStuned and IROVar.OKStuned("target")
@@ -136,6 +136,34 @@ if not IROVar.cannotStun then
             ["Nekthara the Mangler"]=true,
             ["Heavin the Breaker"]=true,
             ["Rek the Hardened"]=true,
+        },
+        ["Tazavesh, the Veiled Market"]={
+            ["Gatewarden Zo'mazz"]=true,
+            ["Armored Overseer"]=true,
+            ["Portalmancer Zo'honn"]=true,
+            ["Zo'phex"]=true,
+            ["Tracker Zo'korss"]=true,
+            ["Ancient Core Hound"]=true,
+            ["Enraged Direhorn"]=true,
+            ["Commerce Enforcer"]=true,
+            ["Commander Zo'far"]=true,
+            ["Cartel Muscle"]=true,
+            ["Oasis Security"]=true,
+            ["Zo'gron"]=true,
+            ["Alcruux"]=true,
+            ["Achillite"]=true,
+            ["Venza Goldfuse"]=true,
+            ["P.O.S.T. Master"]=true,
+            ["So'azmi"]=true,
+            ["Murkbrine Shorerunner"]=true,
+            ["Coastwalker Goliath"]=true,
+            ["Stormforged Guardian"]=true,
+            ["Hylbrande"]=true,
+            ["Drunk Pirate"]=true,
+            ["Corsair Officer"]=true,
+            ["Timecap'n Hooktail"]=true,
+            ["Adorned Starseer"]=true,
+            ["So'leah"]=true,
         }
     }
     IROVar.OKStuned = function(nUnit)
@@ -187,9 +215,10 @@ if not IROVar.VVCareInterrupt then
         if not SName then SName = UnitChannelInfo(nUnit) end
         if not SName then return false end
         if not IROVar.MobListForInterrupt[IROVar.InstanceName][MobName][SName] then return false end
-        return (IROVar.MobListForInterrupt[IROVar.InstanceName][MobName][SName]==true) and true or
+        return (IROVar.MobListForInterrupt[IROVar.InstanceName][MobName][SName]==true) or
             loadstring(IROVar.MobListForInterrupt[IROVar.InstanceName][MobName][SName])()
     end
 end
+
 
 

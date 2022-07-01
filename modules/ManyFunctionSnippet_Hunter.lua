@@ -1,4 +1,4 @@
--- Many Function Version Hunter 9.2.5/6
+-- Many Function Version Hunter 9.2.5/6c
 -- this file save many function for paste to TMW Snippet LUA
 
 --function IROVar.Hun.TBreakDPSForBS() ; return Break Time for Shoot Barbed shot
@@ -12,6 +12,10 @@ if not IROVar.Hun then IROVar.Hun={} end
 
 IROVar.Hun.AimedShotActive=false
 IROVar.Hun.BarbedFullCD=select(4,GetSpellCharges("barbed shot"))
+IROVar.Hun.MD={}
+IROVar.Hun.MD.EditingMacro=false
+IROVar.Hun.MD.TankName="pet"
+IROVar.Hun.MD.nameMacro="~!Num0"
 
 local function CDend(s)
 	local st,du=GetSpellCooldown(s)
@@ -134,14 +138,14 @@ function IROVar.Hun.GetTankPosition()
     if IsInRaid() then
         for i=1,40 do
             local n="raid"..i
-            if UnitExists(n) and UnitGroupRolesAssigned(n)=="TANK" then
+            if UnitExists(n) and UnitGroupRolesAssigned(n)=="TANK" and IsSpellInRange("Misdirection",n) then
                 return n
             end
         end
     elseif IsInGroup() then
         for i=1,4 do
             local n="party"..i
-            if UnitExists(n) and UnitGroupRolesAssigned(n)=="TANK" then
+            if UnitExists(n) and UnitGroupRolesAssigned(n)=="TANK" and IsSpellInRange("Misdirection",n) then
                 return n
             end
         end
@@ -149,10 +153,16 @@ function IROVar.Hun.GetTankPosition()
     return "pet"
 end
 
+function IROVar.Hun.CheckMDTankName()
+    local macroName=IROVar.Hun.MD.nameMacro
+    local macroBody=GetMacroBody(macroName) or ""
+    local tankName=string.sub(macroBody,string.find(macroBody,"nomod,@")+7,string.find(macroBody,",exists,nodead,help")-1)
+    return tankName
+end
+
 function IROVar.Hun.SetMDMacro()
     local macroName=IROVar.Hun.MD.nameMacro
     if InCombatLockdown() then
-        --print("incombat cant edit macro")
         IROVar.Hun.MD.EditingMacro=false
         return
     end
@@ -162,8 +172,9 @@ function IROVar.Hun.SetMDMacro()
         /cast [@focus,nomod,exists,help,nodead][nomod,@pet,exists,nodead,help]Misdirection
     ]]
     local TankName=IROVar.Hun.GetTankPosition()
+    --if IROVar.Hun.MD.TankName==TankName then
+    IROVar.Hun.MD.TankName=IROVar.Hun.CheckMDTankName()
     if IROVar.Hun.MD.TankName==TankName then
-        --print("TankName unchanged",TankName)
         IROVar.Hun.MD.EditingMacro=false
         return
     end
@@ -171,30 +182,33 @@ function IROVar.Hun.SetMDMacro()
     local text2=",exists,nodead,help]Misdirection"
     local _,macroIcon,macrobody=GetMacroInfo(macroName)
     local pointEdit=string.find(macrobody,text1)
-    IROVar.Hun.MD.TankName=TankName
+    local NewMacroBody
     if pointEdit then
-        macrobody=string.sub(macrobody,1,pointEdit-1)..text1..TankName..text2
+        NewMacroBody=string.sub(macrobody,1,pointEdit-1)..text1..TankName..text2
     else
-        --print("Cannot find : ",text1)
     end
-    EditMacro(macroName,macroName,macroIcon,macrobody)
-    --print("Tank : ",TankName,UnitName(TankName))
-    do
+    if NewMacroBody~=macrobody then
+        EditMacro(macroName,macroName,macroIcon,NewMacroBody)
+    end
+    IROVar.Hun.MD.TankName=TankName
+    --[[do
         --DEBUG!!
-        local MB=GetMacroBody(macroName)
-        print(MB==macrobody and "/////Edit Macro susccess" or "/////Edit Macro FAIL!!!!!!!!!")
+        local MB=GetMacroBody(macroName) or ""
+        print(MB==NewMacroBody and "/////Edit Macro susccess" or "/////Edit Macro FAIL!!!!!!!!!")
+        if MB~=NewMacroBody then
+            TempMB=MB
+            Tempmacrobody=NewMacroBody
+        end
         print("Tank : ",TankName,UnitName(TankName))
-        print("Macro Name : ",string.sub(MB,string.find(MB,"nomod,@")+7,string.find(MB,",exists,nodead,help")-1))
-    end
+        print("Macro Name : ",IROVar.Hun.CheckMDTankName())
+    end]]
     IROVar.Hun.MD.EditingMacro=false
 end
 
-IROVar.Hun.MD={}
-IROVar.Hun.MD.EditingMacro=false
-IROVar.Hun.MD.TankName="pet"
-IROVar.Hun.MD.nameMacro="~!Num0"
+
 IROVar.Hun.MD.EventFrame=CreateFrame("Frame")
 IROVar.Hun.MD.EventFrame:RegisterEvent("GROUP_ROSTER_UPDATE")
+IROVar.Hun.MD.EventFrame:RegisterEvent("PLAYER_REGEN_ENABLED")
 function IROVar.Hun.MD.EventCallBack()
     if InCombatLockdown() then
         C_Timer.After(1,IROVar.Hun.MD.EventCallBack)
@@ -210,4 +224,4 @@ end
 
 IROVar.Hun.MD.EventFrame:SetScript("OnEvent",IROVar.Hun.MD.EventCallBack)
 
-C_Timer.After(3,IROVar.Hun.MD.EventCallBack)
+C_Timer.NewTicker(6,IROVar.Hun.MD.EventCallBack,20)

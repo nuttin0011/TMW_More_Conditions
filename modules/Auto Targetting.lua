@@ -1,4 +1,4 @@
--- Auto Target Version 1.0
+-- Auto Target Version 1.1
 
 
 if not IROVar then IROVar={} end
@@ -13,23 +13,6 @@ AT.UnitCount={}
 
 --IROVar.AutoTarget.Unit
 AT.RegisterMacro = {}
-
-AT.RegisterMacro["interrupt"] =
-{
-    MacroName = "~!Num12",
-    Max = 6,
-    IROCode = {
-        [1] = {"ff033d03","[mod:ctrlalt]"},
-        [2] = {"ff053d05","[mod:ctrlshift]"},
-        [3] = {"ff013d01","[mod:ctrl]"},
-        [4] = {"ff023d02","[mod:alt]"},
-        [5] = {"ff043d04","[mod:shift]"},
-        [6] = {"ff003d00","[nomod]"},
-    },
-    Command = "/cast Counter Shot",
-    Suffix = "/run IUSC.SU('3d')",
-}
-
 --[[
     --key 12 = "3d" = "NUMPADMULTIPLY"
 AT.RegisterMacro = {}
@@ -150,12 +133,13 @@ function AT.PushUnitToMacro()
     AT.UpdateRange()
     local Unit=AT.SortByRange()
     for k,v in pairs(AT.RegisterMacro) do
+        --print("Do : ",k)
         local newMobName={}
         local MaxN=math.min(v.Max,#Unit,6)
         for i=1,MaxN do
             newMobName[Unit[i][2]]=i
         end
-        if not IROVar.CompareTable(v.MobName,newMobName) then
+        if IROVar.EditKeyMacro or (not IROVar.CompareTable(v.MobName,newMobName)) then
             v.MobName=newMobName
             local MacroName=v.MacroName
             local Text1="/target "
@@ -170,6 +154,7 @@ function AT.PushUnitToMacro()
             EditMacro(MacroName,MacroName,macroIcon,MacroBody)
         end
     end
+    IROVar.EditKeyMacro=false
     AT.CreateMacroDone = true
 end
 
@@ -193,10 +178,13 @@ function AT.GetIROCode(SetName,MobName)
     return AT.RegisterMacro[SetName].IROCode[AT.RegisterMacro[SetName].MobName[MobName]][1] or "ff000000"
 end
 
-function AT.CanSelect(UnitToken)
+function AT.CanSelect(SetName,UnitToken)
     if not AT.Enable then return false end
     local name=UnitName(UnitToken)
-    if not name then return false end
+    if not name
+    or UnitIsUnit("target",UnitToken)
+    or not AT.RegisterMacro[SetName]
+    or not AT.RegisterMacro[SetName].MobName[name] then return false end
     if (AT.UnitCount[name] or 0)<=1 then return true end
     local UnitRange=IROVar.Range(UnitToken)
     for k,v in pairs(AT.Unit) do
@@ -207,13 +195,32 @@ function AT.CanSelect(UnitToken)
     return true
 end
 
+
+------------------ INTERRUPT SECTION -----------------------------------------
+AT.RegisterMacro["interrupt"] =
+{
+    MacroName = "~!Num12",
+    Max = 6,
+    IROCode = {
+        [1] = {"ff033d03","[mod:ctrlalt]"},
+        [2] = {"ff053d05","[mod:ctrlshift]"},
+        [3] = {"ff013d01","[mod:ctrl]"},
+        [4] = {"ff023d02","[mod:alt]"},
+        [5] = {"ff043d04","[mod:shift]"},
+        [6] = {"ff003d00","[nomod]"},
+    },
+    Command = "/cast Counter Shot",
+    Suffix = "/run IUSC.SO('3d')",
+}
+
 function AT.SetInterrupt(UnitToken,TimeExpire)--; return true if set success
     --if TimeExpire then (endTimeMS/1000) muse be bigger than TimeExpire
     if IsMyInterruptSpellReady()
-    and AT.CanSelect(UnitToken)
+    and AT.CanSelect("interrupt",UnitToken)
     and UnitCanAttack("player",UnitToken)
     and (IsSpellInRange(IROVar.InterruptSpell,UnitToken)==1)
-    and IROVar.CareInterruptLV2(UnitToken)
+    and IROVar.CareInterrupt(UnitToken)
+    --and IROVar.VVCareInterrupt(UnitToken)
     --and UnitIsPlayer(UnitToken.."target") 
     then
         local name, text, texture, startTimeMS, endTimeMS, isTradeSkill,
@@ -224,6 +231,7 @@ function AT.SetInterrupt(UnitToken,TimeExpire)--; return true if set success
             AT.CastDetectEnable=false
             AT.CastUnit=UnitToken
             AT.CastDetectSetup=true
+            NextInterrupter.ChangeWatch(AT.CastUnit)
             C_Timer.After(0.2,function()
                 IROVar.AutoTarget.CastDetect=true
             end)
@@ -252,9 +260,8 @@ AT.CastDetectFrame:SetScript("OnEvent",function(self,event,UnitToken)
 end)
 
 AT.OldInterruptStatus=GetSpellCooldown(IROVar.InterruptSpell)==0
-
 IROVar.Register_SPELL_UPDATE_COOLDOWN_scrip_CALLBACK("InterruptSpellCheck",function()
-    local s=GetSpellCooldown(IROVar.InterruptSpell)==0
+    local s=IsMyInterruptSpellReady()
     if (not IROVar.AutoTarget.OldInterruptStatus) and s then
         --Check all Name plate for interrupt
         local TimeExpire=GetTime()+0.8
@@ -267,3 +274,21 @@ IROVar.Register_SPELL_UPDATE_COOLDOWN_scrip_CALLBACK("InterruptSpellCheck",funct
     end
     IROVar.AutoTarget.OldInterruptStatus=s
 end)
+
+------------------------------------------------------------------------------------
+-------------------Barbed AOE-------------Auto Target
+
+AT.RegisterMacro["Barbed"]={
+    MacroName = "~!Num11",
+    Max = 6,
+    IROCode = {
+        [1] = {"ff033c03","[mod:ctrlalt]"},
+        [2] = {"ff053c05","[mod:ctrlshift]"},
+        [3] = {"ff013c01","[mod:ctrl]"},
+        [4] = {"ff023c02","[mod:alt]"},
+        [5] = {"ff043c04","[mod:shift]"},
+        [6] = {"ff003c00","[nomod]"},
+    },
+    Command = "/cast Barbed Shot",
+    Suffix = "/run IUSC.SU('3c')",
+}

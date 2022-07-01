@@ -1,4 +1,4 @@
--- Care Interrupt V 2.0 ICON
+-- Care Interrupt V 2.3 ICON
 -- interrupt Only Important Spell at Specific Mob
 -- IROVar.CareInterrupt(unit e.g. "target") ; return true / false
 -- IROVar.CareInterruptLV2(unit e.g. "target") ; return true / false ; interrupt only in list
@@ -74,7 +74,10 @@ if not IROVar.MobListForInterrupt then
         },
         ["Halls of Atonement"]={
             ["Depraved Houndmaster"]={["Loyal Beasts"]=true,},
-            ["Depraved Obliterator"]={["Curse of Obliteration"]=true,},
+            ["Depraved Obliterator"]={
+                ["Curse of Obliteration"]=[[return not IROVar.IsDecurseInGroup()]],
+                ["Wicked Bolt"]=[[return IROVar.IsDecurseInGroup()]]
+            },
             ["Depraved Collector"]={["Collect Sins"]=true,},
             ["Stoneborn Reaver"]={["Turn to Stone"]=true,},
             ["High Adjudicator Aleez"]={["Volley of Power"]=true,},
@@ -120,18 +123,83 @@ if not IROVar.MobListForInterrupt then
             ["Support Officer"]={["Hard Light Barrier"]=true},
             ["Interrogation Specialist"]={["Stasis Beam"]=true},
             ["Veteran Sparkcaster"]={["Scintillate"]=true},
-            ["Portalmancer Zo'honn"]={["Radiant Pulse"]=true},
-            ["Tracker Zo'korss"]={["Beam Splicer"]=true},
+            --["Portalmancer Zo'honn"]={["Radiant Pulse"]=true}, --kick all spell
+            --["Tracker Zo'korss"]={["Beam Splicer"]=true}, --cant kick any spell
             ["Ancient Core Hound"]={["Ancient Dread"]=true},
             ["Market Peacekeeper"]={["Phalanx Field"]=true}, -- stun
+            ["So'azmi"]={["Double Technique"]=[[return IROVar.TargetCastBar(0.8)]]}, --Kick at 80%
             --Tazavesh: So'leah's Gambit
-            ["Hourglass Tidesage"]={["Tidal Burst"]=true},
+            ["Hourglass Tidesage"]={["Brackish Bolt"]=true},
             ["Devoted Accomplice"]={["Reinvigorate"]=true},
             ["Focused Ritualist"]={["Unstable Rift"]=true},
             ["Murkbrine Scalebinder"]={["Invigorating Fish Stick"]=true},--stun
         },
 
     }
+
+    IROVar.CareInOld={
+        [1]=bit.rshift(IROVar.TickCount005,1)-1, -- TickCount
+        [2]=IROVar.TargetChangeCount-1, -- TargetCount
+        [3]={
+            --[unittoken]=val
+        }
+    }
+    function IROVar.CareInterrupt(nUnit)
+        local TickC=bit.rshift(IROVar.TickCount005,1)
+        local UseOldCal = false
+        local ClearOldCal = true
+        if IROVar.CareInOld[1]==TickC then
+            ClearOldCal=false
+            if nUnit=="target" then
+                if IROVar.CareInOld[2]==IROVar.TargetChangeCount then
+                    UseOldCal = true
+                end
+            else
+                UseOldCal = true
+            end
+        end
+        if ClearOldCal then
+            IROVar.CareInOld[3]={}
+        end
+        if UseOldCal then
+            if IROVar.CareInOld[3][nUnit]==nil then
+                UseOldCal=false
+            end
+        end
+        if UseOldCal then
+            return IROVar.CareInOld[3][nUnit]
+        end
+        IROVar.CareInOld[1]=TickC
+        IROVar.CareInOld[2]=IROVar.TargetChangeCount
+
+        local ans
+        if not IROVar.MobListForInterrupt[IROVar.InstanceName] then
+            ans=true
+        else
+            local MobName=UnitName(nUnit)
+            if not MobName then ans=true
+            elseif IROVar.MobListForInterrupt[IROVar.InstanceName][MobName]==nil then ans=true
+            elseif IROVar.MobListForInterrupt[IROVar.InstanceName][MobName]==false then ans=false
+            else
+                local SName = UnitCastingInfo(nUnit)
+                if not SName then SName = UnitChannelInfo(nUnit) end
+                if not SName then ans=false
+                elseif not IROVar.MobListForInterrupt[IROVar.InstanceName][MobName][SName] then ans=false
+                else
+                    ans=(IROVar.MobListForInterrupt[IROVar.InstanceName][MobName][SName]==true) or
+                    loadstring(IROVar.MobListForInterrupt[IROVar.InstanceName][MobName][SName])()
+                end
+            end
+        end
+        IROVar.CareInOld[3][nUnit]=ans
+        return ans
+    end
+    --function IROVar.CareInterruptLV2(nUnit)
+        -- same function with IROVar.VVCareInterrupt
+end
+
+--[[
+    OLD Function 
     function IROVar.CareInterrupt(nUnit)
         if not IROVar.MobListForInterrupt[IROVar.InstanceName] then
             return true
@@ -145,22 +213,6 @@ if not IROVar.MobListForInterrupt then
         if not SName then return false end
         if not IROVar.MobListForInterrupt[IROVar.InstanceName][MobName][SName] then return false end
         return (IROVar.MobListForInterrupt[IROVar.InstanceName][MobName][SName]==true) or
-            loadstring(IROVar.MobListForInterrupt[IROVar.InstanceName][MobName][SName])()
+        loadstring(IROVar.MobListForInterrupt[IROVar.InstanceName][MobName][SName])()
     end
-
-    function IROVar.CareInterruptLV2(nUnit)
-        if not IROVar.MobListForInterrupt[IROVar.InstanceName] then
-            return false
-        end
-        local MobName=UnitName(nUnit)
-        if not MobName then return false end
-        if not IROVar.MobListForInterrupt[IROVar.InstanceName][MobName] then return false end
-        local SName = UnitCastingInfo(nUnit)
-        if not SName then SName = UnitChannelInfo(nUnit) end
-        if not SName then return false end
-        if not IROVar.MobListForInterrupt[IROVar.InstanceName][MobName][SName] then return false end
-        return (IROVar.MobListForInterrupt[IROVar.InstanceName][MobName][SName]==true) or
-            loadstring(IROVar.MobListForInterrupt[IROVar.InstanceName][MobName][SName])()
-    end
-end
-
+]]

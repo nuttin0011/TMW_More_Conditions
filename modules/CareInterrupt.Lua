@@ -1,4 +1,4 @@
--- Care Interrupt V 2.3 ICON
+-- Care Interrupt V 2.5 ICON
 -- interrupt Only Important Spell at Specific Mob
 -- IROVar.CareInterrupt(unit e.g. "target") ; return true / false
 -- IROVar.CareInterruptLV2(unit e.g. "target") ; return true / false ; interrupt only in list
@@ -75,8 +75,10 @@ if not IROVar.MobListForInterrupt then
         ["Halls of Atonement"]={
             ["Depraved Houndmaster"]={["Loyal Beasts"]=true,},
             ["Depraved Obliterator"]={
-                ["Curse of Obliteration"]=[[return not IROVar.IsDecurseInGroup()]],
-                ["Wicked Bolt"]=[[return IROVar.IsDecurseInGroup()]]
+                ["Curse of Obliteration"]=
+[[return IROVar.UnitCount("Depraved Obliterator")+IROVar.UnitCount("Depraved Collector")>IROVar.DecurseInGroup()]],
+                ["Wicked Bolt"]=
+[[return IROVar.UnitCount("Depraved Obliterator")+IROVar.UnitCount("Depraved Collector")<=IROVar.DecurseInGroup()]],
             },
             ["Depraved Collector"]={["Collect Sins"]=true,},
             ["Stoneborn Reaver"]={["Turn to Stone"]=true,},
@@ -120,6 +122,7 @@ if not IROVar.MobListForInterrupt then
         },
         ["Tazavesh, the Veiled Market"]={
             --Tazavesh: Streets of Wonder , "Tazavesh, the Veiled Market"
+            ["Disruptive Patron"]={["Teleport"]=true,["Hyperlight Bolt"]=true},
             ["Support Officer"]={["Hard Light Barrier"]=true},
             ["Interrogation Specialist"]={["Stasis Beam"]=true},
             ["Veteran Sparkcaster"]={["Scintillate"]=true},
@@ -133,6 +136,7 @@ if not IROVar.MobListForInterrupt then
             ["Devoted Accomplice"]={["Reinvigorate"]=true},
             ["Focused Ritualist"]={["Unstable Rift"]=true},
             ["Murkbrine Scalebinder"]={["Invigorating Fish Stick"]=true},--stun
+
         },
 
     }

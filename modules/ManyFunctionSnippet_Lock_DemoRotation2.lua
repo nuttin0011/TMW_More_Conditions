@@ -82,13 +82,13 @@ function Rotation.TimeLimitSubGCD(time) -- time to calculate , nil=GetTime()
     if (not time) or (time<currentTime) then
         time=currentTime
     end
-    local val=IROVar.ERO_Old_Val.Check("TimeLimitSubGCD",time) or 0
+    local val=IROVar.ERO_Old_Val.Check("TimeLimitSubGCD",time)
     if val then return val end
     local t=Rotation.TimeLimit - time
     if t<0 then return 0 end
-    val =t/IROVar.CastTime0_5sec
-    IROVar.ERO_Old_Val.Update("TimeLimitSubGCD",time,val)
-    return val
+    local v=t/IROVar.CastTime0_5sec
+    IROVar.ERO_Old_Val.Update("TimeLimitSubGCD",time,v)
+    return v
 end
 
 Rotation.SpellInfo={

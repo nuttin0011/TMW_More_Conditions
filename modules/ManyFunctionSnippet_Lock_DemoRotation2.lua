@@ -1,4 +1,4 @@
---Pre Process Lock Demo Rotation2 9.2.0/7
+--Pre Process Lock Demo Rotation2 9.2.0/8
 --Set Priority to 30
 
 --var IROVar.LockDemoRotation2.SortedRotation --
@@ -11,9 +11,10 @@ if not IROVar.LockDemoRotation2 then
 end
 
 Rotation=IROVar.LockDemoRotation2
-Rotation.TimeLimit=0
+Rotation.TimeLimit=0 -- Reset At Icon Go Stage 4 in TMW
 Rotation.DSTime=12
 Rotation.DSTimeLimit=0
+Rotation.HoGCount=0
 -- TimeLimit = 12 sec after Cast Dreadstalkers
 -- TimeLimit = 8 GCD after Cast HoG
 -- This Rotation Predict Calculate After Cast Dreadstalkers
@@ -56,6 +57,7 @@ function Rotation.Event_COMBAT_LOG_EVENT_UNFILTERED(...)
             Rotation.TimeLimit=Rotation.TimeLimit+IROVar.CastTime1_5sec
             Rotation.DSTimeLimit=(GetTime()+Rotation.DSTime-Rotation.DecreaseTimeFactor)
         elseif spellName=="Hand of Gul'dan" then
+            Rotation.HoGCount=Rotation.HoGCount+1
             local tTemp=(12-Rotation.DecreaseTimeFactor)/IROVar.CastTime0_5sec --seconds to SGCD
             local HoGFactor=24 -- SubGCD
             HoGFactor=math.min(HoGFactor,tTemp)
@@ -80,7 +82,7 @@ function Rotation.TimeLimitSubGCD(time) -- time to calculate , nil=GetTime()
     if (not time) or (time<currentTime) then
         time=currentTime
     end
-    local val=IROVar.ERO_Old_Val.Check("TimeLimitSubGCD",time)
+    local val=IROVar.ERO_Old_Val.Check("TimeLimitSubGCD",time) or 0
     if val then return val end
     local t=Rotation.TimeLimit - time
     if t<0 then return 0 end

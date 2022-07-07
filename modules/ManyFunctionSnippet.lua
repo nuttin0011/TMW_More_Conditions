@@ -1,4 +1,4 @@
--- Many Function Version 9.0.5/64
+-- Many Function Version 9.0.5/66
 -- Set Priority to 1
 -- this file save many function for paste to TMW Snippet LUA
 
@@ -57,7 +57,7 @@
 --var IROVar.CastTime0_5sec
 --var IROVar.HasteFactor ; multiply by cast time = time to cast , = 100/(100+UnitSpellHaste("player"))
 --function AuraUtil.FindAuraByName(auraName, unit, filter) -- return only 1st auraName match
---function AuraUtil.ForEachAura(unit, filter, [maxCount], func)
+--function AuraUtil.ForEachAura(unit, filter, [maxCount|nil], func)
 --[[  name, icon, count, dispelType, duration, expirationTime, source, isStealable,
 nameplateShowPersonal, spellId, canApplyAura, isBossDebuff, castByPlayer,
 nameplateShowAll, timeMod, ... = UnitAura(unit, index [, filter])  ]]
@@ -79,9 +79,12 @@ nameplateShowAll, timeMod, ... = UnitAura(unit, index [, filter])  ]]
 --IROVar.TargetName = TargetName;
     --e.g. "IROVar and (not IROVar.ignoreName[IROVar.TargetName])"
 --function IROVar.CompareTable(a,b) ; return true|false
---function IROVar.IsDecurseInGroup() ; reutnr true|false
+--function IROVar.DecurseInGroup() ; reutnr number
+--function IROVar.UnitCount(n) ; return unit in nameplate
+--var IROVar.PLAYER_TARGET_CHANGED_Time = GetTime()
+--function IROVar.IsUnitCCed(unit) ; return true/false | Dont Break CC
 
-
+    
 if not IROVar then IROVar={} end
 IROVar.Icon = {}
 function IROVar.IsIconShow(icon)
@@ -96,6 +99,27 @@ IROVar.InterruptSpell = nil
 IROVar.SkillCheckDPSRange = nil
 IROVar.InstanceName = GetInstanceInfo()
 IROVar.activeConduits = {}
+IROVar.EditKeyMacroForAutoTarget = 50 -- Update Macro After Restart
+IROVar.PLAYER_TARGET_CHANGED_Time = GetTime()
+IROVar.CCDebuff={}
+for k,v in ipairs(TMW.BE.debuffs.CrowdControl) do
+    IROVar.CCDebuff[v]=true
+end
+
+function IROVar.IsUnitCCed(unit)
+    if not UnitExists(unit) then return false end
+    local CCed=false
+    for i=1,40 do
+        local name,_,_,_,_,_,_,_,_,spellId=UnitAura(unit,i,"HARMFUL")
+        if name then
+            if IROVar.CCDebuff[spellId] or IROVar.CCDebuff[name] then
+                CCed=true
+                break
+            end
+        else break end
+    end
+    return CCed
+end
 
 function IROVar.CounterSetUpdate(c)
     for k,v in pairs(c) do
@@ -767,6 +791,7 @@ IROVar.CastBar.CastFrame:SetScript("OnEvent",function(self,event,arg1,...)
         IROVar.CastBar.ResetKick()
         IROVar.CastBar.CheckSpellInfo()
     elseif event=="PLAYER_TARGET_CHANGED" then
+        IROVar.PLAYER_TARGET_CHANGED_Time=GetTime()
         IROVar.TargetChangeCount=IROVar.TargetChangeCount+1
         IROVar.TargetName=UnitName("target")
         IROVar.CastBar.CheckCasting()
@@ -831,7 +856,7 @@ end
 IROInterruptTier.CDEnd=0
 IROVar.Register_SPELL_UPDATE_COOLDOWN_scrip_CALLBACK("IsMyInterruptSpellReady",function(GCDCDEnd)
     local st,du=GetSpellCooldown(IROVar.InterruptSpell)
-    IROInterruptTier.CDEnd=st+du
+    if st then IROInterruptTier.CDEnd=st+du else IROInterruptTier.CDEnd=0 end
 end)
 
 function IsMyInterruptSpellReady()
@@ -858,51 +883,46 @@ end
 ]]
 local classDecurse =
 {
-    ["MAGE"]={["DAMAGER"]=true,["NONE"]=true},
-    ["SHAMAN"]={["HEALER"]=true},
-    ["DRUID"]={["HEALER"]=true},
+    ["MAGE"]=true,
+    ["SHAMAN"]=true,
+    ["DRUID"]=true,
 }
-IROVar.isDecurseInGroup=false
+IROVar.decurseInGroup=0
 
-function IROVar.IsDecurseCheck()
+function IROVar.DecurseCheck()-- return number of Decurser
     local function DecurseClass(UnitToken)
         local _,class=UnitClass(UnitToken)
-        if classDecurse[class] then
-            return classDecurse[class][UnitGroupRolesAssigned(UnitToken)]
-        end
-        return false
+        return classDecurse[class]
     end
-    IROVar.isDecurseInGroup=false
-    if DecurseClass("player") then
-        IROVar.isDecurseInGroup=true
-        return
-    end
+    local Dn=0
     if IsInRaid() then
         for i=1,40 do
             local n="raid"..i
-            if UnitExists(n) and DecurseClass(n) then
-                IROVar.isDecurseInGroup=true
-                return
-            end
+            if UnitExists(n) and DecurseClass(n) then Dn=Dn+1 end
         end
     elseif IsInGroup() then
         for i=1,4 do
             local n="party"..i
-            if UnitExists(n) and DecurseClass(n) then
-                IROVar.isDecurseInGroup=true
-                return
-            end
+            if UnitExists(n) and DecurseClass(n) then Dn=Dn+1 end
         end
+        if DecurseClass("player") then Dn=Dn+1 end
+    else
+        if DecurseClass("player") then Dn=Dn+1 end
     end
+    IROVar.decurseInGroup=Dn
 end
 
 IROVar.IsDecurseF=CreateFrame("Frame")
 IROVar.IsDecurseF:RegisterEvent("GROUP_ROSTER_UPDATE")
 IROVar.IsDecurseF:SetScript("OnEvent",function()
-    IROVar.IsDecurseCheck()
+    IROVar.DecurseCheck()
 end)
-C_Timer.NewTicker(6,IROVar.IsDecurseCheck,10)
+C_Timer.NewTicker(6,IROVar.DecurseCheck,10)
 
-function IROVar.IsDecurseInGroup()
-    return IROVar.isDecurseInGroup
+function IROVar.DecurseInGroup()
+    return IROVar.decurseInGroup
+end
+
+function IROVar.UnitCount(n)
+    return IROVar.AutoTarget and IROVar.AutoTarget.UnitCount[n] or 0
 end

@@ -1,4 +1,4 @@
--- ZRO Decoder 9.0.5/9M
+-- ZRO Decoder 9.0.5/9N
 -- check Spell GCD
 --[[ macro test button
 /run print(IsControlKeyDown() and "Ctrl" or "no Ctrl")
@@ -78,8 +78,18 @@ IUSC.spec1secGCD = {
 IUSC.NumToSpell={}
 IUSC.NumToID={}
 IUSC.IDToSpell={}
-IUSC.AfterSO=function(...) end
-IUSC.AfterSU=function(...) end
+IUSC.RegCallBackAfterSO={
+	--[nameCallBack]=CallBack,...
+}
+IUSC.RegCallBackAfterSU={
+	--[nameCallBack]=CallBack,...
+}
+IUSC.AfterSO=function(SkillID)
+	for _,v in pairs(IUSC.RegCallBackAfterSO) do v(SkillID)end
+end
+IUSC.AfterSU=function(SkillID)
+	for _,v in pairs(IUSC.RegCallBackAfterSU) do v(SkillID)end
+end
 IUSC.LastSU=nil
 IUSC.Ping={}
 local Ping=IUSC.Ping

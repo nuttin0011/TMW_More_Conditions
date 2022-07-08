@@ -1,4 +1,4 @@
--- Many Function Version Hunter 9.2.5/6c
+-- Many Function Version Hunter 9.2.5/6d
 -- this file save many function for paste to TMW Snippet LUA
 
 --function IROVar.Hun.TBreakDPSForBS() ; return Break Time for Shoot Barbed shot
@@ -155,7 +155,8 @@ end
 
 function IROVar.Hun.CheckMDTankName()
     local macroName=IROVar.Hun.MD.nameMacro
-    local macroBody=GetMacroBody(macroName) or ""
+    local macroBody=GetMacroBody(macroName)
+    if macroBody==nil then return "pet" end
     local tankName=string.sub(macroBody,string.find(macroBody,"nomod,@")+7,string.find(macroBody,",exists,nodead,help")-1)
     return tankName
 end

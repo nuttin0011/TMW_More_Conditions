@@ -1,4 +1,4 @@
---Next Interrupter!!!! V 2.3
+--Next Interrupter!!!! V 2.10c
 --WORK Only counter interruptCounterName=1
 
 InterruptCounterName = "wantinterrupt"

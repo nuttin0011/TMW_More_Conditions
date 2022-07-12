@@ -77,6 +77,8 @@ nameplateShowAll, timeMod, ... = UnitAura(unit, index [, filter])  ]]
 --function IROVar.Range(unit) ; return range
 --IROVar.ignoreName = {Mob Name = true} ; ignore mob name
 --IROVar.TargetName = TargetName;
+--IROVar.TargetGUID = TargetGUID;
+--IROVar.TargetLV = UnitLevel("target")
     --e.g. "IROVar and (not IROVar.ignoreName[IROVar.TargetName])"
 --function IROVar.CompareTable(a,b) ; return true|false
 --function IROVar.DecurseInGroup() ; reutnr number
@@ -774,6 +776,8 @@ end
 
 IROVar.TargetChangeCount=0
 IROVar.TargetName=UnitName("target")
+IROVar.TargetGUID=UnitGUID("target")
+IROVar.TargetLV=UnitLevel("target")
 
 IROVar.CastBar.CastFrame=CreateFrame("Frame")
 IROVar.CastBar.CastFrame:RegisterEvent("UNIT_SPELLCAST_START")
@@ -794,6 +798,8 @@ IROVar.CastBar.CastFrame:SetScript("OnEvent",function(self,event,arg1,...)
         IROVar.PLAYER_TARGET_CHANGED_Time=GetTime()
         IROVar.TargetChangeCount=IROVar.TargetChangeCount+1
         IROVar.TargetName=UnitName("target")
+        IROVar.TargetGUID=UnitGUID("target")
+        IROVar.TargetLV=UnitLevel("target")
         IROVar.CastBar.CheckCasting()
         IROVar.CastBar.CheckChanneling()
         IROVar.CastBar.ResetKick()

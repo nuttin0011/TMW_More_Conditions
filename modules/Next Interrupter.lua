@@ -1,5 +1,6 @@
 --Next Interrupter!!!! V 2.10c
 --WORK Only counter interruptCounterName=1
+-- Set Priority to 10
 
 InterruptCounterName = "wantinterrupt"
 

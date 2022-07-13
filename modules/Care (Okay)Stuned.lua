@@ -1,4 +1,4 @@
--- Care (OK)Stuned V 3.0 ICON + ZeroSI + VVCare
+-- Care (OK)Stuned V 3.0 +ZeroSI + VVCare
 -- Version LUA Snipped
 -- Set Priority to 20
 -- interrupt Only Important Spell at Specific Mob

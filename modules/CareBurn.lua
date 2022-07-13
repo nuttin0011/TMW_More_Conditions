@@ -1,4 +1,4 @@
--- Care Burn 3.0 Icon
+-- Care Burn 3.0
 -- Version LUA Snipped
 -- Set Priority to 20
 -- Burst Only Condition met / no condition on this mob

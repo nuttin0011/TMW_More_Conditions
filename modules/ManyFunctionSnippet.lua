@@ -1,4 +1,4 @@
--- Many Function Version 9.0.5/66
+-- Many Function Version 9.0.5/67
 -- Set Priority to 1
 -- this file save many function for paste to TMW Snippet LUA
 

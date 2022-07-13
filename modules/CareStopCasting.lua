@@ -77,7 +77,7 @@ function IROVar.CSC.COMBAT_LOG_EVENT_UNFILTERED_OnEvent(...)
     destGUID,destName,destFlags,destRaidFlags,spellId=...
     if (subevent=="SPELL_AURA_APPLIED")and(destGUID==IROVar.playerGUID) then
         if IROVar.CSC.DebuffAtPlayer[spellId] then
-            IROVar.CSC.AddPlayerHitedTime(select(3,TMW.CNDT.Env.AuraDur("player",spellId,"harm")))
+            IROVar.CSC.AddPlayerHitedTime(select(3,TMW.CNDT.Env.AuraDur("player",spellId,"HARMFUL")))
         end
         if IROVar.CSC.BuffAtPlayer[spellId] then
             IROVar.CSC.AddPlayerHitedTime(select(3,TMW.CNDT.Env.AuraDur("player",spellId)))

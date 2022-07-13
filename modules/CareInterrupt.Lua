@@ -1,4 +1,4 @@
--- Care Interrupt V 3.0 ICON
+-- Care Interrupt V 3.0
 -- Version LUA Snipped
 -- Set Priority to 10
 -- interrupt Only Important Spell at Specific Mob
@@ -138,13 +138,15 @@ IROVar.CareInOld={
         --[unittoken]=val
     }
 }
+
 function IROVar.CareInterrupt(nUnit)
     local TickC=bit.rshift(IROVar.TickCount005,1)
     local UseOldCal = false
     local ClearOldCal = true
+    local nUnitTarget=nUnit=="target"
     if IROVar.CareInOld[1]==TickC then
         ClearOldCal=false
-        if nUnit=="target" then
+        if nUnitTarget then
             if IROVar.CareInOld[2]==IROVar.TargetChangeCount then
                 UseOldCal = true
             end
@@ -163,20 +165,32 @@ function IROVar.CareInterrupt(nUnit)
     if UseOldCal then
         return IROVar.CareInOld[3][nUnit]
     end
+
     IROVar.CareInOld[1]=TickC
     IROVar.CareInOld[2]=IROVar.TargetChangeCount
-
+    local MobName
+    local SName
     local ans
     if not IROVar.MobListForInterrupt[IROVar.InstanceName] then
         ans=true
     else
-        local MobName=UnitName(nUnit)
+        if nUnitTarget then
+            MobName=IROVar.TargetName
+        else MobName=UnitName(nUnit) end
         if not MobName then ans=true
         elseif IROVar.MobListForInterrupt[IROVar.InstanceName][MobName]==nil then ans=true
         elseif IROVar.MobListForInterrupt[IROVar.InstanceName][MobName]==false then ans=false
         else
-            local SName = UnitCastingInfo(nUnit)
-            if not SName then SName = UnitChannelInfo(nUnit) end
+            if nUnitTarget then
+                if IROVar.CastBar.Casting then
+                    SName=IROVar.CastBar.Casting[1]
+                elseif IROVar.CastBar.Channeling then
+                    SName=IROVar.CastBar.Channeling[1]
+                end
+            else
+                SName = UnitCastingInfo(nUnit)
+                if not SName then SName = UnitChannelInfo(nUnit) end
+            end
             if not SName then ans=false
             elseif not IROVar.MobListForInterrupt[IROVar.InstanceName][MobName][SName] then ans=false
             else

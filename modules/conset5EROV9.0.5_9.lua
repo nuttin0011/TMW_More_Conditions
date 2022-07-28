@@ -1,4 +1,4 @@
--- ZRO Decoder 9.0.5/9N
+-- ZRO Decoder 9.0.5/9Oh
 -- check Spell GCD
 --[[ macro test button
 /run print(IsControlKeyDown() and "Ctrl" or "no Ctrl")
@@ -53,6 +53,17 @@ if not EROTools.IUSCLog then EROTools.IUSCLog={} end
 if not EROTools.IUSCLog.UpdateText then EROTools.IUSCLog.UpdateText=function() end end
 
 local GetTime=GetTime
+-- adjust GCD + Cast by check GCD/SpellCastTime and ClickGap
+-- Max Adjust = 0.1 sec
+-- Goal ; GCD == ClickGap | SpellCastTime-0.2 == ClickGap
+IUSC.NeedAdjust=false
+IUSC.GCDAdjust=0
+IUSC.GCDAdjustT1=0
+IUSC.GCDAdjustT2=0
+IUSC.CastAdjust=0
+IUSC.CastAdjustT1=0
+IUSC.CastAdjustT2=0
+--
 IUSC.debugmode=false
 IUSC.SkillPressStampTime=0
 IUSC.IUSCLog=""
@@ -64,6 +75,7 @@ end
 IUSC.NextReady=GetTime()
 IUSC.Stage=1
 IUSC.GCDCD=1
+IUSC.GCDAtPluse=IUSC.GCDCD
 IUSC.GCDCDMinus005=IUSC.GCDCD-0.05
 IUSC.GCDCDMinus02=IUSC.GCDCD-0.2
 IUSC.PlayerSpec=GetSpecializationInfo(GetSpecialization())
@@ -103,6 +115,15 @@ function Ping.aP()
 end
 Ping.aP()
 
+local function CDEnd(s)
+	local st,du=GetSpellCooldown(s)
+	return st+du
+end
+
+local function GCD()
+	return select(2,GetSpellCooldown(TMW.GCDSpell))
+end
+
 function IUSC.LastSkillUse()
 	return IUSC.LastSU
 end
@@ -114,6 +135,7 @@ end
 function IUSC.Haste_Event(Self,Event,Arg1)
 	if(Arg1=="player")and(not IUSC.spec1secGCD[IUSC.PlayerSpec])then
         IUSC.GCDCD = math.max(0.5,1.5*(100/(100+UnitSpellHaste("player"))))
+		IUSC.GCDCD = math.floor(IUSC.GCDCD*1000)/1000
 		IUSC.GCDCDMinus005=IUSC.GCDCD-0.05
 		--IUSC.GCDCDMinus02=IUSC.GCDCD-0.2
 		IUSC.GCDCDMinus02=IUSC.GCDCD-Ping.nowPlus
@@ -130,7 +152,8 @@ function IUSC.SpecChanged()
 	if IUSC.spec1secGCD[spec] then
 		IUSC.GCDCD=1
 	else
-		IUSC.GCDCD=math.max(0.5,1.5*(100/(100+UnitSpellHaste("player"))))
+        IUSC.GCDCD = math.max(0.5,1.5*(100/(100+UnitSpellHaste("player"))))
+		IUSC.GCDCD = math.floor(IUSC.GCDCD*1000)/1000
 	end
 	IUSC.GCDCDMinus005=IUSC.GCDCD-0.05
 	--IUSC.GCDCDMinus02=IUSC.GCDCD-0.2
@@ -155,11 +178,13 @@ function IUSC.Cast_OnEvent(self,Event,arg1,arg2,arg3,arg4)
 	if (arg1 ~= "player") then return end
 	if (Event=="UNIT_SPELLCAST_SENT") and (arg4==IUSC.SkillPress) then
 		if IUSC.debugmode then
-			--IUSC.printdebug("^SENT:"..IUSC.IDToSpell[arg4]..string.format(":%.2f",(GetTime()-IUSC.SkillPressStampTime)))
 			IUSC.printdebug("^SENT:"..string.format("%.2f",(GetTime()-IUSC.SkillPressStampTime)))
 		end
 		IUSC.SENTStampTime=GetTime()
-		--IUSC.CheckSentEventHandle:Cancel()
+		local nowGCD=GCD()
+		if math.abs(IUSC.GCDAtPluse-nowGCD)>0.08 then
+			IUSC.ReCreateGCDPluse(nowGCD-0.05+IUSC.GCDAdjust,nowGCD)
+		end
     elseif (Event == "UNIT_SPELLCAST_START")and(arg3==IUSC.SkillPress)then
 		if IUSC.debugmode then
 			IUSC.printdebug("^START")
@@ -179,7 +204,7 @@ function IUSC.Cast_OnEvent(self,Event,arg1,arg2,arg3,arg4)
 					IUSC.printdebug("^Instance Cast Skill Adjust GCD")
 				end
 				IUSC.StopPluse()
-				IUSC.CreateGCDPluse(IUSC.GCDCDMinus02)
+				IUSC.CreateGCDPluse(IUSC.GCDAtPluse-0.2)
 			end
 		end
     elseif (Event == "UNIT_SPELLCAST_STOP")and(arg3==IUSC.SkillPress)then
@@ -190,7 +215,6 @@ function IUSC.Cast_OnEvent(self,Event,arg1,arg2,arg3,arg4)
 		if IUSC.debugmode then
 			IUSC.printdebug("^FAILED")
 		end
-		--IUSC.CheckSentEventHandle:Cancel()
 		StopAllPluse()
 	elseif (Event == "UNIT_SPELLCAST_INTERRUPTED")and(arg3==IUSC.SkillPress) then
 		if IUSC.SpellActive==true then
@@ -203,7 +227,6 @@ function IUSC.Cast_OnEvent(self,Event,arg1,arg2,arg3,arg4)
 		if IUSC.debugmode then
 			IUSC.printdebug("^FAILED_QUIET")
 		end
-		--IUSC.CheckSentEventHandle:Cancel()
 		StopAllPluse()
 	end
 end
@@ -247,12 +270,12 @@ function IUSC.forceReady()
 end
 
 function IUSC.CreateGCDPluse(T)
-	T=T or IUSC.GCDCDMinus005
     if IUSC.debugmode then
         IUSC.printdebug("^GCD pluse")
     end
     IUSC.GCDTickHandle:Cancel()
     IUSC.GCDPluseActive=true
+	IUSC.GCDAtPluse=IUSC.GCDCD
     IUSC.GCDPluseTimeStamp=GetTime()
     IUSC.GCDPluseNextTick=IUSC.GCDPluseTimeStamp+T
 	IUSC.NextReady=IUSC.GCDPluseNextTick
@@ -275,6 +298,47 @@ function IUSC.StopPluse(nkl)--nkl = Not keep log in debug mode
 	IUSC.SpellActive=false
 end
 
+--[[ not finish yet
+function IUSC.GCDAdjusting()*****
+	--use this function by GCD Pluse for adjust
+	IUSC.GCDAdjustT2=IUSC.GCDAdjustT1
+	IUSC.GCDAdjustT1=GetTime()
+	local diff=IUSC.GCDAdjustT1-IUSC.GCDAdjustT2-IUSC.GCDCD
+	if diff<1 then
+		if diff>0.02 and (IUSC.GCDAdjust>-0.1)then
+			IUSC.GCDAdjust=IUSC.GCDAdjust-0.01
+		elseif diff<0 and (IUSC.GCDAdjust<0.1) then
+			IUSC.GCDAdjust=IUSC.GCDAdjust+0.01
+		end
+	end
+end
+]]
+function IUSC.ReCreateGCDPluse(T,nowGCD)-- GCD change to T 
+	if not IUSC.GCDPluseActive then return end
+	if IUSC.debugmode then
+		IUSC.printdebug("^ReCreateGCD pluse")
+	end
+	local curretnT=GetTime()
+	if IUSC.GCDPluseTimeStamp+T-curretnT<0.1 then
+		T=curretnT+0.1-IUSC.GCDPluseTimeStamp
+	end
+	IUSC.GCDTickHandle:Cancel()
+	IUSC.GCDAtPluse=nowGCD
+	--IUSC.GCDPluseActive=true
+	--IUSC.GCDPluseTimeStamp=GetTime()
+	IUSC.GCDPluseNextTick=IUSC.GCDPluseTimeStamp+T
+	IUSC.NextReady=IUSC.GCDPluseNextTick
+	IUSC.GCDTickHandle=C_Timer.NewTimer(IUSC.NextReady-curretnT,
+		function()
+			if IUSC.debugmode then
+				IUSC.printdebug("^GCD Pluse end")
+			end
+			IUSC.GCDPluseActive=false
+			IUSC.forceReady()
+	end)
+end
+
+
 function IUSC.CreateCastPluse()
 	if IUSC.debugmode then
 		IUSC.printdebug("^Cast pluse")
@@ -287,17 +351,10 @@ function IUSC.CreateCastPluse()
     --    n, _, _, _, endTimeMS= UnitChannelInfo("player")
     --end
 	endTimeMS=(endTimeMS/1000)-Ping.nowPlus
-	if endTimeMS<=IUSC.GCDPluseNextTick then
-		if IUSC.debugmode then
-			IUSC.printdebug("^casttime<=GCD")
-		end
-		endTimeMS=IUSC.GCDPluseNextTick-IUSC.SpellTimeStamp
-	else
-		if IUSC.debugmode then
-			IUSC.printdebug("^casttime>GCD")
-		end
-		endTimeMS=endTimeMS-IUSC.SpellTimeStamp
+	if IUSC.debugmode then
+		IUSC.printdebug("^castting..")
 	end
+	endTimeMS=endTimeMS-IUSC.SpellTimeStamp
 	if endTimeMS<0 then endTimeMS=0.1 end
 	IUSC.NextReady=IUSC.SpellTimeStamp+endTimeMS
     IUSC.GCDTickHandle=C_Timer.NewTimer(endTimeMS,
@@ -342,16 +399,26 @@ function IUSC.SU(k,t) --k is string e.g. "33" , "3a" , t=GCD /nil=default
 	if IUSC.KeepLogText then IUSC.KeepLogText() end
 	IUSC.Stage=2
 	IUSC.SkillPress=IUSC.NumToID[C] or 0
-	IUSC.SkillPressStampTime=GetTime()
+	local cTime=GetTime()
 	if IUSC.debugmode then
 		local s=IUSC.NumToSpell[C] or "none"
 		local sL=string.len(s)
+		local Gap=cTime-IUSC.SkillPressStampTime-IUSC.GCDCD
+		if Gap>0.01 then IUSC.GCDAdjust=IUSC.GCDAdjust-0.01 end
+		if Gap<0 then IUSC.GCDAdjust=IUSC.GCDAdjust+0.01 end
+		local SGap
+		local SGap2=string.format("%.2f",Gap).."s"
+		Gap=Gap/IUSC.GCDCD
+		if Gap>5 then SGap="+>5GCD "..SGap2 else
+			SGap="+"..string.format("%.2f",Gap).."GCD "..SGap2
+		end
 		IUSC.SkillNameLen=math.max(IUSC.SkillNameLen,sL)
 		s=s..string.rep(" ",IUSC.SkillNameLen-sL)
-		IUSC.printdebug(">>"..IUSC.SkillPressStampTime.." USE: "..s)
+		IUSC.printdebug(">>"..SGap.." "..cTime.." USE: "..s)
 	end
+	IUSC.SkillPressStampTime=cTime
 	IUSC.LastSU=IUSC.NumToSpell[C]
-	IUSC.CreateGCDPluse(t)
+	IUSC.CreateGCDPluse(t or (IUSC.GCDCDMinus005+IUSC.GCDAdjust))
 	IUSC.AfterSU(IUSC.NumToID[C])
 end
 

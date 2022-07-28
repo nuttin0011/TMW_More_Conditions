@@ -1,4 +1,4 @@
--- Many Function Version 9.0.5/67
+-- Many Function Version 9.0.5/69
 -- Set Priority to 1
 -- this file save many function for paste to TMW Snippet LUA
 
@@ -85,7 +85,7 @@ nameplateShowAll, timeMod, ... = UnitAura(unit, index [, filter])  ]]
 --function IROVar.UnitCount(n) ; return unit in nameplate
 --var IROVar.PLAYER_TARGET_CHANGED_Time = GetTime()
 --function IROVar.IsUnitCCed(unit) ; return true/false | Dont Break CC
-
+--function IROVar.KickPress() ; IROVar.KickPressed=true 0.5 sec after turn to false
     
 if not IROVar then IROVar={} end
 IROVar.Icon = {}
@@ -229,8 +229,8 @@ IROVar.ERO_Old_Val = {Timer=0,Old_Val={},
 }
 
 local ItemRangeCheck2 = {
-    --[2] =37727, -- Ruby Acorn -- not work
-    --[3] =42732, -- Everfrost Razor -- not work
+    [2] =37727, -- Ruby Acorn -- not work
+    [3] =42732, -- Everfrost Razor -- not work
     [4] =129055, -- Shoe Shine Kit
     [5] =8149, -- Voodoo Charm
     [7] =61323, -- Ruby Seeds
@@ -779,6 +779,13 @@ IROVar.TargetName=UnitName("target")
 IROVar.TargetGUID=UnitGUID("target")
 IROVar.TargetLV=UnitLevel("target")
 
+function IROVar.CastBar.CheckAll()
+    IROVar.CastBar.CheckCasting()
+    IROVar.CastBar.CheckChanneling()
+    IROVar.CastBar.ResetKick()
+    IROVar.CastBar.CheckSpellInfo()
+end
+
 IROVar.CastBar.CastFrame=CreateFrame("Frame")
 IROVar.CastBar.CastFrame:RegisterEvent("UNIT_SPELLCAST_START")
 IROVar.CastBar.CastFrame:RegisterEvent("UNIT_SPELLCAST_CHANNEL_START")
@@ -800,12 +807,11 @@ IROVar.CastBar.CastFrame:SetScript("OnEvent",function(self,event,arg1,...)
         IROVar.TargetName=UnitName("target")
         IROVar.TargetGUID=UnitGUID("target")
         IROVar.TargetLV=UnitLevel("target")
-        IROVar.CastBar.CheckCasting()
-        IROVar.CastBar.CheckChanneling()
-        IROVar.CastBar.ResetKick()
-        IROVar.CastBar.CheckSpellInfo()
+        IROVar.CastBar.CheckAll()
     end
 end)
+
+C_Timer.NewTicker(0.3,IROVar.CastBar.CheckAll)
 
 IROVar.CastBar.CastFrame2=CreateFrame("Frame")
 IROVar.CastBar.CastFrame2:RegisterEvent("UNIT_SPELLCAST_FAILED_QUIET")
@@ -931,4 +937,12 @@ end
 
 function IROVar.UnitCount(n)
     return IROVar.AutoTarget and IROVar.AutoTarget.UnitCount[n] or 0
+end
+
+IROVar.KickPressed=false
+function IROVar.KickPress()
+    IROVar.KickPressed=true
+    C_Timer.After(0.4,function()
+        IROVar.KickPressed=false
+    end)
 end

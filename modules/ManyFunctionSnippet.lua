@@ -1,4 +1,4 @@
--- Many Function Version 9.0.5/69
+-- Many Function Version 9.0.5/72b
 -- Set Priority to 1
 -- this file save many function for paste to TMW Snippet LUA
 
@@ -30,6 +30,7 @@
 --var IROVar.Icon ; Keep Icon Data from TMW for Use further
 --function IROVar.IsIconShow(icon) ; return true/false
 --function IROVar.IconSweepCompair(icon,max,min) ; return (max > SweepCD > min) (true/false)
+--function IROVar.IconSweepRemain(icon) -- return SecRemain,MaxRemain
 --var IROVar.activeConduits ; dump soulbind to table
 --var IROVar.playerGUID ;
 --var IROVar.incombat ;
@@ -47,7 +48,7 @@
     -- note callBack is Function(GCDEnd) ; GCDEnd = st+du of (GetSpellCooldown(TMW.GCDSpell))
 --function IROVar.UnRegister_SPELL_UPDATE_COOLDOWN_scrip_CALLBACK(name)
 --var IROVar.SPELL_UPDATE_COOLDOWN_count = Count Event Call; use to detemin Update CD
---var IROVar.TickCount005 = Tick Count every 0.05 sec; use to detemin Update CD
+--var IROVar.TickCount01 = Tick Count every 0.1 sec; use to detemin Update CD
 --var IROVar.TargetChangeCount=0;
 
 --var IROVar.Haste ; player Haste
@@ -209,14 +210,14 @@ end
 IROVar.ERO_Old_Val = {Timer=0,Old_Val={},
     Check = function(functionName,input_val_string)
         input_val_string=input_val_string or ""
-        return ((IROVar.ERO_Old_Val.Timer==IROVar.TickCount005)
+        return ((IROVar.ERO_Old_Val.Timer==IROVar.TickCount01)
         and IROVar.ERO_Old_Val.Old_Val[functionName]
         and IROVar.ERO_Old_Val.Old_Val[functionName][input_val_string])
         and IROVar.ERO_Old_Val.Old_Val[functionName][input_val_string] or nil
     end,
     Update = function(functionName,input_val_string,result_val)
         input_val_string=input_val_string or ""
-        local currenTimer = IROVar.TickCount005
+        local currenTimer = IROVar.TickCount01
         if IROVar.ERO_Old_Val.Timer < currenTimer then
             IROVar.ERO_Old_Val.Timer = currenTimer
             IROVar.ERO_Old_Val.Old_Val = {}
@@ -254,6 +255,10 @@ local ItemRangeCheck2 = {
     [150] =46954, -- Flaming Spears
     [200] =75208, -- Rancher's Lariat
 }
+local ItemRangeCheck2_2={}
+for k,v in pairs(ItemRangeCheck2) do
+    ItemRangeCheck2_2[k]="item:"..v
+end
 local ItemRangeCheckOrder = {}
 for i=1,200 do
     if ItemRangeCheck2[i] then
@@ -265,7 +270,7 @@ IROVar.ItemNameToCheck8 = "item:34368"
 
 function IROVar.Range(unit)
     for i=1,#ItemRangeCheckOrder do
-        if IsItemInRange("item:"..ItemRangeCheck2[ItemRangeCheckOrder[i]],unit) then
+        if IsItemInRange(ItemRangeCheck2_2[ItemRangeCheckOrder[i]],unit) then
             return ItemRangeCheckOrder[i-1] or 0
         end
     end
@@ -280,7 +285,7 @@ function IROEnemyCountInRange(nRange)
     while(ItemRangeCheck2[nRange]==nil)do
         nRange=nRange-1
     end
-    local ItemNameToCheck = "item:"..ItemRangeCheck2[nRange]
+    local ItemNameToCheck = ItemRangeCheck2_2[nRange]
     local nn
     local count=0
     for i=1,30 do
@@ -529,6 +534,15 @@ function IROVar.IconSweepCompair(icon,max,min)
     return  (ct>mint) and (ct<maxt)
 end
 
+function IROVar.IconSweepRemain(icon) -- return SecRemain,MaxRemain
+    --return max>SweepCD>min
+    if not icon then return 0,1 end
+    if icon.Modules.IconModule_CooldownSweep.start==0 then return 0,1 end
+    local du=icon.Modules.IconModule_CooldownSweep.duration
+    local remain=icon.Modules.IconModule_CooldownSweep.start+du-GetTime()
+    return remain,du
+end
+
 function IROVar.DetermineActiveCovenantAndSoulbindAndConduits()
     local covenantID = C_Covenants.GetActiveCovenantID();
     if ( not covenantID or covenantID == 0 ) then
@@ -693,9 +707,9 @@ IROVar.SPELL_UPDATE_COOLDOWN_frame:SetScript("OnEvent", function(self, event, ..
     IROVar.SPELL_UPDATE_COOLDOWN_scrip()
 end)
 
-IROVar.TickCount005=0
-IROVar.TickCount005_Handle=C_Timer.NewTicker(0.05,function()
-    IROVar.TickCount005=IROVar.TickCount005+1
+IROVar.TickCount01=0
+IROVar.TickCount01_Handle=C_Timer.NewTicker(0.017,function()
+    IROVar.TickCount01=IROVar.TickCount01+1
 end)
 
 IROVar.CastBar={}

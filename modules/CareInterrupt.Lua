@@ -1,4 +1,4 @@
--- Care Interrupt V 3.0
+-- Care Interrupt V 3.1
 -- Version LUA Snipped
 -- Set Priority to 10
 -- interrupt Only Important Spell at Specific Mob
@@ -132,7 +132,7 @@ IROVar.MobListForInterrupt = {
 }
 
 IROVar.CareInOld={
-    [1]=bit.rshift(IROVar.TickCount005,1)-1, -- TickCount
+    [1]=IROVar.TickCount01-1, -- TickCount
     [2]=IROVar.TargetChangeCount-1, -- TargetCount
     [3]={
         --[unittoken]=val
@@ -140,7 +140,7 @@ IROVar.CareInOld={
 }
 
 function IROVar.CareInterrupt(nUnit)
-    local TickC=bit.rshift(IROVar.TickCount005,1)
+    local TickC=IROVar.TickCount01
     local UseOldCal = false
     local ClearOldCal = true
     local nUnitTarget=nUnit=="target"

@@ -1,4 +1,4 @@
--- Care Burn 3.0
+-- Care Burn 3.1
 -- Version LUA Snipped
 -- Set Priority to 20
 -- Burst Only Condition met / no condition on this mob
@@ -82,7 +82,7 @@ local function ZCareBurn(spec)
 end
 
 local CBOld={
-    [1]=bit.rshift(IROVar.TickCount005,2)-1, -- TickCount
+    [1]=IROVar.TickCount01-1, -- TickCount
     [2]=IROVar.TargetChangeCount-1, -- TargetCount
     [3]={
         --[spec]=val
@@ -91,7 +91,7 @@ local CBOld={
 
 function IROVar.CareBurn(spec)
     spec=spec or ""
-    local Tick=bit.rshift(IROVar.TickCount005,2)
+    local Tick=IROVar.TickCount01
     local Target=IROVar.TargetChangeCount
     if CBOld[1]~=Tick or CBOld[2]~=Target or (CBOld[3][spec]==nil) then
         CBOld[1]=Tick

@@ -1,4 +1,4 @@
--- Many Function Version Hunter 9.2.5/6d
+-- Many Function Version Hunter 9.2.5/7b
 -- this file save many function for paste to TMW Snippet LUA
 
 --function IROVar.Hun.TBreakDPSForBS() ; return Break Time for Shoot Barbed shot
@@ -6,16 +6,26 @@
 --var IROVar.Hun.AimedShotActive ; true = cast Aimed Shoot + after success 0.4 GCD sec
 --var IROVar.Hun.CSCountAfterKC ; Cobra Shot Count After Kill Command
 --var IROVar.Hun.MD.nameMacro="~!Num0" ; name Macro for MD to tank set to [nomod] num0
+--var IROVar.Hun.WFBombName=GetSpellInfo("Wildfire Bomb")
+--IROVar.Hun.JustUseBomb=false
 
 if not IROVar then IROVar={} end
 if not IROVar.Hun then IROVar.Hun={} end
 
 IROVar.Hun.AimedShotActive=false
+
 IROVar.Hun.BarbedFullCD=select(4,GetSpellCharges("barbed shot"))
 IROVar.Hun.MD={}
 IROVar.Hun.MD.EditingMacro=false
 IROVar.Hun.MD.TankName="pet"
 IROVar.Hun.MD.nameMacro="~!Num0"
+IROVar.Hun.JustUseBomb=false
+
+function IROVar.Hun.UseBomb()
+    if IROVar.Hun.JustUseBomb then return end
+    IROVar.Hun.JustUseBomb=true
+    C_Timer.After(1,function() IROVar.Hun.JustUseBomb=false end)
+end
 
 local function CDend(s)
 	local st,du=GetSpellCooldown(s)
@@ -27,6 +37,14 @@ end
 IROVar.Hun.TotHBuffEnd=0 --Thrill of the Hunt buff end time
 IROVar.Hun.BarbedCDEnd=CDend("barbed shot") --Barbed shot CD end time
 IROVar.Hun.CSCountAfterKC=0
+
+
+IROVar.Hun.WFBombName=GetSpellInfo("Wildfire Bomb")
+IROVar.Hun.UpdateIcon = CreateFrame("Frame")
+IROVar.Hun.UpdateIcon:RegisterEvent("SPELL_UPDATE_ICON")
+IROVar.Hun.UpdateIcon:SetScript("OnEvent", function()
+    IROVar.Hun.WFBombName=GetSpellInfo("Wildfire Bomb")
+end)
 
 function IROVar.Hun.CombatLog_OnEvent(...)
     local _,subevent,_,sourceGUID,_,_,_,DesGUID,DesName,_,_,spellID,spellName = ...
@@ -60,8 +78,9 @@ function IROVar.Hun.CombatLog_OnEvent(...)
                 IROVar.Hun.CSCountAfterKC=IROVar.Hun.CSCountAfterKC+1
             end
         end
-
     end
+    --if IROSpecID==255 then -- Survival
+    --end
 end
 IROVar.Register_COMBAT_LOG_EVENT_UNFILTERED_CALLBACK("Hun",IROVar.Hun.CombatLog_OnEvent)
 
@@ -225,4 +244,6 @@ end
 
 IROVar.Hun.MD.EventFrame:SetScript("OnEvent",IROVar.Hun.MD.EventCallBack)
 
-C_Timer.NewTicker(6,IROVar.Hun.MD.EventCallBack,20)
+C_Timer.NewTicker(6,function()
+    if not InCombatLockdown() then IROVar.Hun.MD.EventCallBack() end
+end)

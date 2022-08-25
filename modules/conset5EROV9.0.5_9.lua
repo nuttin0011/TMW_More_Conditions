@@ -1,4 +1,4 @@
--- ZRO Decoder 9.0.5/9Oh
+-- ZRO Decoder 9.0.5/9P
 -- check Spell GCD
 --[[ macro test button
 /run print(IsControlKeyDown() and "Ctrl" or "no Ctrl")
@@ -243,8 +243,8 @@ IUSC.f3:SetScript("OnEvent", IUSC.Cast_OnEvent)
 
 ------------------------------------------------------------------------------------------------------
 
-IUSC.GCDTickHandle=C_Timer.NewTimer(0,function() end)
-IUSC.CheckSentEventHandle=C_Timer.NewTimer(0,function() end)
+IUSC.GCDTickHandle=C_Timer.NewTimer(0.1,function() end)
+IUSC.CheckSentEventHandle=C_Timer.NewTimer(0.1,function() end)
 IUSC.GCDPluseActive=false
 IUSC.SpellActive=false
 IUSC.GCDPluseTimeStamp=0
@@ -279,6 +279,7 @@ function IUSC.CreateGCDPluse(T)
     IUSC.GCDPluseTimeStamp=GetTime()
     IUSC.GCDPluseNextTick=IUSC.GCDPluseTimeStamp+T
 	IUSC.NextReady=IUSC.GCDPluseNextTick
+	if T<=0.1 then T=0.1 end
     IUSC.GCDTickHandle=C_Timer.NewTimer(T,
         function()
             if IUSC.debugmode then
@@ -328,7 +329,9 @@ function IUSC.ReCreateGCDPluse(T,nowGCD)-- GCD change to T
 	--IUSC.GCDPluseTimeStamp=GetTime()
 	IUSC.GCDPluseNextTick=IUSC.GCDPluseTimeStamp+T
 	IUSC.NextReady=IUSC.GCDPluseNextTick
-	IUSC.GCDTickHandle=C_Timer.NewTimer(IUSC.NextReady-curretnT,
+	curretnT=IUSC.NextReady-curretnT
+	if curretnT<0.1 then curretnT=0.1 end
+	IUSC.GCDTickHandle=C_Timer.NewTimer(curretnT,
 		function()
 			if IUSC.debugmode then
 				IUSC.printdebug("^GCD Pluse end")
@@ -357,6 +360,7 @@ function IUSC.CreateCastPluse()
 	endTimeMS=endTimeMS-IUSC.SpellTimeStamp
 	if endTimeMS<0 then endTimeMS=0.1 end
 	IUSC.NextReady=IUSC.SpellTimeStamp+endTimeMS
+	if endTimeMS<0.1 then endTimeMS=0.1 end
     IUSC.GCDTickHandle=C_Timer.NewTimer(endTimeMS,
     function()
 		if IUSC.debugmode then

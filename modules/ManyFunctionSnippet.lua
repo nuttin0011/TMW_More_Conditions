@@ -1,4 +1,4 @@
--- Many Function Version 9.0.5/72b
+-- Many Function Version 9.0.5/73
 -- Set Priority to 1
 -- this file save many function for paste to TMW Snippet LUA
 
@@ -47,6 +47,8 @@
 --function IROVar.Register_SPELL_UPDATE_COOLDOWN_scrip_CALLBACK(name,callBack)
     -- note callBack is Function(GCDEnd) ; GCDEnd = st+du of (GetSpellCooldown(TMW.GCDSpell))
 --function IROVar.UnRegister_SPELL_UPDATE_COOLDOWN_scrip_CALLBACK(name)
+--function IROVar.Register_PLAYER_TARGET_CHANGED_scrip_CALLBACK(name,callBack)
+--function IROVar.UnRegister_PLAYER_TARGET_CHANGED_scrip_CALLBACK(name)
 --var IROVar.SPELL_UPDATE_COOLDOWN_count = Count Event Call; use to detemin Update CD
 --var IROVar.TickCount01 = Tick Count every 0.1 sec; use to detemin Update CD
 --var IROVar.TargetChangeCount=0;
@@ -87,7 +89,7 @@ nameplateShowAll, timeMod, ... = UnitAura(unit, index [, filter])  ]]
 --var IROVar.PLAYER_TARGET_CHANGED_Time = GetTime()
 --function IROVar.IsUnitCCed(unit) ; return true/false | Dont Break CC
 --function IROVar.KickPress() ; IROVar.KickPressed=true 0.5 sec after turn to false
-    
+
 if not IROVar then IROVar={} end
 IROVar.Icon = {}
 function IROVar.IsIconShow(icon)
@@ -677,6 +679,20 @@ IROVar.COMBAT_LOG_EVENT_UNFILTERED_frame:RegisterEvent("COMBAT_LOG_EVENT_UNFILTE
 IROVar.COMBAT_LOG_EVENT_UNFILTERED_frame:SetScript("OnEvent", function(self, event, ...)
     IROVar.COMBAT_LOG_EVENT_UNFILTERED_scrip(CombatLogGetCurrentEventInfo())
 end)
+
+IROVar.PLAYER_TARGET_CHANGED_CALLBACK={}
+function IROVar.Register_PLAYER_TARGET_CHANGED_scrip_CALLBACK(name,callBack)
+    IROVar.PLAYER_TARGET_CHANGED_CALLBACK[name]=callBack
+end
+function IROVar.UnRegister_PLAYER_TARGET_CHANGED_scrip_CALLBACK(name)
+    IROVar.PLAYER_TARGET_CHANGED_CALLBACK[name]=nil
+end
+IROVar.PLAYER_TARGET_CHANGED_frame = CreateFrame("Frame")
+IROVar.PLAYER_TARGET_CHANGED_frame:RegisterEvent("PLAYER_TARGET_CHANGED")
+IROVar.PLAYER_TARGET_CHANGED_frame:SetScript("OnEvent", function()
+    for k,v in pairs(IROVar.PLAYER_TARGET_CHANGED_CALLBACK) do if v then v() end end
+end)
+
 
 IROVar.SPELL_UPDATE_COOLDOWN_CALLBACK={}
 

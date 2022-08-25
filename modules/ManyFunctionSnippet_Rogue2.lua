@@ -1,4 +1,4 @@
--- Many Function Rogue2 9.2.5/1
+-- Many Function Rogue2 9.2.5/3
 
 --var IROVar.Rogue2.RTBCount=0
 --function IROVar.Rogue2.RTBBuffCount()
@@ -16,8 +16,23 @@
 --IROVar.Rogue2.ComboPoint=UnitPower("player", 4)
 --IROVar.Rogue2.SBSCount=0
 
+--function IROVar.Rogue2.Register_NPC_Name_Check(SetName,ArrayNPCName)
+    --[[
+        ArrayNPCName={ "name1","name2","name3"=,..
+    ]]
+--function IROVar.Rogue2.Register_NPC_ID_Check(SetName,ArrayNPCID)
+    --[[
+        ArrayNPCID={ ID1,ID2,ID3,....
+    ]]
+--function IROVar.Rogue2.IsTargetNPCNameSet(SetName)
+--function IROVar.Rogue2.IsTargetNPCIDSet(SetName)
+--IROVar.Rogue2.TargetName=UnitName("target")
+--IROVar.Rogue2.TargetNPCID=TargetNPCID()
+
 if not IROVar then IROVar={} end
 if not IROVar.Rogue2 then IROVar.Rogue2={} end
+
+IROVar.Rogue2.MyAura={}
 
 IROVar.Rogue2.RTBBuffName={
     ["Broadside"]=true,
@@ -56,6 +71,7 @@ IROVar.Rogue2.RTBBuffStatus={
 }
 
 IROVar.Rogue2.playerGUID=UnitGUID("player")
+local playerGUID=IROVar.Rogue2.playerGUID
 IROVar.Rogue2.CheckRTBHandle=C_Timer.NewTimer(1,function() end)
 IROVar.Rogue2.RTBCount=0
 
@@ -74,20 +90,42 @@ end
 function IROVar.Rogue2.CombatLog(...)
     local timestamp, subevent, _, sourceGUID, sourceName, sourceFlags, sourceRaidFlags,
     destGUID, destName, destFlags, destRaidFlags = ...
-    if sourceGUID~=IROVar.Rogue2.playerGUID then return end
-    --print("GUID OK")
-    if subevent=="SPELL_AURA_APPLIED" or subevent=="SPELL_AURA_REFRESH" then
-        --print("Sub EVENT",subevent)
+    if sourceGUID~=playerGUID then return end
+    if subevent=="SPELL_AURA_APPLIED" then
         --local spellId, spellName, spellSchool, amount, overkill, school, resisted,
         --blocked, absorbed, critical, glancing, crushing, isOffHand = select(12, ...)
-        local spellName=select(13,...)
-        --print(spellName)
+        local spellId,spellName=select(12,...)
         if IROVar.Rogue2.RTBBuffName[spellName] then
             IROVar.Rogue2.CheckRTBBuff()
+        end
+        if destGUID==playerGUID then
+            IROVar.Rogue2.MyAura[spellId]=true
+            IROVar.Rogue2.MyAura[spellName]=true
+        end
+    elseif subevent=="SPELL_AURA_REFRESH" then
+        if IROVar.Rogue2.RTBBuffName[select(13,...)] then
+            IROVar.Rogue2.CheckRTBBuff()
+        end
+    elseif subevent=="SPELL_AURA_REMOVED" then
+        if destGUID==playerGUID then
+            local spellId,spellName=select(12,...)
+            IROVar.Rogue2.MyAura[spellId]=false
+            IROVar.Rogue2.MyAura[spellName]=false
         end
     end
 end
 
+function IROVar.Rogue2.CheckMyAura()
+    IROVar.Rogue2.MyAura={}
+    for i=1,40 do
+        local name,_,_,_,_,_,_,_,_,_,spellId=UnitAura("player",i,"PLAYER")
+        if not name then break end
+        IROVar.Rogue2.MyAura[name]=true
+        IROVar.Rogue2.MyAura[spellId]=true
+    end
+end
+
+IROVar.RegisterIncombatCallBackRun("Rogue Check Aura",IROVar.Rogue2.CheckMyAura)
 IROVar.Register_COMBAT_LOG_EVENT_UNFILTERED_CALLBACK("Rogue RTB",IROVar.Rogue2.CombatLog)
 
 function IROVar.Rogue2.CheckRTBBuff()
@@ -144,7 +182,7 @@ IROVar.Rogue2.ShadowBladeBuff=TMW.CNDT.Env.AuraDur("player", "shadow blades", "P
 function IROVar.Rogue2.CombatLogSBS(...)
     local timestamp, subevent, _, sourceGUID, sourceName, sourceFlags, sourceRaidFlags,
     destGUID, destName, destFlags, destRaidFlags,spellID,spellName = ...
-    if sourceGUID~=IROVar.Rogue2.playerGUID then return end
+    if sourceGUID~=playerGUID then return end
     --print("GUID OK")
     if spellName=="Serrated Bone Spike" then
         if subevent=="SPELL_DAMAGE" or subevent=="SPELL_PERIODIC_DAMAGE" then
@@ -174,7 +212,7 @@ function IROVar.Rogue2.CombatLogSBS(...)
         end
     end
 end
-IROVar.Register_COMBAT_LOG_EVENT_UNFILTERED_CALLBACK("Rogue RTB",IROVar.Rogue2.CombatLogSBS)
+IROVar.Register_COMBAT_LOG_EVENT_UNFILTERED_CALLBACK("Rogue SBS",IROVar.Rogue2.CombatLogSBS)
 
 
 IROVar.Rogue2.ComboMax=UnitPowerMax("player", 4)
@@ -231,3 +269,79 @@ end
     end
 end)()]]
 
+
+IROVar.Rogue2.ArrayNPCName={}
+--[[
+    {["Set1 Name"]={
+        ["NPC Name1"]=true,
+        ["NPC Name2"]=true,
+        ["NPC Name3"]=true,...
+    },["Set2 Name"]={...},...}
+]]
+IROVar.Rogue2.ArrayNPCNameChecked={}
+--[[
+    {["Set1 Name"]=true,
+    ,["Set2 Name"]=true,...
+]]
+IROVar.Rogue2.ArrayNPCID={}
+IROVar.Rogue2.ArrayNPCIDChecked={}
+
+local function TargetNPCID()
+    return tonumber((UnitGUID("target") or ""):match(".-%-%d+%-%d+%-%d+%-%d+%-(%d+)"))
+end
+
+local function CheckNPC()
+    IROVar.Rogue2.TargetName=UnitName("target")
+    IROVar.Rogue2.TargetNPCID=TargetNPCID()
+    for k,v in pairs(IROVar.Rogue2.ArrayNPCName) do
+        if v[IROVar.Rogue2.TargetName] then
+            IROVar.Rogue2.ArrayNPCNameChecked[k]=true
+        else
+            IROVar.Rogue2.ArrayNPCNameChecked[k]=false
+        end
+    end
+    for k,v in pairs(IROVar.Rogue2.ArrayNPCID) do
+        if v[IROVar.Rogue2.TargetNPCID] then
+            IROVar.Rogue2.ArrayNPCIDChecked[k]=true
+        else
+            IROVar.Rogue2.ArrayNPCIDChecked[k]=false
+        end
+    end
+end
+
+
+C_Timer.After(3,CheckNPC)
+
+IROVar.Register_PLAYER_TARGET_CHANGED_scrip_CALLBACK("Rogue_Target_Name_NPCID",function()
+    CheckNPC()
+end)
+
+function IROVar.Rogue2.Register_NPC_Name_Check(SetName,ArrayNPCName)
+    --[[
+        ArrayNPCName={ "name1","name2","name3"=,..
+    ]]
+    local array={}
+    for _,v in pairs(ArrayNPCName) do
+        array[v]=true
+    end
+    IROVar.Rogue2.ArrayNPCName[SetName]=array
+end
+
+function IROVar.Rogue2.Register_NPC_ID_Check(SetName,ArrayNPCID)
+    --[[
+        ArrayNPCID={ ID1,ID2,ID3,....
+    ]]
+    local array={}
+    for _,v in pairs(ArrayNPCID) do
+        array[v]=true
+    end
+    IROVar.Rogue2.ArrayNPCID[SetName]=array
+end
+
+function IROVar.Rogue2.IsTargetNPCNameSet(SetName)
+    return IROVar.Rogue2.ArrayNPCNameChecked[SetName]
+end
+
+function IROVar.Rogue2.IsTargetNPCIDSet(SetName)
+    return IROVar.Rogue2.ArrayNPCIDChecked[SetName]
+end

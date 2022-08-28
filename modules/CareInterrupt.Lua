@@ -1,4 +1,4 @@
--- Care Interrupt V 3.1
+-- Care Interrupt V 3.2
 -- Version LUA Snipped
 -- Set Priority to 10
 -- interrupt Only Important Spell at Specific Mob
@@ -126,9 +126,26 @@ IROVar.MobListForInterrupt = {
         ["Devoted Accomplice"]={["Reinvigorate"]=true},
         ["Focused Ritualist"]={["Unstable Rift"]=true},
         ["Murkbrine Scalebinder"]={["Invigorating Fish Stick"]=true},--stun
-
+        ["Murkbrine Fishmancer"]={["Waterbolt"]=[[return IsMyInterruptSpellReady()]]},
+        ["Murkbrine Shellcrusher"]={["Cry of Mrrggllrrgg"]=true},
     },
-
+    ["Grimrail Depot"]={
+        ["Grimrail Technician"]={["Activating"]=true,["50,000 Volts"]=true},
+        ["Grom'kar Gunner"]={["Shrapnel Blast"]=true},
+        ["Grom'kar Boomer"]={["Cannon Barrage"]=true,["Blackrock Mortar"]=true},
+        ["Grom'kar Cinderseer"]={["Flametongue"]=true},
+    },
+    ["Iron Docks"]={
+        ["Thunderlord Wrangler"]={["Throw"]=true,["Serrated Spear"]=true},
+    },
+    ["Return to Karazhan"]={
+    },
+    ["Operation: Mechagon"]={
+        ["Bomb Tonk"]={["Detonate"]=true},
+        ["Rocket Tonk"]={["Rocket Barrage"]=true},
+        ["Junkyard D.0.G."]={["Flaming Refuse"]=true},
+        ["Mechagon Tinkerer"]={["Giga-Wallop"]=true,["Activate Anti-Personnel Squirrel"]=true},
+    },
 }
 
 IROVar.CareInOld={

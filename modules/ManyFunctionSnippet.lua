@@ -1,4 +1,4 @@
--- Many Function Version 9.0.5/73
+-- Many Function Version 9.0.5/73b
 -- Set Priority to 1
 -- this file save many function for paste to TMW Snippet LUA
 
@@ -841,7 +841,7 @@ IROVar.CastBar.CastFrame:SetScript("OnEvent",function(self,event,arg1,...)
     end
 end)
 
-C_Timer.NewTicker(0.3,IROVar.CastBar.CheckAll)
+C_Timer.NewTicker(0.41,IROVar.CastBar.CheckAll)
 
 IROVar.CastBar.CastFrame2=CreateFrame("Frame")
 IROVar.CastBar.CastFrame2:RegisterEvent("UNIT_SPELLCAST_FAILED_QUIET")

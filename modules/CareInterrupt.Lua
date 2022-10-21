@@ -1,4 +1,4 @@
--- Care Interrupt V 3.2
+-- Care Interrupt V 3.3
 -- Version LUA Snipped
 -- Set Priority to 10
 -- interrupt Only Important Spell at Specific Mob
@@ -141,10 +141,19 @@ IROVar.MobListForInterrupt = {
     ["Return to Karazhan"]={
     },
     ["Operation: Mechagon"]={
+        ["Scrapbone Shaman"]={["Grasping Hex"]=true,["Stoneskin"]=true},
+        ["Scrapbone Grinder"]={["Skullcracker"]=true,["Enrage"]=true},
+        ["Scraphound"]={["B.O.R.K"]=true,},
+        ["Anodized Coilbearer"]={["Charged Coil"]=true},
+        ["Mechagon Trooper"]={["Nanoslicer"]=true},
+        ["Mechagon Renormalizer"]={["Shrink"]=true,["Enlarge"]=true,},
         ["Bomb Tonk"]={["Detonate"]=true},
         ["Rocket Tonk"]={["Rocket Barrage"]=true},
         ["Junkyard D.0.G."]={["Flaming Refuse"]=true},
         ["Mechagon Tinkerer"]={["Giga-Wallop"]=true,["Activate Anti-Personnel Squirrel"]=true},
+        ["Pistonhead Mechanic"]={["Repair"]=true},
+        ["Toxic Lurker"]={["Suffocating Smog"]=true},
+        ["Slime Elemental"]={["Slimebolt"]=true,["Slimewave"]=true},
     },
 }
 

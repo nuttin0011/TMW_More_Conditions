@@ -1,4 +1,4 @@
--- Many Function Version 9.0.5/73b
+-- Many Function Version 9.0.5/74
 -- Set Priority to 1
 -- this file save many function for paste to TMW Snippet LUA
 
@@ -89,7 +89,9 @@ nameplateShowAll, timeMod, ... = UnitAura(unit, index [, filter])  ]]
 --var IROVar.PLAYER_TARGET_CHANGED_Time = GetTime()
 --function IROVar.IsUnitCCed(unit) ; return true/false | Dont Break CC
 --function IROVar.KickPress() ; IROVar.KickPressed=true 0.5 sec after turn to false
+--function IROVar.UpdateCounter(n,v) ; update counter name to value
 
+local TMW=TMW
 if not IROVar then IROVar={} end
 IROVar.Icon = {}
 function IROVar.IsIconShow(icon)
@@ -975,4 +977,11 @@ function IROVar.KickPress()
     C_Timer.After(0.4,function()
         IROVar.KickPressed=false
     end)
+end
+
+function IROVar.UpdateCounter(n,v)
+    if TMW.COUNTERS[n]~=v then
+        TMW.COUNTERS[n]=v
+        TMW:Fire("TMW_COUNTER_MODIFIED",n)
+    end
 end

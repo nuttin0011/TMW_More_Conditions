@@ -6,6 +6,8 @@
 --var IROVar.Hun.AimedShotActive ; true = cast Aimed Shoot + after success 0.4 GCD sec
 --var IROVar.Hun.CSCountAfterKC ; Cobra Shot Count After Kill Command
 --var IROVar.Hun.MD.nameMacro="~!Num0" ; name Macro for MD to tank set to [nomod] num0
+    -- use this in Num0
+    --\n/cast [@focus,nomod,exists,help,nodead][nomod,@pet,exists,nodead,help]Misdirection
 --var IROVar.Hun.WFBombName=GetSpellInfo("Wildfire Bomb")
 --IROVar.Hun.JustUseBomb=false
 
@@ -176,6 +178,8 @@ function IROVar.Hun.CheckMDTankName()
     local macroName=IROVar.Hun.MD.nameMacro
     local macroBody=GetMacroBody(macroName)
     if macroBody==nil then return "pet" end
+    -- use this in Num0
+    --\n/cast [@focus,nomod,exists,help,nodead][nomod,@pet,exists,nodead,help]Misdirection
     local tankName=string.sub(macroBody,string.find(macroBody,"nomod,@")+7,string.find(macroBody,",exists,nodead,help")-1)
     return tankName
 end

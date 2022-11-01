@@ -1,4 +1,4 @@
--- Many Function Rogue2 9.2.5/3
+-- Many Function Rogue2 9.2.5/4
 
 --var IROVar.Rogue2.RTBCount=0
 --function IROVar.Rogue2.RTBBuffCount()
@@ -32,7 +32,62 @@
 if not IROVar then IROVar={} end
 if not IROVar.Rogue2 then IROVar.Rogue2={} end
 
+IROVar.Rogue2.BuffBroadside=false
+IROVar.Rogue2.BuffShadowBlades=false
+function IROVar.Rogue2.AuraCheck()
+    local name
+    local BuffBroadside=false
+    local BuffShadowBlades=false
+    for i=1,40 do
+        name=UnitAura("player",i)
+        if not name then break end
+        if name =="Broadside" then BuffBroadside=true end
+        if name =="Shadow Blades" then BuffShadowBlades=true end
+    end
+    IROVar.Rogue2.BuffBroadside=BuffBroadside
+    IROVar.Rogue2.BuffShadowBlades=BuffShadowBlades
+end
+IROVar.Rogue2.AuraCheck()
+IROVar.Rogue2.UNIT_AURA_Frame=CreateFrame("Frame")
+IROVar.Rogue2.UNIT_AURA_Frame:RegisterEvent("UNIT_AURA")
+IROVar.RogueCP.UNIT_AURA_Frame:SetScript("OnEvent",function(self,event,arg1, arg2)
+    if arg1~="player" then return end
+    if event=="UNIT_AURA" then
+        IROVar.Rogue2.AuraCheck()
+    end
+end)
+
+IROVar.Rogue2.CounterName={}
+IROVar.Rogue2.CounterName.CP="cpstatus"
+IROVar.Rogue2.CounterName.CPcBuff1="cpcbuffi"
+IROVar.Rogue2.CounterName.CPcBuff2="cpcbuffii"
+-- 10 = MaxCP , 9 = MaxCP-1 , 8 = MaxCP-2 ..... 0 = CP 0
+function IROVar.Rogue2.CheckCPStatusCounter()
+    local cp=IROVar.Rogue2.ComboPoint-IROVar.Rogue2.ComboMax --CP max = 0
+
+    if IROVar.Rogue2.ComboPoint==0 then
+        IROVar.UpdateCounter(IROVar.Rogue2.CounterName.CP,0)
+    else
+        IROVar.UpdateCounter(IROVar.Rogue2.CounterName.CP,10+cp)
+    end
+
+    if cp<0 or (cp<-1 and (IROVar.Rogue2.BuffBroadside or IROVar.Rogue2.BuffShadowBlades)) then
+        IROVar.UpdateCounter(IROVar.Rogue2.CounterName.CPcBuff1,1)
+    else
+        IROVar.UpdateCounter(IROVar.Rogue2.CounterName.CPcBuff1,0)
+    end
+
+    if cp<-1 or (cp<-2 and (IROVar.Rogue2.BuffBroadside or IROVar.Rogue2.BuffShadowBlades)) then
+        IROVar.UpdateCounter(IROVar.Rogue2.CounterName.CPcBuff2,1)
+    else
+        IROVar.UpdateCounter(IROVar.Rogue2.CounterName.CPcBuff2,0)
+    end
+end
+
+
+
 IROVar.Rogue2.MyAura={}
+
 
 IROVar.Rogue2.RTBBuffName={
     ["Broadside"]=true,
@@ -217,6 +272,7 @@ IROVar.Register_COMBAT_LOG_EVENT_UNFILTERED_CALLBACK("Rogue SBS",IROVar.Rogue2.C
 
 IROVar.Rogue2.ComboMax=UnitPowerMax("player", 4)
 IROVar.Rogue2.ComboPoint=UnitPower("player", 4)
+IROVar.Rogue2.CheckCPStatusCounter()
 
 IROVar.Rogue2.ComboMaxUpdateFrame=CreateFrame("Frame")
 IROVar.Rogue2.ComboMaxUpdateFrame:RegisterEvent("PLAYER_SPECIALIZATION_CHANGED")
@@ -226,10 +282,11 @@ IROVar.Rogue2.ComboMaxUpdateFrame:SetScript("OnEvent",function()
     C_Timer.After(1,function() IROVar.Rogue2.ComboMax=UnitPowerMax("player", 4) end)
 end)
 IROVar.Rogue2.ComboUpdateFrame=CreateFrame("Frame")
-IROVar.Rogue2.ComboUpdateFrame:RegisterEvent("UNIT_POWER_UPDATE")
+IROVar.Rogue2.ComboUpdateFrame:RegisterEvent("UNIT_POWER_FREQUENT")
 IROVar.Rogue2.ComboUpdateFrame:SetScript("OnEvent",function(self,event,unit,powerType)
     if unit=="player" and powerType=="COMBO_POINTS" then
         IROVar.Rogue2.ComboPoint=UnitPower("player", 4)
+        IROVar.Rogue2.CheckCPStatusCounter()
     end
 end)
 

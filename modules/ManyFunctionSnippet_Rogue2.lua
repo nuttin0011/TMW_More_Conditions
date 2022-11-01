@@ -44,13 +44,17 @@ function IROVar.Rogue2.AuraCheck()
         if name =="Broadside" then BuffBroadside=true end
         if name =="Shadow Blades" then BuffShadowBlades=true end
     end
-    IROVar.Rogue2.BuffBroadside=BuffBroadside
-    IROVar.Rogue2.BuffShadowBlades=BuffShadowBlades
+    if (IROVar.Rogue2.BuffBroadside~=BuffBroadside) or (IROVar.Rogue2.BuffShadowBlades~=BuffShadowBlades) then
+        IROVar.Rogue2.BuffBroadside=BuffBroadside
+        IROVar.Rogue2.BuffShadowBlades=BuffShadowBlades
+        IROVar.Rogue2.CheckCPStatusCounter()
+    end
 end
+
 IROVar.Rogue2.AuraCheck()
 IROVar.Rogue2.UNIT_AURA_Frame=CreateFrame("Frame")
 IROVar.Rogue2.UNIT_AURA_Frame:RegisterEvent("UNIT_AURA")
-IROVar.RogueCP.UNIT_AURA_Frame:SetScript("OnEvent",function(self,event,arg1, arg2)
+IROVar.Rogue2.UNIT_AURA_Frame:SetScript("OnEvent",function(self,event,arg1, arg2)
     if arg1~="player" then return end
     if event=="UNIT_AURA" then
         IROVar.Rogue2.AuraCheck()
@@ -58,36 +62,20 @@ IROVar.RogueCP.UNIT_AURA_Frame:SetScript("OnEvent",function(self,event,arg1, arg
 end)
 
 IROVar.Rogue2.CounterName={}
-IROVar.Rogue2.CounterName.CP="cpstatus"
-IROVar.Rogue2.CounterName.CPcBuff1="cpcbuffi"
-IROVar.Rogue2.CounterName.CPcBuff2="cpcbuffii"
+IROVar.Rogue2.CounterName.CP="comboblank"
+IROVar.Rogue2.CounterName.CPcBuff="comboblankwithbuff"
+
+IROVar.Rogue2.CounterName.RTBstatus="rtbstatus" -- 0 = dont RTB, 1 = do RTB
+
 -- 10 = MaxCP , 9 = MaxCP-1 , 8 = MaxCP-2 ..... 0 = CP 0
 function IROVar.Rogue2.CheckCPStatusCounter()
-    local cp=IROVar.Rogue2.ComboPoint-IROVar.Rogue2.ComboMax --CP max = 0
-
-    if IROVar.Rogue2.ComboPoint==0 then
-        IROVar.UpdateCounter(IROVar.Rogue2.CounterName.CP,0)
-    else
-        IROVar.UpdateCounter(IROVar.Rogue2.CounterName.CP,10+cp)
-    end
-
-    if cp<0 or (cp<-1 and (IROVar.Rogue2.BuffBroadside or IROVar.Rogue2.BuffShadowBlades)) then
-        IROVar.UpdateCounter(IROVar.Rogue2.CounterName.CPcBuff1,1)
-    else
-        IROVar.UpdateCounter(IROVar.Rogue2.CounterName.CPcBuff1,0)
-    end
-
-    if cp<-1 or (cp<-2 and (IROVar.Rogue2.BuffBroadside or IROVar.Rogue2.BuffShadowBlades)) then
-        IROVar.UpdateCounter(IROVar.Rogue2.CounterName.CPcBuff2,1)
-    else
-        IROVar.UpdateCounter(IROVar.Rogue2.CounterName.CPcBuff2,0)
-    end
+    local cpBlank=IROVar.Rogue2.ComboMax-IROVar.Rogue2.ComboPoint --CP max = 0
+    IROVar.UpdateCounter(IROVar.Rogue2.CounterName.CP,cpBlank)
+    local cpBlankWithBuff=cpBlank-((IROVar.Rogue2.BuffBroadside or IROVar.Rogue2.BuffShadowBlades) and 1 or 0)
+    IROVar.UpdateCounter(IROVar.Rogue2.CounterName.CPcBuff,cpBlankWithBuff)
 end
 
-
-
 IROVar.Rogue2.MyAura={}
-
 
 IROVar.Rogue2.RTBBuffName={
     ["Broadside"]=true,
@@ -214,8 +202,35 @@ function IROVar.Rogue2.CheckRTBBuff()
     IROVar.Rogue2.RTBCount=count
     IROVar.Rogue2.CheckRTBHandle:Cancel()
     IROVar.Rogue2.CheckRTBHandle=C_Timer.NewTimer(nearExp,IROVar.Rogue2.CheckRTBBuff)
+    IROVar.Rogue2.RTBStatusCounter()
+end
+IROVar.RegisterIncombatCallBackRun("Rogue Check RTB",IROVar.Rogue2.CheckRTBBuff)
+
+--IROVar.Rogue2.CounterName.RTBstatus
+function IROVar.Rogue2.RTBStatusCounter()
+    local status = 0
+    local RTBCount = IROVar.Rogue2.RTBBuffCount()
+    if RTBCount>=3 then
+        status=0
+    elseif RTBCount==2 then
+        if IROVar.Rogue2.RTBBuffStatus["Grand Melee"] and IROVar.Rogue2.RTBBuffStatus["Buried Treasure"] then
+            status=1
+        else
+            status=0
+        end
+    elseif RTBCount==1 then
+        if IROVar.Rogue2.RTBBuffStatus["Broadside"] or IROVar.Rogue2.RTBBuffStatus["True Bearing"] or IROVar.Rogue2.RTBBuffStatus["Skull and Crossbones"] then
+            status=0
+        else
+            status=1
+        end
+    else
+        status=1
+    end
+    IROVar.UpdateCounter(IROVar.Rogue2.CounterName.RTBstatus,status)
 end
 
+IROVar.Rogue2.CheckRTBBuff()
 
 --Serrated Bone Spike
 IROVar.Rogue2.SBSCount=0
@@ -269,7 +284,6 @@ function IROVar.Rogue2.CombatLogSBS(...)
 end
 IROVar.Register_COMBAT_LOG_EVENT_UNFILTERED_CALLBACK("Rogue SBS",IROVar.Rogue2.CombatLogSBS)
 
-
 IROVar.Rogue2.ComboMax=UnitPowerMax("player", 4)
 IROVar.Rogue2.ComboPoint=UnitPower("player", 4)
 IROVar.Rogue2.CheckCPStatusCounter()
@@ -290,7 +304,6 @@ IROVar.Rogue2.ComboUpdateFrame:SetScript("OnEvent",function(self,event,unit,powe
     end
 end)
 
-
 function IROVar.Rogue2.ShouldUseSBS()
     local comboCurrent=IROVar.Rogue2.ComboPoint
     local comboBlank=IROVar.Rogue2.ComboMax-comboCurrent
@@ -304,27 +317,6 @@ function IROVar.Rogue2.ShouldUseSBS()
         return comboGen<=comboBlank
     end
 end
-
---[[(function()
-    local comboCurrent=UnitPower("player", 4)
-    local comboBlank=UnitPowerMax("player", 4)-comboCurrent
-    if comboBlank==0 then return false end
-    local comboGen=1
-    for i=1,30 do
-        local n="nameplate"..i
-        if UnitExists(n) and UnitCanAttack("player", n) and (TMW.CNDT.Env.AuraDur(n, "serrated bone spike", "PLAYER HARMFUL")>0) then
-            comboGen=comboGen+1
-        end
-    end
-    if TMW.CNDT.Env.AuraDur("player", "broadside", "PLAYER HELPFUL")>0.5 then comboGen=comboGen+1 end
-    if TMW.CNDT.Env.AuraDur("player", "shadow blades", "PLAYER HELPFUL")>0.5 then comboGen=comboGen+1 end
-    
-    if comboBlank>=4 then
-        return true
-    else
-        return comboGen<=comboBlank
-    end
-end)()]]
 
 
 IROVar.Rogue2.ArrayNPCName={}

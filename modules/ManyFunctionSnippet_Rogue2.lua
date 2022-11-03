@@ -1,4 +1,4 @@
--- Many Function Rogue2 9.2.5/4
+-- Many Function Rogue2 9.2.5/4 beta
 
 --var IROVar.Rogue2.RTBCount=0
 --function IROVar.Rogue2.RTBBuffCount()

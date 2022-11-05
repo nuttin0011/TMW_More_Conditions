@@ -1,4 +1,6 @@
--- Many Function Version Hunter 9.2.5/7b
+-- Many Function Version Hunter 9.2.5/8
+-- Set Priority to 10
+
 -- this file save many function for paste to TMW Snippet LUA
 
 --function IROVar.Hun.TBreakDPSForBS() ; return Break Time for Shoot Barbed shot
@@ -10,9 +12,14 @@
     --\n/cast [@focus,nomod,exists,help,nodead][nomod,@pet,exists,nodead,help]Misdirection
 --var IROVar.Hun.WFBombName=GetSpellInfo("Wildfire Bomb")
 --IROVar.Hun.JustUseBomb=false
+--counter = "enemycount",IROEnemyCountInRange(40)
+--"pethppercen" = math.floor(UnitHealth("pet")/UnitHealthMax("pet")*100))
+
 
 if not IROVar then IROVar={} end
 if not IROVar.Hun then IROVar.Hun={} end
+
+--setup icon run
 
 IROVar.Hun.AimedShotActive=false
 
@@ -22,6 +29,19 @@ IROVar.Hun.MD.EditingMacro=false
 IROVar.Hun.MD.TankName="pet"
 IROVar.Hun.MD.nameMacro="~!Num0"
 IROVar.Hun.JustUseBomb=false
+
+IROVar.EnemyCountTrigger=C_Timer.NewTicker(0.7,function()
+    IROVar.UpdateCounter("enemycount",IROEnemyCountInRange(40))
+end)
+
+local function PetHPP()
+    if UnitExists("pet") then
+        IROVar.UpdateCounter("pethppercen",math.floor(UnitHealth("pet")/UnitHealthMax("pet")*100))
+    else
+        IROVar.UpdateCounter("pethppercen",0)
+    end
+end
+IROVar.PetHPPercenH=C_Timer.NewTicker(0.71,PetHPP)
 
 function IROVar.Hun.UseBomb()
     if IROVar.Hun.JustUseBomb then return end

@@ -1,4 +1,4 @@
--- Many Function Version 9.0.5/74
+-- Many Function Version 9.0.5/75
 -- Set Priority to 1
 -- this file save many function for paste to TMW Snippet LUA
 
@@ -93,6 +93,11 @@ nameplateShowAll, timeMod, ... = UnitAura(unit, index [, filter])  ]]
 
 local TMW=TMW
 if not IROVar then IROVar={} end
+--Timer
+IROVar.IROEnemyGroupVVHPRunTick=0.5
+IROVar.TickCount01_Tick=0.17
+IROVar.CastBarCheck_Tick=0.41
+--
 IROVar.Icon = {}
 function IROVar.IsIconShow(icon)
     return icon and icon.attributes.shown and not icon:Update() and icon.attributes.realAlpha > 0
@@ -423,8 +428,8 @@ function IROEnemyGroupVVHP(nMultipy)
     IROVar.IROEnemyGroupVVHPRun=false
     return ans
 end
-C_Timer.NewTicker(0.5,function()
-    if not IROVar.IROEnemyGroupVVHPRun then
+C_Timer.NewTicker(IROVar.IROEnemyGroupVVHPRunTick,function()
+    if not IROVar.IROEnemyGroupVVHPRun and next(IROVar.IROEnemyGroupVVHPOldVal) then
         IROVar.IROEnemyGroupVVHPOldVal={}
     end
 end)
@@ -726,7 +731,7 @@ IROVar.SPELL_UPDATE_COOLDOWN_frame:SetScript("OnEvent", function(self, event, ..
 end)
 
 IROVar.TickCount01=0
-IROVar.TickCount01_Handle=C_Timer.NewTicker(0.017,function()
+IROVar.TickCount01_Handle=C_Timer.NewTicker(IROVar.TickCount01_Tick,function()
     IROVar.TickCount01=IROVar.TickCount01+1
 end)
 
@@ -843,7 +848,7 @@ IROVar.CastBar.CastFrame:SetScript("OnEvent",function(self,event,arg1,...)
     end
 end)
 
-C_Timer.NewTicker(0.41,IROVar.CastBar.CheckAll)
+C_Timer.NewTicker(IROVar.CastBarCheck_Tick,IROVar.CastBar.CheckAll)
 
 IROVar.CastBar.CastFrame2=CreateFrame("Frame")
 IROVar.CastBar.CastFrame2:RegisterEvent("UNIT_SPELLCAST_FAILED_QUIET")

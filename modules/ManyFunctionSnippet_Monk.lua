@@ -1,5 +1,5 @@
 -- Many Function Monk 10.0.0/1
--- Set Priority to 5
+-- Set Priority to 10
 
 --function IROVar.Monk.CanUseCombo(skillName) ; check for ComboStrinkeSkill skillName Case Sensitive
 --counter "usedskill" ; check old skill use see in variables IROVar.Monk.ComboStrikesSkill
@@ -21,6 +21,8 @@ IROVar.Monk.ComboStrikesSkill={
     ["Crackling Jade Lightning"]=9,
     ["Expel Harm"]=10,
     ["Flying Serpent Kick"]=11,
+    ["Chi Burst"]=12,
+    ["Chi Wave"]=13,
 }
 IROVar.Monk.playerGUID=UnitGUID("player")
 

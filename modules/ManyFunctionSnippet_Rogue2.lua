@@ -86,6 +86,7 @@ function IROVar.Rogue2.CheckCPStatusCounter()
 end
 
 --Enemy Count 8yard
+IROVar.CV.EC8Tick=0.8
 local function EC8()
     local nn
     local c=0

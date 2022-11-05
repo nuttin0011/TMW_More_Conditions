@@ -1,4 +1,4 @@
--- Many Function Aura Tracker 10.0.0/1
+-- Many Function Aura Tracker 10.0.0/2
 -- Set Priority to 5
 
 --function IROVar.Aura.Register_UNIT_AURA_scrip_CALLBACK(name,callback)
@@ -57,6 +57,7 @@ function IROVar.Aura1.RegisterTrackedAura(list)
     else
         IROVar.Aura1.TrackedAura[list]=true
     end
+    IROVar.Aura1.DumpAura()
 end
 function IROVar.Aura1.UnRegisterTrackedAura(list)
     if type(list)=="table" then

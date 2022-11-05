@@ -18,18 +18,19 @@
 ]]
 if not IROVar then IROVar = {} end
 if not IROVar.CV then IROVar.CV = {} end
-IROVar.CV.EC8Tick=0.8
+
 IROVar.CV.InterIcon_Trigger_Tick=0.3
 IROVar.CV.StunIcon_Trigger_Tick=0.31
 IROVar.CV.Targethp_Tick=0.7
 IROVar.CV.PlayerHPPercen_Tick=0.18
-
+IROVar.CV.EC8Tick=0.8
 
 --[[
 "enemycountviii" = IROEnemyCountInRange(8)
 --Enemy Count 8yard
 --"item:34368" 8 yard
 --"item:28767" 40 yard
+IROVar.CV.EC8Tick=0.8
 local function EC8()
     local nn
     local c=0

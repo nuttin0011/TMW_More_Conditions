@@ -1,6 +1,12 @@
--- Many Function Rogue2 9.2.5/4 beta2
+-- Many Function Rogue2 9.2.5/5
 -- Set Priority to 10
 -- Use Many Function Aura Tracker
+
+--counter
+--"enemycountviii" = IROEnemyCountInRange(8)
+--"comboblank"
+--"comboblankwithbuff"
+--"rtbstatus" -- 0 = dont RTB, 1 = do RTB
 
 --var IROVar.Rogue2.RTBCount=0
 --function IROVar.Rogue2.RTBBuffCount()
@@ -48,12 +54,13 @@ if not IROVar then IROVar={} end
 if not IROVar.Rogue2 then IROVar.Rogue2={} end
 
 IROVar.Rogue2.MyAura={} -- Remove later
-
+IROVar.Rogue2.RTBCount=0  -- Remove later
 IROVar.Rogue2.ComboMax=UnitPowerMax("player", 4)
 IROVar.Rogue2.ComboPoint=UnitPower("player", 4)
 
 IROVar.Rogue2.BuffBroadside=false
 IROVar.Rogue2.BuffShadowBlades=false
+
 function IROVar.Rogue2.AuraCheck()
     local BuffBroadside=IROVar.Aura1.My["Broadside"]
     local BuffShadowBlades=IROVar.Aura1.My["Shadow Blades"]
@@ -77,6 +84,26 @@ function IROVar.Rogue2.CheckCPStatusCounter()
     local cpBlankWithBuff=cpBlank-((IROVar.Rogue2.BuffBroadside or IROVar.Rogue2.BuffShadowBlades) and 1 or 0)
     IROVar.UpdateCounter(IROVar.Rogue2.CounterName.CPcBuff,cpBlankWithBuff)
 end
+
+--Enemy Count 8yard
+local function EC8()
+    local nn
+    local c=0
+    for i=1,30 do
+        nn='nameplate'..i
+        if UnitExists(nn) and UnitCanAttack("player",nn) then
+            c=c+(IsItemInRange("item:34368",nn) and 1 or 0)
+        end
+        if c>=6 then break end
+    end
+    IROVar.UpdateCounter("enemycountviii",c)
+end
+IROVar.CV.EC8H=C_Timer.NewTicker(IROVar.CV.EC8Tick,function()
+    if TMW.time-IUSC.SkillPressStampTime>=IROVar.CV.EC8Tick then
+        EC8()
+    end
+end)
+IUSC.RegCallBackAfterSU["EC8"]=EC8
 
 ---NEW RTB
 
@@ -118,6 +145,7 @@ function IROVar.Rogue2.RTBStatusCounter()
         status=1
     end
     IROVar.UpdateCounter(IROVar.Rogue2.CounterName.RTBstatus,status)
+    IROVar.Rogue2.RTBCount=RTBCount  -- Remove later
 end
 
 IROVar.Aura.Register_UNIT_AURA_scrip_CALLBACK("IROVar.Rogue2",function(unit)

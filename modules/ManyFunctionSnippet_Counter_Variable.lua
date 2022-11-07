@@ -1,4 +1,4 @@
--- ManyFunctionSnippet_Counter_Variable 10.0.0/1
+-- ManyFunctionSnippet_Counter_Variable 10.0.0/2
 -- Set Priority to 6
 
 --[[
@@ -15,6 +15,7 @@
 "intericonb" = IROVar.TargetCastBar(0.4)and 1 or 0)
 "stunicon" = IROVar.TargetCastBar(0.3,true)and IROVar.OKStunedTarget()and NextInterrupter.ZeroSITarget()and(not IROVar.KickPressed)
 "stuniconb" = IROVar.VVCareInterruptTarget()
+"enemycountviii" = IROEnemyCountInRange(8)
 ]]
 if not IROVar then IROVar = {} end
 if not IROVar.CV then IROVar.CV = {} end
@@ -25,8 +26,6 @@ IROVar.CV.Targethp_Tick=0.7
 IROVar.CV.PlayerHPPercen_Tick=0.18
 IROVar.CV.EC8Tick=0.8
 
---[[
-"enemycountviii" = IROEnemyCountInRange(8)
 --Enemy Count 8yard
 --"item:34368" 8 yard
 --"item:28767" 40 yard
@@ -49,7 +48,7 @@ IROVar.CV.EC8H=C_Timer.NewTicker(IROVar.CV.EC8Tick,function()
     end
 end)
 IUSC.RegCallBackAfterSU["EC8"]=EC8
-]]
+
 
 ----------Interrupt Icon
 local func=function()

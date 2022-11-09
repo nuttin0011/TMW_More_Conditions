@@ -1,4 +1,4 @@
--- Many Function Aura Tracker 10.0.0/2
+-- Many Function Aura Tracker 10.0.0/4b
 -- Set Priority to 5
 
 --function IROVar.Aura.Register_UNIT_AURA_scrip_CALLBACK(name,callback)
@@ -37,59 +37,81 @@ function IROVar.Aura.UnRegister_UNIT_AURA_scrip_CALLBACK(name)
         end
     end
 end
-
--- Aura1 keep only Name , id
+-- Aura1 At Player keep only Name , id
 if not IROVar.Aura1 then IROVar.Aura1 = {} end
 
 IROVar.Aura1.My={}
 IROVar.Aura1.TrackedAura={}
---[[
-    IROVar.Aura1.TrackedAura={
+IROVar.Aura1.Changed={} -- true = Changed from last IROVar.Aura1.DumpAura()
+--[[    IROVar.Aura1.TrackedAura={
         ["aura Name"]=ExpTime,
         [auraID]=ExpTime,
     }
 ]]
-function IROVar.Aura1.RegisterTrackedAura(list)
+local function RegisterTracked(list,table)
     if type(list)=="table" then
         for _,v in pairs(list) do
-            IROVar.Aura1.TrackedAura[v]=true
+            table[v]=true
         end
     else
-        IROVar.Aura1.TrackedAura[list]=true
+        table[list]=true
     end
-    IROVar.Aura1.DumpAura()
+end
+local function UnRegisterTracked(list,table)
+    if type(list)=="table" then
+        for _,v in pairs(list) do
+            table[v]=nil
+        end
+    else
+        table[list]=nil
+    end
+end
+function IROVar.Aura1.RegisterTrackedAura(list)
+    RegisterTracked(list,IROVar.Aura1.TrackedAura)
 end
 function IROVar.Aura1.UnRegisterTrackedAura(list)
-    if type(list)=="table" then
-        for _,v in pairs(list) do
-            IROVar.Aura1.TrackedAura[v]=nil
-        end
-    else
-        IROVar.Aura1.TrackedAura[list]=nil
-    end
+    UnRegisterTracked(list,IROVar.Aura1.TrackedAura)
 end
 
 function IROVar.Aura1.GetAura(n) -- return ExpTime , nil = no aura , 0 = no ExpTime
     return IROVar.Aura1.My[n]
 end
-
 --[[
 name, icon, count, dispelType, duration, expirationTime, source, isStealable, nameplateShowPersonal,
 spellId, canApplyAura, isBossDebuff, castByPlayer, nameplateShowAll, timeMod, ...
 = UnitAura  (unit, index [, filter])
 ]]
 function IROVar.Aura1.DumpAura(filter)
+    local OldAura=IROVar.Aura1.My
     IROVar.Aura1.My={}
+    IROVar.Aura1.Changed={}
     for i=1,100 do
-        local name,_,_,_,_,expirationTime,_,_,_,spellId= UnitAura("player", i, filter)
-        if not name then return end
-        if IROVar.Aura1.TrackedAura[name] or IROVar.Aura1.TrackedAura[spellId] then
-            IROVar.Aura1.My[name]=IROVar.Aura1.My[name] and math.min(expirationTime,IROVar.Aura1.My[name]) or expirationTime
-            IROVar.Aura1.My[spellId]=IROVar.Aura1.My[spellId] and math.min(expirationTime,IROVar.Aura1.My[spellId]) or expirationTime
+        local name,_,_,_,_,exp,_,_,_,spellId= UnitAura("player", i, filter)
+        if not name then break end
+        if IROVar.Aura1.TrackedAura[name] then
+            IROVar.Aura1.My[name]=IROVar.Aura1.My[name] and math.min(exp,IROVar.Aura1.My[name]) or exp
+            IROVar.Aura1.Changed[name]=true
+        elseif IROVar.Aura1.TrackedAura[spellId] then
+            IROVar.Aura1.My[spellId]=IROVar.Aura1.My[spellId] and math.min(exp,IROVar.Aura1.My[spellId]) or exp
+            IROVar.Aura1.Changed[spellId]=true
         end
     end
+    for k,v in pairs(OldAura) do
+        IROVar.Aura1.Changed[k]=not(v==IROVar.Aura1.My[k])
+    end
+    --print("Dump At :",GetTime())
 end
 IROVar.Aura.Register_UNIT_AURA_scrip_CALLBACK("IROVar.Aura1.My",function(unit)
     if unit=="player" then IROVar.Aura1.DumpAura()end
 end)
+C_Timer.After(2,function() -- Init Dump Aura
+    for _,v in ipairs(IROVar.Aura.CallBack) do v[2]("player")end
+end)
 
+-- Aura2 At Target keep only Name , id
+--[[
+if not IROVar.Aura2 then IROVar.Aura2 = {} end
+IROVar.Aura2.My={}
+IROVar.Aura2.TrackedAura={}
+IROVar.Aura2.Changed={}
+]]

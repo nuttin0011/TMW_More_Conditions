@@ -1,6 +1,6 @@
--- ManyFunctionSnippet_Counter_Variable 10.0.0/2
+-- ManyFunctionSnippet_Counter_Variable 10.0.0/4
 -- Set Priority to 6
-
+-- use Many Function Aura Tracker
 --[[
 "targethp" = UnitHealth("target")
 "playerhppercen" = math.floor(UnitHealth("player")/UnitHealthMax("player")*100)
@@ -16,6 +16,23 @@
 "stunicon" = IROVar.TargetCastBar(0.3,true)and IROVar.OKStunedTarget()and NextInterrupter.ZeroSITarget()and(not IROVar.KickPressed)
 "stuniconb" = IROVar.VVCareInterruptTarget()
 "enemycountviii" = IROEnemyCountInRange(8)
+
+
+-- Register Counter Aura Duration Track
+--Auto Push Aura Duration To Counter
+-- 0.0 - 0.39 = 0
+-- 0.4 - 1.39 = 1
+-- 1.4 - 2.39 = 2 ...
+--function IROVar.CV.Register_Player_Aura_Duration(AuraName,counterName)
+--function IROVar.CV.UnRegister_Player_Aura_Duration(AuraName)
+
+-- Aura Has 0 = not sure , 1 = Has , check Duration > 0.4 sec
+--function IROVar.CV.Register_Player_Aura_Has(AuraName,counterName)
+--function IROVar.CV.UnRegister_Player_Aura_Has(AuraName)
+
+-- Aura not Has 0 = not sure , 1 = not Has , check Duration < 0.1 sec or nil
+--function IROVar.CV.Register_Player_Aura_Not_Has(AuraName,counterName)
+--function IROVar.CV.UnRegister_Player_Aura_Not_Has(AuraName)
 ]]
 if not IROVar then IROVar = {} end
 if not IROVar.CV then IROVar.CV = {} end
@@ -77,3 +94,174 @@ local function PlayerHPP()
 end
 IROVar.CV.PlayerHPPercenH=C_Timer.NewTicker(IROVar.CV.PlayerHPPercen_Tick,PlayerHPP)
 
+-- Register Counter Aura Duration Track
+IROVar.CV.AuraDuration={}
+IROVar.CV.AuraHandle={}
+
+local function D2C(Du) -- Change Duration (s) to counter (integer)
+    return math.floor(Du+0.6)
+end
+local function E2D(Exp) -- Change ExpTime to Duration (now)
+    local du = Exp-GetTime()
+    return du
+end
+local function NextUpdate(du) -- return Next secound for UpdateCounter
+    --ex. if Du = 1.6 , Counter Is 2 , Next Counter Change To 1 is 0.21 s (at Du = 1.39)
+    --ex. if Du = 1.39 , Counter Is 1 , Next Counter Change To 0 is 1 s (at Du = 0.39)
+    local b=du+0.6
+    return b+0.01-math.floor(b)
+end
+
+local function UpdateAura(AuraName)
+    local function Reset0(a)
+        if IROVar.CV.AuraHandle[a] then
+            IROVar.CV.AuraHandle[a]:Cancel()
+            IROVar.CV.AuraHandle[a]=nil
+        end
+        IROVar.UpdateCounter(IROVar.CV.AuraDuration[a],0)
+    end
+    local exp=IROVar.Aura1.My[AuraName]
+    if not exp then
+        Reset0(AuraName)
+    else
+        local d=E2D(exp)
+        local c=D2C(d)
+        if d<0 then --aura has no time limit
+            IROVar.UpdateCounter(IROVar.CV.AuraDuration[AuraName],1)
+        elseif c<=0 then
+            Reset0(AuraName)
+        else
+            IROVar.UpdateCounter(IROVar.CV.AuraDuration[AuraName],c)
+            --print(c,d,NextUpdate(d))
+            do
+                local a=AuraName
+                IROVar.CV.AuraHandle[a]=C_Timer.NewTimer(NextUpdate(d),function()UpdateAura(a)end)
+            end
+        end
+    end
+end
+function IROVar.CV.DumpAuraDuration()
+    for k,_ in pairs(IROVar.CV.AuraDuration) do
+        if IROVar.Aura1.Changed[k] then
+            if IROVar.CV.AuraHandle[k] then
+                IROVar.CV.AuraHandle[k]:Cancel()
+                IROVar.CV.AuraHandle[k]=nil
+            end
+            UpdateAura(k)
+        end
+    end
+end
+function IROVar.CV.Register_Player_Aura_Duration(AuraName,counterName)
+    if not IROVar.Aura1.TrackedAura[AuraName] then
+        IROVar.Aura1.RegisterTrackedAura(AuraName)
+    end
+    IROVar.CV.AuraDuration[AuraName]=counterName
+    if not IROVar.CV.AuraHandle[counterName] then UpdateAura(AuraName) end
+end
+function IROVar.CV.UnRegister_Player_Aura_Duration(AuraName)
+    IROVar.UpdateCounter(IROVar.CV.AuraDuration[AuraName],0)
+    IROVar.CV.AuraDuration[AuraName]=nil
+    if IROVar.CV.AuraHandle[AuraName] then
+        IROVar.CV.AuraHandle[AuraName]:Cancel()
+        IROVar.CV.AuraHandle[AuraName]=nil
+    end
+end
+IROVar.Aura.Register_UNIT_AURA_scrip_CALLBACK("IROVar.CV.DumpAuraDuration",function(unit)
+    if unit=="player" then IROVar.CV.DumpAuraDuration()end
+end)
+
+-- Aura has 0 = not sure , 1 = has
+IROVar.CV.AuraHas={}
+IROVar.CV.AuraHasHandle={}
+
+local function NextUpdateAuraHas(du)
+    return du-0.39
+end
+function IROVar.CV.Aura_Has_Update1(n,c)
+    local exp=IROVar.Aura1.My[n]
+    local du=exp and E2D(exp) or 0
+    if du<0 then -- Aura has no time limit
+        IROVar.UpdateCounter(c,1)
+    elseif du<0.4 then
+        IROVar.UpdateCounter(c,0)
+    else
+        IROVar.UpdateCounter(c,1)
+        do
+            local a,CC=n,c
+            IROVar.CV.AuraHasHandle[a]=C_Timer.NewTimer(NextUpdateAuraHas(du),function()
+                IROVar.CV.Aura_Has_Update1(a,CC)
+            end)
+        end
+    end
+end
+function IROVar.CV.Register_Player_Aura_Has(AuraName,counterName)
+    if not IROVar.Aura1.TrackedAura[AuraName] then
+        IROVar.Aura1.RegisterTrackedAura(AuraName)
+    end
+    IROVar.CV.AuraHas[AuraName]=counterName
+    IROVar.CV.Aura_Has_Update1(AuraName,counterName)
+end
+function IROVar.CV.UnRegister_Player_Aura_Has(AuraName)
+    IROVar.UpdateCounter(IROVar.CV.AuraHas[AuraName],0)
+    IROVar.CV.AuraHas[AuraName]=nil
+end
+IROVar.Aura.Register_UNIT_AURA_scrip_CALLBACK("IROVar.CV.AuraHas",function(unit)
+    if unit=="player" then
+        for k,v in pairs(IROVar.CV.AuraHas) do
+            if IROVar.Aura1.Changed[k] then
+                if IROVar.CV.AuraHasHandle[k] then
+                    IROVar.CV.AuraHasHandle[k]:Cancel()
+                    IROVar.CV.AuraHasHandle[k]=nil
+                end
+                IROVar.CV.Aura_Has_Update1(k,v)
+            end
+        end
+    end
+end)
+-- Aura not has 0 = not sure , 1 = not has
+IROVar.CV.AuraNotHas={}
+IROVar.CV.AuraNotHasHandle={}
+local function NextUpdateAuraNotHas(du)
+    return du-0.09
+end
+function IROVar.CV.Aura_Not_Has_Update1(n,c)
+    local exp=IROVar.Aura1.My[n]
+    local du=exp and E2D(exp) or 0
+    if du<0 then --aura has no time limit
+        IROVar.UpdateCounter(c,0)
+    elseif du>=0.1 then
+        IROVar.UpdateCounter(c,0)
+        do
+            local a,CC=n,c
+            IROVar.CV.AuraNotHasHandle[a]=C_Timer.NewTimer(NextUpdateAuraNotHas(du),function()
+                IROVar.CV.Aura_Not_Has_Update1(a,CC)
+            end)
+        end
+    else
+        IROVar.UpdateCounter(c,1)
+    end
+end
+function IROVar.CV.Register_Player_Aura_Not_Has(AuraName,counterName)
+    if not IROVar.Aura1.TrackedAura[AuraName] then
+        IROVar.Aura1.RegisterTrackedAura(AuraName)
+    end
+    IROVar.CV.AuraNotHas[AuraName]=counterName
+    IROVar.CV.Aura_Not_Has_Update1(AuraName,counterName)
+end
+function IROVar.CV.UnRegister_Player_Aura_Not_Has(AuraName)
+    IROVar.UpdateCounter(IROVar.CV.AuraNotHas[AuraName],0)
+    IROVar.CV.AuraNotHas[AuraName]=nil
+end
+IROVar.Aura.Register_UNIT_AURA_scrip_CALLBACK("IROVar.CV.AuraNotHas",function(unit)
+    if unit=="player" then
+        for k,v in pairs(IROVar.CV.AuraNotHas) do
+            if IROVar.Aura1.Changed[k] then
+                if IROVar.CV.AuraNotHasHandle[k] then
+                    IROVar.CV.AuraNotHasHandle[k]:Cancel()
+                    IROVar.CV.AuraNotHasHandle[k]=nil
+                end
+                IROVar.CV.Aura_Not_Has_Update1(k,v)
+            end
+        end
+    end
+end)

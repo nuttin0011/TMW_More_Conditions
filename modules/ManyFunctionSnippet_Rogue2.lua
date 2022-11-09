@@ -7,7 +7,6 @@
 --"comboblank"
 --"comboblankwithbuff"
 --"rtbstatus" -- 0 = dont RTB, 1 = do RTB
-
 --var IROVar.Rogue2.RTBCount=0
 --function IROVar.Rogue2.RTBBuffCount()
 --[[
@@ -39,16 +38,16 @@
 --IROVar.Rogue2.TargetName=UnitName("target")
 --IROVar.Rogue2.TargetNPCID=TargetNPCID()
 
-local list={
+local Aura_Track_list1={
     "Broadside",
     "True Bearing",
     "Ruthless Precision",
     "Skull and Crossbones",
     "Buried Treasure",
     "Grand Melee",
-    "Shadow Blades"
+    "Shadow Blades",
 }
-IROVar.Aura1.RegisterTrackedAura(list)
+IROVar.Aura1.RegisterTrackedAura(Aura_Track_list1)
 
 if not IROVar then IROVar={} end
 if not IROVar.Rogue2 then IROVar.Rogue2={} end

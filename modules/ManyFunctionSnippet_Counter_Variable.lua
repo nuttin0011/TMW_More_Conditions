@@ -1,4 +1,4 @@
--- ManyFunctionSnippet_Counter_Variable 10.0.0/4
+-- ManyFunctionSnippet_Counter_Variable 10.0.0/5
 -- Set Priority to 6
 -- use Many Function Aura Tracker
 --[[
@@ -17,7 +17,6 @@
 "stuniconb" = IROVar.VVCareInterruptTarget()
 "enemycountviii" = IROEnemyCountInRange(8)
 
-
 -- Register Counter Aura Duration Track
 --Auto Push Aura Duration To Counter
 -- 0.0 - 0.39 = 0
@@ -33,6 +32,18 @@
 -- Aura not Has 0 = not sure , 1 = not Has , check Duration < 0.1 sec or nil
 --function IROVar.CV.Register_Player_Aura_Not_Has(AuraName,counterName)
 --function IROVar.CV.UnRegister_Player_Aura_Not_Has(AuraName)
+
+-- Player Unit Power -- refresh every 0.1 sec
+-- function IROVar.CV.Register_Player_Power(PowerType,counterName)
+-- function IROVar.CV.UnRegister_Player_Power(PowerType) 
+    0="MANA",
+    1="RAGE",
+    2="FOCUS",
+    3="ENERGY",
+    4="COMBO_POINTS",
+    5="RUNES",
+    6="RUNIC_POWER",
+    9="HOLY_POWER",
 ]]
 if not IROVar then IROVar = {} end
 if not IROVar.CV then IROVar.CV = {} end
@@ -265,3 +276,69 @@ IROVar.Aura.Register_UNIT_AURA_scrip_CALLBACK("IROVar.CV.AuraNotHas",function(un
         end
     end
 end)
+
+-- Player Unit Power -- refresh every 0.1 sec
+-- function IROVar.CV.Register_Player_Power(PowerType,counterName)
+-- function IROVar.CV.UnRegister_Player_Power(PowerType) 
+
+
+IROVar.CV.Power={}
+-- ["Power Type"]="counterName"
+IROVar.CV.PowerRunning={}
+IROVar.CV.PowerChange={}
+IROVar.CV.PowerType={
+    ["MANA"]=0,
+    ["RAGE"]=1,
+    ["FOCUS"]=2,
+    ["ENERGY"]=3,
+    ["COMBO_POINTS"]=4,
+    ["RUNES"]=5,
+    ["RUNIC_POWER"]=6,
+    ["HOLY_POWER"]=9,
+}
+
+--local oldCheck = GetTime()
+function IROVar.CV.CheckPower(cN,pT)
+    if IROVar.CV.PowerChange[pT] then
+        --print (GetTime()-oldCheck)
+        --oldCheck=GetTime()
+        IROVar.UpdateCounter(cN,UnitPower("player",pT))
+        IROVar.CV.PowerChange[pT]=false
+        IROVar.CV.PowerRunning[pT]=true
+        do local cc,pp=cN,pT
+            C_Timer.After(0.13,function()
+                IROVar.CV.CheckPower(cc,pp)
+            end)
+        end
+    else
+        IROVar.CV.PowerRunning[pT]=false
+    end
+end
+
+local function SetupUnitPowerFrame()
+    IROVar.CV.UnitPowerFrame=CreateFrame("Frame")
+    IROVar.CV.UnitPowerFrame:RegisterEvent("UNIT_POWER_FREQUENT")
+    IROVar.CV.UnitPowerFrame:SetScript("OnEvent",function(_,_,unit,powerType)
+        if unit~="player" then return end
+        powerType=IROVar.CV.PowerType[powerType] or -1
+        local c=IROVar.CV.Power[powerType]
+        if not c then return end
+        IROVar.CV.PowerChange[powerType]=true
+        if not IROVar.CV.PowerRunning[powerType] then
+            IROVar.CV.CheckPower(c,powerType)
+        end
+    end)
+end
+
+function IROVar.CV.Register_Player_Power(PowerType,counterName)
+    IROVar.CV.Power[PowerType]=counterName
+    IROVar.UpdateCounter(counterName,UnitPower("player",PowerType))
+    if not IROVar.CV.UnitPowerFrame then
+        SetupUnitPowerFrame()
+    end
+end
+
+function IROVar.CV.UnRegister_Player_Power(PowerType)
+    IROVar.CV.Power[PowerType]=nil
+end
+

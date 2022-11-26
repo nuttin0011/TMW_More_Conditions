@@ -1,4 +1,4 @@
--- ManyFunctionSnippet_Counter_Variable 10.0.0/5
+-- ManyFunctionSnippet_Counter_Variable 10.0.0/6
 -- Set Priority to 6
 -- use Many Function Aura Tracker
 --[[
@@ -33,6 +33,12 @@
 --function IROVar.CV.Register_Player_Aura_Not_Has(AuraName,counterName)
 --function IROVar.CV.UnRegister_Player_Aura_Not_Has(AuraName)
 
+--function IROVar.CV.Register_Target_Aura_Duration(AuraName,counterName,filter)
+    --use same filter ll make it faster!!!!!
+--function IROVar.CV.UnRegister_Target_Aura_Duration(AuraName,filter)
+
+
+
 -- Player Unit Power -- refresh every 0.1 sec
 -- function IROVar.CV.Register_Player_Power(PowerType,counterName)
 -- function IROVar.CV.UnRegister_Player_Power(PowerType) 
@@ -43,7 +49,11 @@
     4="COMBO_POINTS",
     5="RUNES",
     6="RUNIC_POWER",
+    8="LUNAR_POWER"],
     9="HOLY_POWER",
+
+    e.g. IROVar.CV.Register_Player_Power(3,"en")
+    IROVar.CV.Register_Player_Power(8,"lunarpower")
 ]]
 if not IROVar then IROVar = {} end
 if not IROVar.CV then IROVar.CV = {} end
@@ -167,7 +177,7 @@ function IROVar.CV.Register_Player_Aura_Duration(AuraName,counterName)
         IROVar.Aura1.RegisterTrackedAura(AuraName)
     end
     IROVar.CV.AuraDuration[AuraName]=counterName
-    if not IROVar.CV.AuraHandle[counterName] then UpdateAura(AuraName) end
+    if not IROVar.CV.AuraHandle[AuraName] then UpdateAura(AuraName) end
 end
 function IROVar.CV.UnRegister_Player_Aura_Duration(AuraName)
     IROVar.UpdateCounter(IROVar.CV.AuraDuration[AuraName],0)
@@ -280,8 +290,6 @@ end)
 -- Player Unit Power -- refresh every 0.1 sec
 -- function IROVar.CV.Register_Player_Power(PowerType,counterName)
 -- function IROVar.CV.UnRegister_Player_Power(PowerType) 
-
-
 IROVar.CV.Power={}
 -- ["Power Type"]="counterName"
 IROVar.CV.PowerRunning={}
@@ -294,6 +302,7 @@ IROVar.CV.PowerType={
     ["COMBO_POINTS"]=4,
     ["RUNES"]=5,
     ["RUNIC_POWER"]=6,
+    ["LUNAR_POWER"]=8,
     ["HOLY_POWER"]=9,
 }
 
@@ -342,3 +351,79 @@ function IROVar.CV.UnRegister_Player_Power(PowerType)
     IROVar.CV.Power[PowerType]=nil
 end
 
+--function IROVar.CV.Register_Target_Aura_Duration(AuraName,counterName,filter)
+    --use same filter ll make it faster!!!!!
+--function IROVar.CV.UnRegister_Target_Aura_Duration(AuraName)
+
+IROVar.CV.TargetAuraDuration={}
+-- ["Filter"] = { [AuraName]="CounterName" }
+IROVar.CV.TargetAuraDurationHandle={}
+-- ["Filter"] = { [AuraName]=Handle C_Timer }
+
+local function UpdateTargetAura(AuraName,filter)
+    local function Reset0(a,f)
+        if IROVar.CV.TargetAuraDurationHandle[f][a] then
+            IROVar.CV.TargetAuraDurationHandle[f][a]:Cancel()
+            IROVar.CV.TargetAuraDurationHandle[f][a]=nil
+        end
+        IROVar.UpdateCounter(IROVar.CV.TargetAuraDuration[f][a],0)
+    end
+
+    local exp=IROVar.Aura2.tar[filter] and IROVar.Aura2.tar[filter][AuraName]
+    if not exp then
+        Reset0(AuraName,filter)
+    else
+        local d=E2D(exp)
+        local c=D2C(d)
+        if d<0 then --aura has no time limit
+            IROVar.UpdateCounter(IROVar.CV.TargetAuraDuration[filter][AuraName],1)
+        elseif c<=0 then
+            Reset0(AuraName,filter)
+        else
+            IROVar.UpdateCounter(IROVar.CV.TargetAuraDuration[filter][AuraName],c)
+            --print(c,d,NextUpdate(d))
+            do
+                local a,f=AuraName,filter
+                IROVar.CV.TargetAuraDurationHandle[f][a]=C_Timer.NewTimer(NextUpdate(d),function()UpdateTargetAura(a,f)end)
+            end
+        end
+    end
+end
+
+function IROVar.CV.DumpTargetAuraDuration()
+    for filter,setAura in pairs(IROVar.CV.TargetAuraDuration) do
+        for k,_ in pairs(setAura) do
+            if IROVar.Aura2.Changed[filter][k] then
+                if IROVar.CV.TargetAuraDurationHandle[filter][k] then
+                    IROVar.CV.TargetAuraDurationHandle[filter][k]:Cancel()
+                    IROVar.CV.TargetAuraDurationHandle[filter][k]=nil
+                end
+                UpdateTargetAura(k,filter)
+            end
+        end
+    end
+end
+
+function IROVar.CV.Register_Target_Aura_Duration(AuraName,counterName,filter)
+    if (not IROVar.Aura2.TrackedAura[filter])or(not IROVar.Aura2.TrackedAura[filter][AuraName]) then
+        IROVar.Aura2.RegisterTrackedAura(AuraName,filter)
+    end
+    IROVar.CV.TargetAuraDuration[filter]=IROVar.CV.TargetAuraDuration[filter] or {}
+    IROVar.CV.TargetAuraDuration[filter][AuraName]=counterName
+    IROVar.CV.TargetAuraDurationHandle[filter]=IROVar.CV.TargetAuraDurationHandle[filter] or {}
+    if not IROVar.CV.TargetAuraDurationHandle[filter][AuraName] then UpdateTargetAura(AuraName,filter) end
+end
+
+function IROVar.CV.UnRegister_Target_Aura_Duration(AuraName,filter)
+    IROVar.UpdateCounter(IROVar.CV.TargetAuraDuration[filter][AuraName],0)
+    IROVar.CV.TargetAuraDuration[filter][AuraName]=nil
+    if IROVar.CV.TargetAuraDurationHandle[filter][AuraName] then
+        IROVar.CV.TargetAuraDurationHandle[filter][AuraName]:Cancel()
+        IROVar.CV.TargetAuraDurationHandle[filter][AuraName]=nil
+    end
+end
+
+IROVar.Aura.Register_UNIT_AURA_scrip_CALLBACK("IROVar.CV.DumpTargetAuraDuration",function(unit)
+    if unit=="target" then IROVar.CV.DumpTargetAuraDuration()end
+end)
+IROVar.Register_PLAYER_TARGET_CHANGED_scrip_CALLBACK("IROVar.CV.DumpTargetAuraDuration",IROVar.CV.DumpTargetAuraDuration)

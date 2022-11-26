@@ -1,4 +1,4 @@
--- Many Function Version 9.0.5/75
+-- Many Function Version 9.0.5/76
 -- Set Priority to 1
 -- this file save many function for paste to TMW Snippet LUA
 
@@ -688,18 +688,22 @@ IROVar.COMBAT_LOG_EVENT_UNFILTERED_frame:SetScript("OnEvent", function(self, eve
 end)
 
 IROVar.PLAYER_TARGET_CHANGED_CALLBACK={}
+-- [1] = {name , Callback}
 function IROVar.Register_PLAYER_TARGET_CHANGED_scrip_CALLBACK(name,callBack)
-    IROVar.PLAYER_TARGET_CHANGED_CALLBACK[name]=callBack
+    table.insert(IROVar.PLAYER_TARGET_CHANGED_CALLBACK,{name,callBack})
 end
 function IROVar.UnRegister_PLAYER_TARGET_CHANGED_scrip_CALLBACK(name)
-    IROVar.PLAYER_TARGET_CHANGED_CALLBACK[name]=nil
+    for k,v in ipairs(IROVar.PLAYER_TARGET_CHANGED_CALLBACK) do
+        if v[1]==name then
+            table.remove(IROVar.PLAYER_TARGET_CHANGED_CALLBACK,k)
+        end
+    end
 end
 IROVar.PLAYER_TARGET_CHANGED_frame = CreateFrame("Frame")
 IROVar.PLAYER_TARGET_CHANGED_frame:RegisterEvent("PLAYER_TARGET_CHANGED")
 IROVar.PLAYER_TARGET_CHANGED_frame:SetScript("OnEvent", function()
-    for k,v in pairs(IROVar.PLAYER_TARGET_CHANGED_CALLBACK) do if v then v() end end
+    for _,v in ipairs(IROVar.PLAYER_TARGET_CHANGED_CALLBACK) do v[2]() end
 end)
-
 
 IROVar.SPELL_UPDATE_COOLDOWN_CALLBACK={}
 

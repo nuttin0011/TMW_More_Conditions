@@ -1,4 +1,4 @@
--- Many Function Rogue2 9.2.5/5
+-- Many Function Rogue2 9.2.5/6
 -- Set Priority to 10
 -- Use Many Function Aura Tracker
 
@@ -7,6 +7,7 @@
 --"comboblank"
 --"comboblankwithbuff"
 --"rtbstatus" -- 0 = dont RTB, 1 = do RTB
+--"kirstatus" Keep RTB -- 0 = dont keep , 1 do keep
 --var IROVar.Rogue2.RTBCount=0
 --function IROVar.Rogue2.RTBBuffCount()
 --[[
@@ -76,6 +77,7 @@ IROVar.Rogue2.CounterName.CP="comboblank"
 IROVar.Rogue2.CounterName.CPcBuff="comboblankwithbuff"
 
 IROVar.Rogue2.CounterName.RTBstatus="rtbstatus" -- 0 = dont RTB, 1 = do RTB
+IROVar.Rogue2.CounterName.KiRstatus="kirstatus" -- 0 = dont Keep, 1 = do Keep
 
 function IROVar.Rogue2.CheckCPStatusCounter()
     local cpBlank=IROVar.Rogue2.ComboMax-IROVar.Rogue2.ComboPoint --CP max = 0
@@ -124,10 +126,13 @@ function IROVar.Rogue2.RTBBuffCount()
     return count
 end
 
+--IROVar.Rogue2.CounterName.KiRstatus
 function IROVar.Rogue2.RTBStatusCounter()
     local status = 0
+    local KiRStatus = 0
     local RTBCount = IROVar.Rogue2.RTBBuffCount()
     if RTBCount>=3 then
+        KiRStatus=1
         status=0
     elseif RTBCount==2 then
         if IROVar.Aura1.My["Grand Melee"] and IROVar.Aura1.My["Buried Treasure"] then
@@ -135,18 +140,27 @@ function IROVar.Rogue2.RTBStatusCounter()
         else
             status=0
         end
+        if IROVar.Aura1.My["Grand Melee"] or IROVar.Aura1.My["Buried Treasure"] then
+            KiRStatus=0
+        else
+            KiRStatus=1
+        end
     elseif RTBCount==1 then
-        if IROVar.Aura1.My["Broadside"] or IROVar.Aura1.My["True Bearing"] or IROVar.Aura1.My["Skull and Crossbones"] then
+        KiRStatus=0
+        if IROVar.Aura1.My["True Bearing"] or IROVar.Aura1.My["Skull and Crossbones"] then
             status=0
         else
             status=1
         end
     else
+        KiRStatus=0
         status=1
     end
     IROVar.UpdateCounter(IROVar.Rogue2.CounterName.RTBstatus,status)
+    IROVar.UpdateCounter(IROVar.Rogue2.CounterName.KiRstatus,KiRStatus)
     IROVar.Rogue2.RTBCount=RTBCount  -- Remove later
 end
+
 
 IROVar.Aura.Register_UNIT_AURA_scrip_CALLBACK("IROVar.Rogue2",function(unit)
     if unit=="player" then

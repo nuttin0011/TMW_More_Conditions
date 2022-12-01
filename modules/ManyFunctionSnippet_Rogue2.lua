@@ -1,4 +1,4 @@
--- Many Function Rogue2 9.2.5/6
+-- Many Function Rogue2 9.2.5/7
 -- Set Priority to 10
 -- Use Many Function Aura Tracker
 
@@ -140,20 +140,18 @@ function IROVar.Rogue2.RTBStatusCounter()
         else
             status=0
         end
-        if IROVar.Aura1.My["Grand Melee"] or IROVar.Aura1.My["Buried Treasure"] then
-            KiRStatus=0
-        else
+        if (not IROVar.Aura1.My["Grand Melee"])and
+        (not IROVar.Aura1.My["Buried Treasure"])and
+        (IROVar.Aura1.My["True Bearing"]) then
             KiRStatus=1
         end
     elseif RTBCount==1 then
-        KiRStatus=0
         if IROVar.Aura1.My["True Bearing"] or IROVar.Aura1.My["Skull and Crossbones"] then
             status=0
         else
             status=1
         end
     else
-        KiRStatus=0
         status=1
     end
     IROVar.UpdateCounter(IROVar.Rogue2.CounterName.RTBstatus,status)

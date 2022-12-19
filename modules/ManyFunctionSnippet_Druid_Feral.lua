@@ -1,5 +1,5 @@
 -- Many Function Version Druid Feral 10.0.2/2
--- this file save many function for paste to TMW Snippet LUA
+-- Set Priority to 10
 
 --function IROVar.DruidFeral.DotRakeEmpower(unitToken) -- return %Rake DMG , Eg no buff = 100, Has Berserk = 160
 --function IROVar.DruidFeral.DotRipEmpower(unitToken) -- return %Rip DMG , Dot at target , Eg no buff = 100, Has Bloodtalons = 130

@@ -1,4 +1,4 @@
--- Many Function Version 9.0.5/76
+-- Many Function Version 9.0.5/77
 -- Set Priority to 1
 -- this file save many function for paste to TMW Snippet LUA
 
@@ -49,14 +49,16 @@
 --function IROVar.UnRegister_SPELL_UPDATE_COOLDOWN_scrip_CALLBACK(name)
 --function IROVar.Register_PLAYER_TARGET_CHANGED_scrip_CALLBACK(name,callBack)
 --function IROVar.UnRegister_PLAYER_TARGET_CHANGED_scrip_CALLBACK(name)
+--function IROVar.Register_TALENT_CHANGE_scrip_CALLBACK(name,callback)
 --var IROVar.SPELL_UPDATE_COOLDOWN_count = Count Event Call; use to detemin Update CD
 --var IROVar.TickCount01 = Tick Count every 0.1 sec; use to detemin Update CD
 --var IROVar.TargetChangeCount=0;
 
 --var IROVar.Haste ; player Haste
 --var IROVar.CastTime2sec ; cast time in second mod by haste
+--var IROVar.CastTime2_25sec
 --var IROVar.CastTime6sec
---var IROVar.CastTime1_5sec ; cast time in second mod by haste
+--var IROVar.CastTime1_5sec
 --var IROVar.CastTime0_5sec
 --var IROVar.HasteFactor ; multiply by cast time = time to cast , = 100/(100+UnitSpellHaste("player"))
 --function AuraUtil.FindAuraByName(auraName, unit, filter) -- return only 1st auraName match
@@ -144,6 +146,7 @@ function IROVar.CalculateHaste()
     IROVar.Haste = UnitSpellHaste("player")
     IROVar.HasteFactor = 100/(100+IROVar.Haste)
     IROVar.CastTime2sec = 2*IROVar.HasteFactor
+    IROVar.CastTime2_25sec = 2.25*IROVar.HasteFactor
     IROVar.CastTime1_5sec = 1.5*IROVar.HasteFactor
     IROVar.CastTime6sec = 6*IROVar.HasteFactor
     IROVar.CastTime0_5sec = 0.5*IROVar.HasteFactor
@@ -177,15 +180,28 @@ function IROVar.Debug()
     IROVar.DebugMode=not IROVar.DebugMode
     print("IROVar.DebugMode : "..(IROVar.DebugMode and "On" or "Off"))
 end
-function IROVar:fspecOnEvent(event)
+
+IROVar.fspecOnEventCallBack={}
+-- [1]={name,callback}...
+
+function IROVar.fspecOnEvent(event)
     if IROVar.DebugMode then print("Event : "..((event~=nil) and event or "nil")) end
     IROVar.UpdateVar()
     C_Timer.After(5,IROVar.UpdateVar)
+    for _,v in ipairs(IROVar.fspecOnEventCallBack) do
+        v[2]()
+    end
+end
+
+function IROVar.Register_TALENT_CHANGE_scrip_CALLBACK(name,callback)
+    table.insert(IROVar.fspecOnEventCallBack,{name,callback})
 end
 
 IROVar.fspec = CreateFrame("Frame")
-IROVar.fspec:RegisterEvent("PLAYER_SPECIALIZATION_CHANGED")
-IROVar.fspec:RegisterEvent("ZONE_CHANGED_NEW_AREA")
+IROVar.fspec:RegisterEvent("ACTIVE_PLAYER_SPECIALIZATION_CHANGED")
+IROVar.fspec:RegisterEvent("PLAYER_TALENT_UPDATE")
+IROVar.fspec:RegisterEvent("TRAIT_CONFIG_UPDATED")
+IROVar.fspec:RegisterEvent("ACTIVE_TALENT_GROUP_CHANGED")
 IROVar.fspec:SetScript("OnEvent", IROVar.fspecOnEvent)
 
 function IROVar.UpdateVar()

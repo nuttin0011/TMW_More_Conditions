@@ -1,8 +1,9 @@
--- Many Function Version Druid Feral 9.2.0/1
+-- Many Function Version Druid Feral 10.0.2/2
 -- this file save many function for paste to TMW Snippet LUA
 
 --function IROVar.DruidFeral.DotRakeEmpower(unitToken) -- return %Rake DMG , Eg no buff = 100, Has Berserk = 160
 --function IROVar.DruidFeral.DotRipEmpower(unitToken) -- return %Rip DMG , Dot at target , Eg no buff = 100, Has Bloodtalons = 130
+    -- e.g. IROVar.DruidFeral.DotRakeEmpower("target")
 --function IROVar.DruidFeral.CastRakeEmpower() -- return %Rip DMG, will cast to target
 --function IROVar.DruidFeral.CastRakeEmpowerWithTigerFury()
 --function IROVar.DruidFeral.CastRipEmpower()
@@ -11,6 +12,12 @@
 
 if not IROVar then IROVar = {} end
 if not IROVar.DruidFeral then IROVar.DruidFeral = {} end
+
+if #TMW.CNDT.Env.TalentMap==0 then -- use function TMW to update player talents,
+    TMW.CNDT:PLAYER_TALENT_UPDATE()
+    -- talent's data in TMW.CNDT.Env.TalentMap
+    -- use lower case Ex TMW.CNDT.Env.TalentMap["carnivorous instinct"]
+end
 
 IROVar.DruidFeral.HasBloodtalonsTalent = false
 IROVar.DruidFeral.TigerFuryReadyTime=GetTime()+TMW.CNDT.Env.CooldownDuration("Tiger's Fury")
@@ -25,17 +32,18 @@ end
 IROVar.DruidFeral.AuraEffectRakeRip ={
     -- [auraName] = {effect Rake, effect rip, %increase}
     ["Tiger's Fury"]={true,true,15},
-    ["Savage Roar"]={true,true,15},
+    --["Savage Roar"]={true,true,15},
     ["Berserk"]={true,false,60},
-    ["Bloodtalons"]={false,true,30},
+    ["Bloodtalons"]={false,true,25},
     ["Sudden Ambush"]={true,false,60},
     ["Prowl"]={true,false,60},
 }
 
 function IROVar.DruidFeral.CheckCarnivorousInstinct()
-    if IROVar.activeConduits["Carnivorous Instinct"] then -- conduit + Dmg Tiger's Fury assume 5%
-        IROVar.DruidFeral.AuraEffectRakeRip["Tiger's Fury"][3]=20
-    end
+    local ctalent=TMW.CNDT.Env.TalentMap["carnivorous instinct"]
+    ctalent=(ctalent or 0)*6
+    -- talent "carnivorous instinct" + Dmg 6% per point
+    IROVar.DruidFeral.AuraEffectRakeRip["Tiger's Fury"][3]=15+ctalent
 end
 IROVar.DruidFeral.CheckCarnivorousInstinct()
 
@@ -128,8 +136,8 @@ end
 
 
 function IROVar.DruidFeral.CheckTalent()
-    local _,TName,_,TSelected=GetTalentInfo(7,2,1)
-    IROVar.DruidFeral.HasBloodtalonsTalent = (TName=="Bloodtalons") and TSelected
+    TMW.CNDT:PLAYER_TALENT_UPDATE()
+    IROVar.DruidFeral.HasBloodtalonsTalent = TMW.CNDT.Env.TalentMap["bloodtalons"]
 end
 
 function IROVar.DruidFeral.ClearDotAtMobInfo()
@@ -141,7 +149,9 @@ function IROVar.DruidFeral.FOnEvent(_,event)
         print("Event in DruidFeral On Event",event)
     end
     if event == "PLAYER_TALENT_UPDATE" then
-        C_Timer.After(2,IROVar.DruidFeral.CheckTalent)
+        C_Timer.After(2,function()
+            IROVar.DruidFeral.CheckTalent()
+        end)
     elseif event == "PLAYER_REGEN_ENABLED" then
         -- out combat
         IROVar.DruidFeral.ClearDotAtMobInfoHandle=C_Timer.NewTimer(20,IROVar.DruidFeral.ClearDotAtMobInfo)
@@ -206,7 +216,7 @@ IROVar.DruidFeral.CombatEvent = function(...)
         if IROVar.DruidFeral.AuraEffectRakeRip[spellName] then
             if IROVar.DruidFeral.AuraDelay[spellName] then
                 --"Sudden Ambush"+"Prowl" removed befor "Rake" apple , must check "Rake" as have "Sudden Ambush"
-                C_Timer.After(0.1,function()
+                C_Timer.After(0.5,function()
                     IROVar.DruidFeral.PlayerHasAura[spellName]=false
                     CheckCastEmpower(spellName)
                 end)

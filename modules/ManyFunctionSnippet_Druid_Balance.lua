@@ -1,5 +1,5 @@
 -- Many Function Version Druid Balance 9.2.5/4
-
+-- Set Priority to 10
 
 --var IROVar.DruidBalance.NewMoon ; name spell
 --var IROVar.DruidBalance.NewMoonAstGen ; Ast Gen from this spell

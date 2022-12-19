@@ -1,4 +1,4 @@
--- Many Function Rogue2 9.2.5/7
+-- Many Function Rogue2 9.2.5/8
 -- Set Priority to 10
 -- Use Many Function Aura Tracker
 
@@ -47,6 +47,7 @@ local Aura_Track_list1={
     "Buried Treasure",
     "Grand Melee",
     "Shadow Blades",
+    "Loaded Dice",
 }
 IROVar.Aura1.RegisterTrackedAura(Aura_Track_list1)
 
@@ -135,18 +136,25 @@ function IROVar.Rogue2.RTBStatusCounter()
         KiRStatus=1
         status=0
     elseif RTBCount==2 then
-        if IROVar.Aura1.My["Grand Melee"] and IROVar.Aura1.My["Buried Treasure"] then
+        if IROVar.Aura1.My["Loaded Dice"] then
+            if (not IROVar.Aura1.My["Broadside"]) and
+            (not IROVar.Aura1.My["Skull and Crossbones"]) and
+            (not IROVar.Aura1.My["True Bearing"]) then
+                status=1
+            end
+        elseif IROVar.Aura1.My["Grand Melee"] and IROVar.Aura1.My["Buried Treasure"] then
             status=1
-        else
-            status=0
         end
-        if (not IROVar.Aura1.My["Grand Melee"])and
-        (not IROVar.Aura1.My["Buried Treasure"])and
+
+        if (IROVar.Aura1.My["Broadside"]) or
+        (IROVar.Aura1.My["Skull and Crossbones"]) or
         (IROVar.Aura1.My["True Bearing"]) then
             KiRStatus=1
         end
     elseif RTBCount==1 then
-        if IROVar.Aura1.My["True Bearing"] or IROVar.Aura1.My["Skull and Crossbones"] then
+        if IROVar.Aura1.My["Loaded Dice"] then
+            status=1
+        elseif (IROVar.Aura1.My["Broadside"] or IROVar.Aura1.My["True Bearing"] or IROVar.Aura1.My["Skull and Crossbones"]) then
             status=0
         else
             status=1

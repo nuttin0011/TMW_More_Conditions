@@ -1,4 +1,4 @@
--- Care Interrupt V 3.3
+-- Care Interrupt V 4.0
 -- Version LUA Snipped
 -- Set Priority to 10
 -- interrupt Only Important Spell at Specific Mob
@@ -155,6 +155,86 @@ IROVar.MobListForInterrupt = {
         ["Toxic Lurker"]={["Suffocating Smog"]=true},
         ["Slime Elemental"]={["Slimebolt"]=true,["Slimewave"]=true},
     },
+-------------------- Dragonflight 10.0.2 --Stun / Interrupt List
+    ["Algeth'ar Academy"]={
+        ["Spellbound Scepter"] = {["Mystic Blast"]=true},
+        ["Unruly Textbook"] = {["Monotonous Lecture"]=true},
+        ["Alpha Eagle"] = {["Call of the Flock"]=true},
+        ["Algeth'ar Security"] = {["Disrupting Pulse"]=true},
+        ["Algeth'ar Echoknight"] = {["Astral Whirlwind"]=true},
+        ["Spectral Invoker"] = {["Astral Bomb"]=true,["Arcane Missiles"]=true},
+        ["Corrupted Manafiend"] = {["Surge"]=true},
+    },
+--------------------------------------------------------
+    ["Court of Stars"]={
+        ["Duskwatch Guard"] = {["Quelling Strike"]=true},
+        ["Guardian Construct"] = {["Suppress"]=true,["Charging Station"]=true},
+        ["Duskwatch Sentry"] = {["Sound Alarm"]=true},
+        ["Bound Energy"] = {["Charged Blast"]=true},
+        -- ไม่เอา ["Patrol Captain Gerdo"] = {["Resonant Slash"]=true},
+        ["Blazing Imp"] = {["Drifting Embers"]=true},
+        ["Talixae Flamewreath"] = {["Withering Soul"]=true},
+    },
+--------------------------------------------------------
+    ["Halls of Valor"]={
+        ["Valarjar Runecarver"] = {["Etch"]=true,["Shattered Rune"]=true},
+        ["Valarjar Mystic"] = {["Holy Radiance"]=true,["Rune of Healing"]=true},
+    },
+--------------------------------------------------------
+    ["Ruby Life Pools"]={
+        ["Primalist Shockcaster"] = {["Lightning Bolt"]=true},
+        ["Primal Thundercloud"] = {["Crackling Detonation "]=true},
+        ["Tempest Channeler"] = {["Thunder Bolt"]=true},
+        ["High Channeler Ryvati"] = {["Shock Blast"]=true},
+        ["Flame Channeler"] = {["Flashfire"]=true},
+        ["Primalist Cinderweaver"] = {["Cinderbolt"]=true},
+    },
+--------------------------------------------------------
+    ["Shadowmoon Burial Grounds"]={
+        ["Shadowmoon Bone-Mender"] = {["Shadow Mend"]=true,["Shadow Bolt"]=true},
+        ["Shadowmoon Exhumer"] = {["Void Bolt"]=true},
+        ["Exhumed Spirit"] = {["Death Blast"]=true},
+        ["Monstrous Corpse Spider"] = {["Necrotic Burst"]=true},
+        ["Plagued Bat"] = {["Plague Spit"]=true},
+    },
+--------------------------------------------------------
+    ["Temple of the Jade Serpent"]={
+        ["Fallen Waterspeaker"] = {["Hydrolance"]=true},
+        ["Haunting Sha"] = {["Haunting Scream"]=true},
+        ["The Nodding Tiger"] = {["Cat Nap"]=true},
+        ["Sha-Touched Guardian"] = {["Leg Sweep"]=true},
+        ["Depraved Mistweaver"] = {["Defiling Mist"]=true},
+    },
+--------------------------------------------------------
+    ["The Azure Vault"]={
+        ["Conjured Lasher"] = {["Mystic Vapors"]=true},
+        ["Shrieking Whelp"] = {["Shriek"]=true},
+        ["Arcane Elemental"] = {["Waking Bane"]=true},
+        ["Rune Seal Keeper"] = {["Icy Bindings"]=true,["Condensed Frost"]=true},
+        ["Crystal Fury"] = {["Piercing Shards"]=true},
+        ["Crystal Thrasher"] = {["Splintering Shards"]=true},
+        ["Astral Attendant"] = {["Unstable Power"]=true},
+        ["Vault Guard"] = {["Ice Cutter"]=true},
+        ["Scalebane Lieutenant"] = {["Ice Cutter"]=true},
+        ["Nullmagic Hornswog"] = {["Null Stomp"]=true},
+    },
+--------------------------------------------------------
+    ["The Nokhud Offensive"]={
+        ["Nokhud Longbow"] = {["Shoot"]=true,["Rain of Arrows"]=true},
+        ["Nokhud Warspear"] = {["Swift Stab"]=true},
+        ["Nokhud Hornsounder"] = {["Rally the Clan"]=true},
+        ["Primalist Stormspeaker"] = {["Stormbolt"]=true,["Tempest"]=true},
+        ["Primalist Thunderbeast"] = {["Chain Lightning"]=true},
+        ["Soulharvester Duuren"] = {["Death Bolt Volley"]=true},
+        ["Soulharvester Galtmaa"] = {["Death Bolt Volley"]=true},
+        ["Soulharvester Tumen"] = {["Death Bolt Volley"]=true},
+        ["Soulharvester Mandakh"] = {["Death Bolt Volley"]=true},
+        ["Ukhel Deathspeaker"] = {["Grasp of the Dead"]=true},
+        ["Ukhel Willcrusher"] = {["Dominate"]=true},
+        ["Nokhud Thunderfist"] = {["Storm Shock"]=true},
+    },
+--------------------------------------------------------
+
 }
 
 IROVar.CareInOld={

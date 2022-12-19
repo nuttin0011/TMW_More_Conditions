@@ -1,4 +1,4 @@
--- Care Interrupt V 4.1
+-- Care Interrupt V 4.2
 -- Version LUA Snipped
 -- Set Priority to 10
 -- interrupt Only Important Spell at Specific Mob
@@ -189,6 +189,8 @@ IROVar.MobListForInterrupt = {
         ["Flame Channeler"] = {["Flashfire"]=true},
         ["Primalist Cinderweaver"] = {["Cinderbolt"]=true},
         ["Primalist Flamedancer"] = {["Flame Dance"]=true},
+        ["Flashfrost Chillweaver"] = {["Ice Shield"]=true},
+        ["Flashfrost Earthshaper"] = {["Tectonic Slam"]=true},
     },
 --------------------------------------------------------
     ["Shadowmoon Burial Grounds"]={

@@ -1,4 +1,4 @@
--- Many Function DPS Average 10.0.0/1
+-- Many Function DPS Average 10.0.0/2
 -- this file save many function for paste to TMW Snippet LUA
 -- Set Priority to 5
 -- counter "targethptimeremain" target HP time remain
@@ -86,6 +86,7 @@ end
 local CheckHolder=C_Timer.NewTimer(0.1,function() end)
 
 IROVar.RegisterIncombatCallBackRun("IROVarDPSCountMob",function()
+    IROVar.DPS.CheckMobIncombat()
     CheckHolder=C_Timer.NewTicker(1.34,IROVar.DPS.CheckMobIncombat)
 end)
 IROVar.RegisterOutcombatCallBackRun("IROVarDPSCountMob",function()

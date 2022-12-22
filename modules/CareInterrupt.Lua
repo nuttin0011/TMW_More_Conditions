@@ -1,4 +1,4 @@
--- Care Interrupt V 4.2
+-- Care Interrupt V 4.4b
 -- Version LUA Snipped
 -- Set Priority to 10
 -- interrupt Only Important Spell at Specific Mob
@@ -167,18 +167,23 @@ IROVar.MobListForInterrupt = {
     },
 --------------------------------------------------------
     ["Court of Stars"]={
-        ["Duskwatch Guard"] = {["Quelling Strike"]=true},
         ["Guardian Construct"] = {["Suppress"]=true,["Charging Station"]=true},
         ["Duskwatch Sentry"] = {["Sound Alarm"]=true},
-        ["Bound Energy"] = {["Charged Blast"]=true},
-        -- ไม่เอา ["Patrol Captain Gerdo"] = {["Resonant Slash"]=true},
+        ["Watchful Inquisitor"] = {["Searing Glare"]=true},
         ["Blazing Imp"] = {["Drifting Embers"]=true},
+        ["Baalgar the Watchful"] = {["Disintegration Beam"]=true},
         ["Talixae Flamewreath"] = {["Withering Soul"]=true},
     },
 --------------------------------------------------------
     ["Halls of Valor"]={
         ["Valarjar Runecarver"] = {["Etch"]=true,["Shattered Rune"]=true},
-        ["Valarjar Mystic"] = {["Holy Radiance"]=true,["Rune of Healing"]=true},
+        ["Valarjar Mystic"] = {["Holy Radiance"]=true},
+        ["Valarjar Thundercaller"] = {["Thunderous Bolt"]=true},
+        ["Valarjar Marksman"] = {["Penetrating Shot"]=true},
+        ["King Haldor"] = {["Unruly Yell"]=true},
+        ["King Ranulf"] = {["Unruly Yell"]=true},
+        ["King Bjorn"] = {["Unruly Yell"]=true},
+        ["King Tor"] = {["Unruly Yell"]=true},
     },
 --------------------------------------------------------
     ["Ruby Life Pools"]={

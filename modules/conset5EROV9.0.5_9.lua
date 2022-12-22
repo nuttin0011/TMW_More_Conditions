@@ -25,7 +25,7 @@ function IUSC.AfterSU(Skill ID)
 function IUSC.AfterSO(Skill ID)
 	call this function after macro end
 function IUSC.LastSkillUse() -- Return "Skill Name" or nil
-var IUSC.NextReady -- predict Next Ready for Spell on GCD
+var IUSC.NextReady -- predict Next Ready for Spell Or GCD
 ]]
 
 -- can copy this to LUA Snippted

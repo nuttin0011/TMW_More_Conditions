@@ -1,10 +1,14 @@
--- Many Function Version Druid Balance 9.2.5/4
+-- Many Function Version Druid Balance 9.2.5/6
 -- Set Priority to 10
 
 --var IROVar.DruidBalance.NewMoon ; name spell
 --var IROVar.DruidBalance.NewMoonAstGen ; Ast Gen from this spell
 --var IROVar.DruidBalance.NewMoonCast ; casting?
 --function IROVar.DruidBalance.CountSunfireDotAtEnemy()
+--function IROVar.DruidBalance.PredictAPadd() -- predict AP add after use this spell
+
+--function IROVar.DruidBalance.StarfallAP() -- return starfall AP use
+--function IROVar.DruidBalance.StarsurgeAP()
 
 --var IROVar.DruidBalance.RSend ; "Rattled Stars" buff endTime
 
@@ -24,11 +28,23 @@
 --counter Predict Astral Power after this spell
 --"predictastral"
 
---input Counter
--- "wantww" = want AOE; 2 = always AOE , 1 = AOE if possible , 0 = Only Single ; reset to 1 after out combat
--- "wantstarfall" = want Starfall ; 1 = use Starfal , just use onece and reset to 0 after use/outcombat
--- "keepap" = keep astral power ; 1 = keep AP as much as possible ; reset to 0 after outcombat
+--counter
+--Shooting Stars count "shootingstarscount"
+-- reset when Full Moon fall by passive skill
+
+--"lunarpower" = astral power
+--"lunarpoweradd" = astral power + predict AP
+
+
+
+
 --[[
+    ******************************** Not DONE YET
+    input Counter
+    "wantww" = want AOE; 2 = always AOE , 1 = AOE if possible , 0 = Only Single ; reset to 1 after out combat
+    "wantstarfall" = want Starfall ; 1 = use Starfal , just use onece and reset to 0 after use/outcombat
+    "keepap" = keep astral power ; 1 = keep AP as much as possible ; reset to 0 after outcombat
+
     use 3 counter condition for use "Starfall" or "Starsurge"
     dud.ManyMob = "nsunfire">=2
 
@@ -59,17 +75,35 @@
         reset "keepap" to 0
 
     **Rattled Stars nearly end mean after use current spell/GCD has Buff < 1 GCD
+
+    output counter
+    "starsurgeorfall" ; 0 = use Starsurge , 1 = use Starfall
 ]]
---output counter
---"starsurgeorfall" ; 0 = use Starsurge , 1 = use Starfall
-
-
 
 
 if not IROVar then IROVar = {} end
 if not IROVar.DruidBalance then IROVar.DruidBalance = {} end
 
 local dud = IROVar.DruidBalance
+
+function dud.StarfallAP()
+    --[[
+    local s=IROVar.Aura1.GetAuraStack("Rattled Stars") or 0
+    local aUse=50-math.floor(s*2.5)
+    local ap=TMW_ST:GetCounter("lunarpower")
+    return ap>=aUse]]
+    return 50-math.floor(2.5*(IROVar.Aura1.GetAuraStack("Rattled Stars") or 0))
+end
+
+function dud.StarsurgeAP()
+    return 40-((IROVar.Aura1.GetAuraStack("Rattled Stars") or 0)*2)
+    --[[local s=IROVar.Aura1.GetAuraStack("Rattled Stars") or 0
+    local aUse=40-(s*2)
+    local ap=TMW_ST:GetCounter("lunarpower")
+    return ap>=aUse]]
+end
+
+
 
 dud.NewMoon = "New Moon"
 dud.NewMoonAstGen = 10
@@ -87,6 +121,53 @@ dud.dotCount={
     [164812]=0,
     [202347]=0,
 }
+dud.ShootingStarsCount=0
+
+local PredictAPBySpell={
+    ["Starfire"]=8,[194153]=8,
+    ["Wrath"]=8,[190984]=8,
+    ["Stellar Flare"]=8,[202347]=8,
+    ["Full Moon"] = 40,[274283]=40,
+    ["Half Moon"] = 20,[274282]=20,
+    ["New Moon"] = 10,[274281]=10,
+}
+local SpellCasting = nil
+
+dud.predictAPadd=0
+--IROVar.RegisterOutcombatCallBackRun("reset dud.predictAPadd",function() IROVar.DruidBalance.predictAPadd=0 end)
+function dud.PredictAPadd() --after cast this spell
+    return dud.predictAPadd or 0
+end
+
+-- Create an event handler function to track spell casts
+local function OnSpellCast(self, event, unit, castID, spellID)
+  -- Check if the event is for the player
+  if unit == "player" then
+    SpellCasting = spellID
+    dud.predictAPadd=PredictAPBySpell[spellID] or 0
+    IROVar.UpdateCounter("lunarpoweradd",TMW_ST:GetCounter("lunarpower")+IROVar.DruidBalance.PredictAPadd())
+  end
+end
+
+-- Register the event handler function to listen for UNIT_SPELLCAST_START events
+local eventFrame = CreateFrame("FRAME")
+eventFrame:RegisterEvent("UNIT_SPELLCAST_START")
+eventFrame:SetScript("OnEvent", OnSpellCast)
+
+-- Create a second event frame and function to reset the current spell cast when the cast is finished or fails
+local resetFrame = CreateFrame("FRAME")
+local function ResetCurrentSpellCast(self,event,unit)
+    if unit == "player" then
+        dud.predictAPadd=0
+        SpellCasting = nil
+        IROVar.UpdateCounter("lunarpoweradd",TMW_ST:GetCounter("lunarpower")+IROVar.DruidBalance.PredictAPadd())
+    end
+end
+
+-- Register the reset function to listen for the SPELL_CAST_SUCCESS and SPELL_CAST_FAILED events
+resetFrame:RegisterEvent("UNIT_SPELLCAST_STOP")
+resetFrame:RegisterEvent("UNIT_SPELLCAST_FAILED_QUIET")
+resetFrame:SetScript("OnEvent", ResetCurrentSpellCast)
 
 
 function dud.UpdateNewMoon()
@@ -102,26 +183,49 @@ end
 dud.UpdateNewMoon()
 IROVar.Register_TALENT_CHANGE_scrip_CALLBACK("dud.UpdateNewMoon",dud.UpdateNewMoon)
 
+
+local nextFullMoonFromSpell=false
+local FullMoonTimeStamp=0
 function dud.CombatEvent(...)
 
     local function isNewMoon(sID)
         return (sID>=274281) and (sID<=274283)
     end
 
-    local _,subevent,_,sourceGUID,_,_,_,DesGUID,DesName,_,_,spellID,spellName = ...
+    local timestamp,subevent,_,sourceGUID,_,_,_,DesGUID,DesName,_,_,spellID,spellName = ...
     if sourceGUID~=IROVar.playerGUID then return end
     --274281 274282 274283 ; newMoon HalfMoon FullMoon
 	if subevent=="SPELL_CAST_SUCCESS" then
+        if spellID==274283 then
+            nextFullMoonFromSpell=true
+        end
         if isNewMoon(spellID) then
             dud.UpdateNewMoon()
         end
         dud.NewMoonCast=false
     elseif subevent=="SPELL_CAST_START" then
+        dud.predictAPadd=PredictAPBySpell[spellName]
         if isNewMoon(spellID) then
             dud.NewMoonCast=true
         end
     elseif subevent=="SPELL_CAST_FAILED" then
         dud.NewMoonCast=false
+    elseif subevent=="SPELL_DAMAGE" then
+        if spellID==202497 then -- "Shooting Stars"
+            dud.ShootingStarsCount=dud.ShootingStarsCount+1
+            IROVar.UpdateCounter("shootingstarscount",dud.ShootingStarsCount)
+        elseif spellID==274283 then -- "Full Moon" --SPELL_DAMAGE Full Moon 274283
+            -- full moon from Shooting Stars --> reset Shooting Stars to 0
+            if timestamp~=FullMoonTimeStamp then
+                FullMoonTimeStamp=timestamp
+                if nextFullMoonFromSpell then
+                    nextFullMoonFromSpell=false
+                else
+                    dud.ShootingStarsCount=0
+                    IROVar.UpdateCounter("shootingstarscount",dud.ShootingStarsCount)
+                end
+            end
+        end
     end
 end
 
@@ -244,6 +348,14 @@ end
 local frame = CreateFrame("Frame")
 frame:RegisterEvent("UNIT_AURA")
 frame:SetScript("OnEvent", onUnitAura)
+
+
+--PLAYER RESOURCE
+IROVar.CV.Register_Player_Power(8,"lunarpower",function(AP)
+    --need more counter place here
+    IROVar.UpdateCounter("lunarpoweradd",AP+IROVar.DruidBalance.PredictAPadd())
+end)
+
 
 --[[
 Full Moon = 3sec

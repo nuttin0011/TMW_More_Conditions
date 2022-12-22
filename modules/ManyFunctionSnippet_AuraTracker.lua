@@ -1,14 +1,15 @@
--- Many Function Aura Tracker 10.0.0/6
+-- Many Function Aura Tracker 10.0.0/7
 -- Set Priority to 5
 
 --function IROVar.Aura.Register_UNIT_AURA_scrip_CALLBACK(name,callback)
 --function IROVar.Aura.UnRegister_UNIT_AURA_scrip_CALLBACK(name)
 
---Aura1 , Track Player Name/ID/ExpTime ( if multiple aura use shortest ExpTime)
+--Aura1 , Track Player Name/ID/ExpTime/stack ( if multiple aura use shortest ExpTime)
 --function IROVar.Aura1.RegisterTrackedAura(list)
 --function IROVar.Aura1.UnRegisterTrackedAura(list)
 --function IROVar.Aura1.GetAura(n) -- return ExpTime , nil = no aura , 0 = no ExpTime
     -- or use IROVar.Aura1.My[n]
+--function IROVar.Aura1.GetAuraStack(n)
 
 -- Aura2 At Target keep only Name , id
 --function IROVar.Aura2.RegisterTrackedAura(aura,filter)
@@ -53,6 +54,7 @@ IROVar.Aura1.Changed={} -- true = Changed from last IROVar.Aura1.DumpAura()
         [auraID]=ExpTime,
     }
 ]]
+IROVar.Aura1.Stack={} -- keep Stack of aura
 local function RegisterTracked(list,table)
     if type(list)=="table" then
         for _,v in pairs(list) do
@@ -81,6 +83,10 @@ end
 function IROVar.Aura1.GetAura(n) -- return ExpTime , nil = no aura , 0 = no ExpTime
     return IROVar.Aura1.My[n]
 end
+
+function IROVar.Aura1.GetAuraStack(n)
+    return IROVar.Aura1.Stack[n]
+end
 --[[
 name, icon, count, dispelType, duration, expirationTime, source, isStealable, nameplateShowPersonal,
 spellId, canApplyAura, isBossDebuff, castByPlayer, nameplateShowAll, timeMod, ...
@@ -88,29 +94,46 @@ spellId, canApplyAura, isBossDebuff, castByPlayer, nameplateShowAll, timeMod, ..
 ]]
 
 function IROVar.Aura1.DumpAura()
-    local function addAuraToTable(n,e,s)
+    local function addAuraToTable(n,e,s,c)
         if IROVar.Aura1.TrackedAura[n] then
-            IROVar.Aura1.My[n]=IROVar.Aura1.My[n] and math.min(e,IROVar.Aura1.My[n]) or e
+            if not IROVar.Aura1.My[n] then
+                IROVar.Aura1.My[n]=e
+                IROVar.Aura1.Stack[n]=c
+            else
+                if e<IROVar.Aura1.My[n] then
+                    IROVar.Aura1.My[n]=e
+                    IROVar.Aura1.Stack[n]=c
+                end
+            end
             IROVar.Aura1.Changed[n]=true
         end
         if IROVar.Aura1.TrackedAura[s] then
-            IROVar.Aura1.My[s]=IROVar.Aura1.My[s] and math.min(e,IROVar.Aura1.My[s]) or e
+            if not IROVar.Aura1.My[s] then
+                IROVar.Aura1.My[s]=e
+                IROVar.Aura1.Stack[s]=c
+            else
+                if e<IROVar.Aura1.My[s] then
+                    IROVar.Aura1.My[s]=e
+                    IROVar.Aura1.Stack[s]=c
+                end
+            end
             IROVar.Aura1.Changed[s]=true
         end
     end
     local OldAura=IROVar.Aura1.My
     IROVar.Aura1.My={}
     IROVar.Aura1.Changed={}
-    local name,exp,spellId
+    IROVar.Aura1.Stack={}
+    local name,exp,spellId,count
     for i=1,40 do
-        name,_,_,_,_,exp,_,_,_,spellId= UnitBuff("player",i)
+        name,_,count,_,_,exp,_,_,_,spellId= UnitBuff("player",i)
         if not name then break end
-        addAuraToTable(name,exp,spellId)
+        addAuraToTable(name,exp,spellId,count)
     end
     for i=1,40 do
-        name,_,_,_,_,exp,_,_,_,spellId= UnitDebuff("player",i)
+        name,_,count,_,_,exp,_,_,_,spellId= UnitDebuff("player",i)
         if not name then break end
-        addAuraToTable(name,exp,spellId)
+        addAuraToTable(name,exp,spellId,count)
     end
     for k,v in pairs(OldAura) do
         IROVar.Aura1.Changed[k]=v~=IROVar.Aura1.My[k]

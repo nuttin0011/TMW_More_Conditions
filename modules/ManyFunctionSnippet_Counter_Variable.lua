@@ -1,4 +1,4 @@
--- ManyFunctionSnippet_Counter_Variable 10.0.0/6
+-- ManyFunctionSnippet_Counter_Variable 10.0.0/7
 -- Set Priority to 6
 -- use Many Function Aura Tracker
 --[[
@@ -40,8 +40,10 @@
 
 
 -- Player Unit Power -- refresh every 0.1 sec
--- function IROVar.CV.Register_Player_Power(PowerType,counterName)
+-- function IROVar.CV.Register_Player_Power(PowerType,counterName,[CallBack_function(PowerValue)])
 -- function IROVar.CV.UnRegister_Player_Power(PowerType) 
+    **** We can use Only 1 Power Type per 1 Counter
+    if need more function can insert in [CallBack_function(PowerValue)]
     0="MANA",
     1="RAGE",
     2="FOCUS",
@@ -52,8 +54,13 @@
     8="LUNAR_POWER"],
     9="HOLY_POWER",
 
-    e.g. IROVar.CV.Register_Player_Power(3,"en")
-    IROVar.CV.Register_Player_Power(8,"lunarpower")
+    e.g.
+    IROVar.CV.Register_Player_Power(3,"en")
+    IROVar.CV.Register_Player_Power(1,"rage")
+    IROVar.CV.Register_Player_Power(8,"lunarpower",function(AP)
+        --need more counter place here
+        IROVar.UpdateCounter("lunarpoweradd",AP+IROVar.DruidBalance.PredictAPadd())
+    end)
 ]]
 if not IROVar then IROVar = {} end
 if not IROVar.CV then IROVar.CV = {} end
@@ -288,10 +295,11 @@ IROVar.Aura.Register_UNIT_AURA_scrip_CALLBACK("IROVar.CV.AuraNotHas",function(un
 end)
 
 -- Player Unit Power -- refresh every 0.1 sec
--- function IROVar.CV.Register_Player_Power(PowerType,counterName)
+-- function IROVar.CV.Register_Player_Power(PowerType,counterName,[CallBack_function(PowerValue)])
 -- function IROVar.CV.UnRegister_Player_Power(PowerType) 
 IROVar.CV.Power={}
 -- ["Power Type"]="counterName"
+IROVar.CV.PowerCallBack={}
 IROVar.CV.PowerRunning={}
 IROVar.CV.PowerChange={}
 IROVar.CV.PowerType={
@@ -311,7 +319,11 @@ function IROVar.CV.CheckPower(cN,pT)
     if IROVar.CV.PowerChange[pT] then
         --print (GetTime()-oldCheck)
         --oldCheck=GetTime()
-        IROVar.UpdateCounter(cN,UnitPower("player",pT))
+        local power=UnitPower("player",pT)
+        IROVar.UpdateCounter(cN,power)
+        if IROVar.CV.PowerCallBack[pT] then
+            IROVar.CV.PowerCallBack[pT](power)
+        end
         IROVar.CV.PowerChange[pT]=false
         IROVar.CV.PowerRunning[pT]=true
         do local cc,pp=cN,pT
@@ -339,9 +351,12 @@ local function SetupUnitPowerFrame()
     end)
 end
 
-function IROVar.CV.Register_Player_Power(PowerType,counterName)
+function IROVar.CV.Register_Player_Power(PowerType,counterName,CallBackFunc)
     IROVar.CV.Power[PowerType]=counterName
-    IROVar.UpdateCounter(counterName,UnitPower("player",PowerType))
+    IROVar.CV.PowerCallBack[PowerType]=CallBackFunc
+    local power=UnitPower("player",PowerType)
+    IROVar.UpdateCounter(counterName,power)
+    if CallBackFunc then CallBackFunc(power) end
     if not IROVar.CV.UnitPowerFrame then
         SetupUnitPowerFrame()
     end
@@ -349,6 +364,7 @@ end
 
 function IROVar.CV.UnRegister_Player_Power(PowerType)
     IROVar.CV.Power[PowerType]=nil
+    IROVar.CV.PowerCallBack[PowerType]=nil
 end
 
 --function IROVar.CV.Register_Target_Aura_Duration(AuraName,counterName,filter)

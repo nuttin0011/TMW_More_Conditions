@@ -4,11 +4,84 @@
 
 -- counter "pausedps" pause DPS for Drain Soul/Drain Life ; 0=DPS normaly, 1=Pause DPS
 --function IROVar.Lock.ChannelPluseDPS()
+
 --function IROVar.Lock.SoulLeechPercen()
+
+--function IROVar.Lock.PredictSS() -- return SSFragment
+-- counter "pssfragment" = Predict SS fragment in Des
+-- counter "pss" = Predict SS in Demo , Aff
+-- counter "ssfragment" == UnitPower("player",7,true)
+-- counter "ss" == UnitPower("player",7)
+
+
 
 
 if not IROVar then IROVar={} end
 if not IROVar.Lock then IROVar.Lock={} end
+
+
+IROVar.Lock.PSS={}
+IROVar.Lock.PSS[265]={ -- aff
+    [324536]=-1, --Malefic Rapture
+}
+IROVar.Lock.PSS[266]={ -- demo
+    [686]=1, --shadow bolt
+    [104316]=-2, --[Call Dreadstalkers]
+    [265187]=5, --[Summon Demonic Tyrant]
+    [264178]=2, --[Demonbolt]
+    [105174]=-3, --[Hand of Gul'dan]
+}
+IROVar.Lock.PSS[267]={ -- des !!!!!!!!!!!!!! not finish Yet
+}
+IROVar.Lock.PSS.CastID=nil
+--[[
+UNIT_SPELLCAST_START
+    arg1 UnitToken
+    arg2 CastID
+    arg3 SpellID
+
+UNIT_SPELLCAST_STOP
+    arg1 UnitToken
+    arg2 CastID
+    arg3 SpellID
+
+UNIT_SPELLCAST_FAILED_QUIET
+]]
+IROVar.CV.Register_Player_Power(7,"ss",function(p)
+    IROVar.UpdateCounter("ssfragment",UnitPower("player",7,true))
+end)
+local function UpdatePSS()
+    local ss=
+end
+local function UNIT_SPELLCAST_START_prediceSS(event,UnitToken,CastID,SpellID)
+    if UnitToken=="player" then
+        IROVar.Lock.PSS.CastID=SpellID
+
+    end
+end
+TMW_ST:AddEvent("UNIT_SPELLCAST_START",
+function(event,unit)
+    if unit~="player" then return end
+    IROVar.Lock.UpdateSoulLeech()
+end)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 -- Counter Pause DPS for Drain Soul/ Drain Life

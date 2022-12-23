@@ -1,4 +1,4 @@
--- ManyFunctionSnippet_Counter_Variable 10.0.0/7
+-- ManyFunctionSnippet_Counter_Variable 10.0.0/8
 -- Set Priority to 6
 -- use Many Function Aura Tracker
 --[[
@@ -51,7 +51,8 @@
     4="COMBO_POINTS",
     5="RUNES",
     6="RUNIC_POWER",
-    8="LUNAR_POWER"],
+    7="SOUL_SHARDS",
+    8="LUNAR_POWER",
     9="HOLY_POWER",
 
     e.g.
@@ -310,6 +311,7 @@ IROVar.CV.PowerType={
     ["COMBO_POINTS"]=4,
     ["RUNES"]=5,
     ["RUNIC_POWER"]=6,
+    ["SOUL_SHARDS"]=7,
     ["LUNAR_POWER"]=8,
     ["HOLY_POWER"]=9,
 }

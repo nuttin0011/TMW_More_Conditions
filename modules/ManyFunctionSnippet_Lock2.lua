@@ -1,4 +1,4 @@
--- Many Function Version Warlock2 10.0.0/1
+-- Many Function Version Warlock2 10.0.0/2
 -- Set Priority to 10
 -- this file save many function for paste to TMW Snippet LUA
 
@@ -19,8 +19,27 @@ UNIT_SPELLCAST_CHANNEL_STOP
 234153 Drain Life
 ]]
 
-IROVar.Lock.ChannelStep={0,0,0,0,0,0,0,math.huge}
+IROVar.Lock.ChannelStep={0,0,0,0,0,0,0,GetTime()+1000000}
 IROVar.Lock.ChannelHandle=nil
+
+local function StepChannel(n,c)
+    IROVar.UpdateCounter("pausedps",c)
+    if n==8 then
+        IROVar.Lock.ChannelHandle=nil
+        return
+    end
+    do
+        local cT=GetTime()
+        local nextTick=IROVar.Lock.ChannelStep[n+1]-cT
+        if nextTick<=0 then
+            StepChannel(n+1,math.abs(c-1))
+        else
+            IROVar.Lock.ChannelHandle=C_Timer.NewTimer(nextTick,function()
+                StepChannel(n+1,math.abs(c-1))
+            end)
+        end
+    end
+end
 
 TMW_ST:AddEvent("UNIT_SPELLCAST_CHANNEL_START",
 function(EventName,unit,arg3,spellID)
@@ -39,15 +58,26 @@ function(EventName,unit,arg3,spellID)
     IROVar.Lock.ChannelStep[5]=IROVar.Lock.ChannelStep[3]+tick
     IROVar.Lock.ChannelStep[6]=IROVar.Lock.ChannelStep[5]+_5
     IROVar.Lock.ChannelStep[7]=IROVar.Lock.ChannelStep[5]+tick
-    IROVar.Lock.ChannelStep[8]=math.huge
+    IROVar.Lock.ChannelStep[8]=endTime+100
     if du<IROVar.CastTime2sec*2 then--[Nightfall]
         --print("[Nightfall]")
         IROVar.Lock.ChannelStep[1]=IROVar.Lock.ChannelStep[7]
+        IROVar.Lock.ChannelStep[2]=IROVar.Lock.ChannelStep[7]
+        IROVar.Lock.ChannelStep[3]=IROVar.Lock.ChannelStep[7]
+        IROVar.Lock.ChannelStep[4]=IROVar.Lock.ChannelStep[7]
+        IROVar.Lock.ChannelStep[5]=IROVar.Lock.ChannelStep[7]
+        IROVar.Lock.ChannelStep[6]=IROVar.Lock.ChannelStep[7]
     end
+    StepChannel(0,1)
 end)
 TMW_ST:AddEvent("UNIT_SPELLCAST_CHANNEL_STOP",
 function()
-    IROVar.Lock.ChannelStep={0,0,0,0,0,0,0,math.huge}
+    IROVar.UpdateCounter("pausedps",0)
+    if IROVar.Lock.ChannelHandle and not IROVar.Lock.ChannelHandle:IsCancelled() then
+        IROVar.Lock.ChannelHandle:Cancel()
+        IROVar.Lock.ChannelHandle=nil
+    end
+    IROVar.Lock.ChannelStep={0,0,0,0,0,0,0,GetTime()+1000000}
 end)
 -- Channeling
 -- start time st , pause
@@ -89,3 +119,4 @@ end)
 function IROVar.Lock.SoulLeechPercen()
     return IROVar.Lock.soulLeechPercen
 end
+

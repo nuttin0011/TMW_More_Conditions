@@ -1,4 +1,4 @@
--- ManyFunctionSnippet_Counter_Variable 10.0.0/9
+-- ManyFunctionSnippet_Counter_Variable 10.0.0/10
 -- Set Priority to 6
 -- use Many Function Aura Tracker
 --[[
@@ -24,7 +24,13 @@
 -- 1.4 - 2.39 = 2 ...
 --function IROVar.CV.Register_Player_Aura_Duration(AuraName,counterName)
 --function IROVar.CV.UnRegister_Player_Aura_Duration(AuraName)
---function IROVar.CV.Register_Player_Aura_Arg(AuraName,counterName,ArgNo)
+--function IROVar.CV.Register_Player_Aura_Arg(AuraName,counterName,ArgNo,[function(ArgValue)])
+    --[[
+        eg. if expire > 1 sec counter = 1, otherwise 0
+        IROVar.CV.Register_Player_Aura_Arg("Demonic Core","demoniccore",6,
+            function(expTime)
+                return (expTime-GetTime() > 1) and 1 or 0
+            end)
 
 -- Aura Has 0 = not sure , 1 = Has , check Duration > 0.4 sec
 --function IROVar.CV.Register_Player_Aura_Has(AuraName,counterName)
@@ -198,16 +204,19 @@ function IROVar.CV.UnRegister_Player_Aura_Duration(AuraName)
 end
 
 IROVar.CV.AuraArg={} -- = {[AuraName]={counterName,ArgNo}}
-function IROVar.CV.Register_Player_Aura_Arg(AuraName,counterName,ArgNo)
+function IROVar.CV.Register_Player_Aura_Arg(AuraName,counterName,ArgNo,callbackArgMod)
     if not IROVar.Aura1.TrackedAura[AuraName] then
         IROVar.Aura1.RegisterTrackedAura(AuraName)
     end
-    IROVar.CV.AuraArg[AuraName]={counterName,ArgNo}
+    IROVar.CV.AuraArg[AuraName]={counterName,ArgNo,callbackArgMod}
 end
 local function UpdateAuraArg(AuraN)
     local cName=IROVar.CV.AuraArg[AuraN][1]
     local aArg=IROVar.CV.AuraArg[AuraN][2]
     local aVal=IROVar.Aura1.AuraInfo[AuraN] and IROVar.Aura1.AuraInfo[AuraN][aArg] or 0
+    if IROVar.CV.AuraArg[AuraN][3] then
+        aVal=IROVar.CV.AuraArg[AuraN][3](aVal)
+    end
     IROVar.UpdateCounter(cName,aVal)
 end
 function IROVar.CV.DumpAuraArg()

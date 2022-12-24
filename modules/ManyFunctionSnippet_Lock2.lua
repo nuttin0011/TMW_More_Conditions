@@ -1,4 +1,4 @@
--- Many Function Version Warlock2 10.0.0/3
+-- Many Function Version Warlock2 10.0.0/4
 -- Set Priority to 10
 -- this file save many function for paste to TMW Snippet LUA
 
@@ -12,10 +12,14 @@
 -- counter "predss" = Predict SS in Demo , Aff
 -- counter "ssfragment" == UnitPower("player",7,true) -- !!!not finish
 -- counter "ss" == UnitPower("player",7)
+-- counter "dcore" == Demonic Core Duration
+-- counter "dcorestack" == Demonic Core Stack
 
 if not IROVar then IROVar={} end
 if not IROVar.Lock then IROVar.Lock={} end
 
+IROVar.CV.Register_Player_Aura_Duration("Demonic Core","dcore")
+IROVar.CV.Register_Player_Aura_Arg("Demonic Core","dcorestack",3)
 
 IROVar.Lock.PSS={}
 IROVar.Lock.PSS[265]={ -- aff

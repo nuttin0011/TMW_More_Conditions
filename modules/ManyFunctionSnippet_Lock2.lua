@@ -1,4 +1,4 @@
--- Many Function Version Warlock2 10.0.0/2
+-- Many Function Version Warlock2 10.0.0/3
 -- Set Priority to 10
 -- this file save many function for paste to TMW Snippet LUA
 
@@ -8,13 +8,10 @@
 --function IROVar.Lock.SoulLeechPercen()
 
 --function IROVar.Lock.PredictSS() -- return SSFragment
--- counter "pssfragment" = Predict SS fragment in Des
--- counter "pss" = Predict SS in Demo , Aff
--- counter "ssfragment" == UnitPower("player",7,true)
+-- counter "predssf" = Predict SS fragment in Des
+-- counter "predss" = Predict SS in Demo , Aff
+-- counter "ssfragment" == UnitPower("player",7,true) -- !!!not finish
 -- counter "ss" == UnitPower("player",7)
-
-
-
 
 if not IROVar then IROVar={} end
 if not IROVar.Lock then IROVar.Lock={} end
@@ -34,6 +31,8 @@ IROVar.Lock.PSS[266]={ -- demo
 IROVar.Lock.PSS[267]={ -- des !!!!!!!!!!!!!! not finish Yet
 }
 IROVar.Lock.PSS.CastID=nil
+IROVar.Lock.PSS.SS=UnitPower("player",7)
+IROVar.Lock.PSS.SSf=UnitPower("player",7,true)
 --[[
 UNIT_SPELLCAST_START
     arg1 UnitToken
@@ -47,42 +46,46 @@ UNIT_SPELLCAST_STOP
 
 UNIT_SPELLCAST_FAILED_QUIET
 ]]
-IROVar.CV.Register_Player_Power(7,"ss",function(p)
-    IROVar.UpdateCounter("ssfragment",UnitPower("player",7,true))
-end)
-local function UpdatePSS()
-    local ss=
+function IROVar.Lock.PSS.UpdatePSS()
+    local ss=IROVar.Lock.PSS.SS
+    local pSS=ss+(IROVar.Lock.PSS[IROSpecID][IROVar.Lock.PSS.CastID] or 0)
+    pSS=(pSS>5) and 5 or pSS
+    pSS=(pSS<0) and 0 or pSS
+    IROVar.UpdateCounter("predss",pSS)
 end
-local function UNIT_SPELLCAST_START_prediceSS(event,UnitToken,CastID,SpellID)
+
+IROVar.CV.Register_Player_Power(7,"ss",function(p)
+    local SSf=UnitPower("player",7,true)
+    IROVar.UpdateCounter("predssf",SSf)
+    IROVar.Lock.PSS.SS=p
+    IROVar.Lock.PSS.SSf=SSf
+    IROVar.Lock.PSS.UpdatePSS()
+end)
+
+local function PSS_UNIT_SPELLCAST_START(event,UnitToken,CastID,SpellID)
     if UnitToken=="player" then
         IROVar.Lock.PSS.CastID=SpellID
-
+        IROVar.Lock.PSS.UpdatePSS()
     end
 end
+local function PSS_UNIT_SPELLCAST_STOP(event,UnitToken,CastID,SpellID)
+    if UnitToken=="player" and IROVar.Lock.PSS.CastID==SpellID then
+        IROVar.Lock.PSS.CastID=nil
+        IROVar.Lock.PSS.UpdatePSS()
+    end
+end
+TMW_ST:AddEvent("UNIT_SPELLCAST_START",PSS_UNIT_SPELLCAST_START)
+TMW_ST:AddEvent("UNIT_SPELLCAST_STOP",PSS_UNIT_SPELLCAST_STOP)
+TMW_ST:AddEvent("UNIT_SPELLCAST_FAILED_QUIET",PSS_UNIT_SPELLCAST_STOP)
+IROVar.RegisterOutcombatCallBackRun("Lock.PSS",function()
+    IROVar.Lock.PSS.CastID=nil
+end)
+
 TMW_ST:AddEvent("UNIT_SPELLCAST_START",
 function(event,unit)
     if unit~="player" then return end
     IROVar.Lock.UpdateSoulLeech()
 end)
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 -- Counter Pause DPS for Drain Soul/ Drain Life
 --[[

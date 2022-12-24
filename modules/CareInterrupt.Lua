@@ -1,4 +1,4 @@
--- Care Interrupt V 4.4b
+-- Care Interrupt V 4.6
 -- Version LUA Snipped
 -- Set Priority to 10
 -- interrupt Only Important Spell at Specific Mob
@@ -176,8 +176,9 @@ IROVar.MobListForInterrupt = {
     },
 --------------------------------------------------------
     ["Halls of Valor"]={
+        ["Valarjar Mystic"] = {["Rune of Healing"]=true,["Holy Radiance"]=true},
+        ["Stormforged Obliterator"] = {["Surge"]=true},
         ["Valarjar Runecarver"] = {["Etch"]=true,["Shattered Rune"]=true},
-        ["Valarjar Mystic"] = {["Holy Radiance"]=true},
         ["Valarjar Thundercaller"] = {["Thunderous Bolt"]=true},
         ["Valarjar Marksman"] = {["Penetrating Shot"]=true},
         ["King Haldor"] = {["Unruly Yell"]=true},
@@ -196,11 +197,13 @@ IROVar.MobListForInterrupt = {
         ["Primalist Flamedancer"] = {["Flame Dance"]=true},
         ["Flashfrost Chillweaver"] = {["Ice Shield"]=true},
         ["Flashfrost Earthshaper"] = {["Tectonic Slam"]=true},
+        ["Melidrussa Chillworn"] = {["Frost Overload"]=true},
     },
 --------------------------------------------------------
     ["Shadowmoon Burial Grounds"]={
         ["Shadowmoon Bone-Mender"] = {["Shadow Mend"]=true,["Shadow Bolt"]=true},
-        ["Shadowmoon Exhumer"] = {["Void Bolt"]=true},
+        ["Shadowmoon Dominator"] = {["Rending Voidlash"]=true,["Domination"]=true},
+        ["Shadowmoon Exhumer"] = {["Void Bolt"]=true,["Exhume the Crypts"]=true},
         ["Exhumed Spirit"] = {["Death Blast"]=true},
         ["Monstrous Corpse Spider"] = {["Necrotic Burst"]=true},
         ["Plagued Bat"] = {["Plague Spit"]=true},

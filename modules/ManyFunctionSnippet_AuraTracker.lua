@@ -1,4 +1,4 @@
--- Many Function Aura Tracker 10.0.0/8
+-- Many Function Aura Tracker 10.0.0/9
 -- Set Priority to 5
 
 --function IROVar.Aura.Register_UNIT_AURA_scrip_CALLBACK(name,callback)

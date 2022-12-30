@@ -25,7 +25,7 @@
 --function IROVar.CV.Register_Player_Aura_Duration(AuraName,counterName)
 --function IROVar.CV.UnRegister_Player_Aura_Duration(AuraName)
 --function IROVar.CV.Register_Player_Aura_Arg(AuraName,counterName,ArgNo,[function(ArgValue)])
-    --[[
+
         eg. if expire > 1 sec counter = 1, otherwise 0
         IROVar.CV.Register_Player_Aura_Arg("Demonic Core","demoniccore",6,
             function(expTime)

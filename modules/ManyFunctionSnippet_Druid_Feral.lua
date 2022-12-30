@@ -1,4 +1,4 @@
--- Many Function Version Druid Feral/Tank 10.0.2/3
+-- Many Function Version Druid Feral/Tank 10.0.2/4
 -- Set Priority to 10
 
 --function IROVar.DruidFeral.DotRakeEmpower(unitToken) -- return %Rake DMG , Eg no buff = 100, Has Berserk = 160
@@ -22,6 +22,10 @@
 "berserk" = buff "Berserk"
 "incarnation" = buff "Incarnation: Guardian of Ursoc"
 "ironfur" = buff "Ironfur"
+"justuserg" = just click Regrowth; 1 = just used in 10 sec
+    use /run IROVar.DruidFeral.UsedRG()
+    counter turn form 0 to 1
+    10 sec later turn form 1 to 0
 ]]
 
 
@@ -32,6 +36,13 @@ if #TMW.CNDT.Env.TalentMap==0 then -- use function TMW to update player talents,
     TMW.CNDT:PLAYER_TALENT_UPDATE()
     -- talent's data in TMW.CNDT.Env.TalentMap
     -- use lower case Ex TMW.CNDT.Env.TalentMap["carnivorous instinct"]
+end
+
+local UsedRGHandle=C_Timer.NewTimer(0.1,function() end)
+function IROVar.DruidFeral.UsedRG()
+    UsedRGHandle:Cancel()
+    IROVar.UpdateCounter("justuserg",1)
+    UsedRGHandle=C_Timer.NewTimer(10,function() IROVar.UpdateCounter("justuserg",0) end)
 end
 
 local function partyHPPercent()

@@ -1,4 +1,4 @@
---Next Interrupter!!!! V 3.0
+--Next Interrupter!!!! V 3.1
 --WORK Only counter interruptCounterName=1
 -- Set Priority to 10
 
@@ -30,9 +30,12 @@ NextInterrupter.interruptTier={
     [71] = {'B','Pummel'}, -- Arm
     [72] = {'B','Pummel'}, -- fury
     [73] = {'A','Pummel'}, -- Protection
-    [265] = {'D','Spell Lock'}, -- Aff 'Spell Lock'119910
-    [266] = {'D','Axe Toss'}, -- Demo 'Command Demon' 'Axe Toss'119914
-    [267] = {'D','Spell Lock'}, -- Dest 'Spell Lock'119910
+--  [265] = {'D','Spell Lock'}, -- Aff 'Spell Lock'119910
+--  [266] = {'D','Axe Toss'}, -- Demo 'Command Demon' 'Axe Toss'119914
+--  [267] = {'D','Spell Lock'}, -- Dest 'Spell Lock'119910
+    [265] = {'D','Command Demon'}, -- Aff 'Spell Lock'119910
+    [266] = {'D','Command Demon'}, -- Demo 'Command Demon' 'Axe Toss'119914
+    [267] = {'D','Command Demon'}, -- Dest 'Spell Lock'119910
     [262] = {'C','Wind Shear'}, -- Element
     [263] = {'B','Wind Shear'}, -- Enha
     [264] = {'D','Wind Shear'}, -- Resto

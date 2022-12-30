@@ -1,4 +1,4 @@
--- Many Function Version Druid Feral 10.0.2/2
+-- Many Function Version Druid Feral/Tank 10.0.2/3
 -- Set Priority to 10
 
 --function IROVar.DruidFeral.DotRakeEmpower(unitToken) -- return %Rake DMG , Eg no buff = 100, Has Berserk = 160
@@ -10,6 +10,21 @@
 --function IROVar.DruidFeral.CastRipEmpowerWithTigerFury()
 --function IROVar.DruidFeral.TigerFuryReady()
 
+--[[counter 
+"partyhppercent" = party HP / MaxHP
+"nothasfrenzregen" = not has "Frenzied Regeneration"
+"targettnc" = target debuff "Tooth and Claw"
+"targetthrash" = target debuff "Thrash"
+"playertnc" = target buff "Tooth and Claw"
+"myrage" = UnitPower("player",1) -- rage
+"galaguar" = buff "Galactic Guardian"
+"dreamofc" = buff "Dream of Cenarius"
+"berserk" = buff "Berserk"
+"incarnation" = buff "Incarnation: Guardian of Ursoc"
+"ironfur" = buff "Ironfur"
+]]
+
+
 if not IROVar then IROVar = {} end
 if not IROVar.DruidFeral then IROVar.DruidFeral = {} end
 
@@ -18,6 +33,49 @@ if #TMW.CNDT.Env.TalentMap==0 then -- use function TMW to update player talents,
     -- talent's data in TMW.CNDT.Env.TalentMap
     -- use lower case Ex TMW.CNDT.Env.TalentMap["carnivorous instinct"]
 end
+
+local function partyHPPercent()
+    local sHP=0
+    local sMaxHP=0
+    if IsInRaid() then
+        local n=GetNumGroupMembers()
+        if n==0 then n=1 end
+        for i=1,n do
+            local u="raid"..i
+            sHP=sHP+UnitHealth(u)
+            sMaxHP=sMaxHP+UnitHealthMax(u)
+        end
+    elseif IsInGroup() then
+        sHP=UnitHealth("player")
+        sMaxHP=UnitHealthMax("player")
+        local n=GetNumGroupMembers()
+        for i=1,n-1 do
+            local u="party"..i
+            sHP=sHP+UnitHealth(u)
+            sMaxHP=sMaxHP+UnitHealthMax(u)
+        end
+    else
+        sHP=UnitHealth("player")
+        sMaxHP=UnitHealthMax("player")
+    end
+    if sMaxHP==0 then sMaxHP=1 end
+    return (sHP/sMaxHP)*100
+end
+C_Timer.NewTicker(1.1,function()
+    IROVar.UpdateCounter("partyhppercent",math.floor(partyHPPercent()))
+end)
+IROVar.CV.Register_Player_Aura_Not_Has("Frenzied Regeneration","nothasfrenzregen")
+IROVar.CV.Register_Target_Aura_Duration("Tooth and Claw","targettnc","PLAYER HARMFUL")
+IROVar.CV.Register_Target_Aura_Duration("Thrash","targetthrash","PLAYER HARMFUL")
+IROVar.CV.Register_Player_Aura_Duration("Tooth and Claw","playertnc")
+IROVar.CV.Register_Player_Aura_Duration("Galactic Guardian","galaguar")
+IROVar.CV.Register_Player_Aura_Duration("Dream of Cenarius","dreamofc")
+IROVar.CV.Register_Player_Aura_Duration("Berserk","berserk")
+IROVar.CV.Register_Player_Aura_Duration("Incarnation: Guardian of Ursoc","incarnation")
+IROVar.CV.Register_Player_Aura_Duration("Ironfur","ironfur")
+
+IROVar.CV.Register_Player_Power(1,"myrage")
+
 
 IROVar.DruidFeral.HasBloodtalonsTalent = false
 IROVar.DruidFeral.TigerFuryReadyTime=GetTime()+TMW.CNDT.Env.CooldownDuration("Tiger's Fury")

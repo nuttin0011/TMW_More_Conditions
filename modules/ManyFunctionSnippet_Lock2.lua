@@ -14,11 +14,13 @@
 -- counter "ss" == UnitPower("player",7)
 -- counter "dcore" == Demonic Core Duration
 -- counter "dcorestack" == Demonic Core Stack
+-- counter "dcall" == Demonic Calling Duration
 
 if not IROVar then IROVar={} end
 if not IROVar.Lock then IROVar.Lock={} end
 
 IROVar.CV.Register_Player_Aura_Duration("Demonic Core","dcore")
+IROVar.CV.Register_Player_Aura_Duration("Demonic Calling","dcall")
 IROVar.CV.Register_Player_Aura_Arg("Demonic Core","dcorestack",3)
 
 IROVar.Lock.PSS={}

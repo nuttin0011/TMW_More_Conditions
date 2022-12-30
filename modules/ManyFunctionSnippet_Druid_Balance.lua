@@ -34,8 +34,20 @@
 
 --"lunarpower" = astral power
 --"lunarpoweradd" = astral power + predict AP
+--[[
+counter
+player buff
+"nothasrattledstars" no Buff "Rattled Stars"
+    ["Rattled Stars"]="rattledstars",
+    ["Eclipse (Solar)"]="eclipsesolar",
+    ["Eclipse (Lunar)"]="eclipselunar",
+enemy debuff
+    ["Moonfire"]="moonfire",
+    ["Sunfire"]="sunfire",
+    ["Stellar Flare"]="stellarflare",
+    ["Fungal Growth"]="fungalgrowth"
 
-
+]]
 
 
 --[[
@@ -83,6 +95,28 @@
 
 if not IROVar then IROVar = {} end
 if not IROVar.DruidBalance then IROVar.DruidBalance = {} end
+
+
+--ENEMY DEBUFF
+local aa="PLAYER HARMFUL"
+local a={
+    ["Moonfire"]="moonfire",
+    ["Sunfire"]="sunfire",
+    ["Stellar Flare"]="stellarflare",
+    ["Fungal Growth"]="fungalgrowth"}
+for k,v in pairs(a) do
+    IROVar.CV.Register_Target_Aura_Duration(k,v,aa)
+end
+--PLAYER BUFF
+local b={
+    ["Rattled Stars"]="rattledstars",
+    ["Eclipse (Solar)"]="eclipsesolar",
+    ["Eclipse (Lunar)"]="eclipselunar",}
+for k,v in pairs(b) do
+    IROVar.CV.Register_Player_Aura_Duration(k,v)
+end
+IROVar.CV.Register_Player_Aura_Not_Has("Rattled Stars","nothasrattledstars")
+
 
 local dud = IROVar.DruidBalance
 

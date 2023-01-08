@@ -122,3 +122,12 @@ end)()
 
 
 
+IROVar.Register_COMBAT_LOG_EVENT_UNFILTERED_CALLBACK("test",function(...)
+    local timestamp,subevent,_,sourceGUID,_,_,_,DesGUID,DesName,_,_,spellID,spellName = ...
+    if sourceGUID~=IROVar.playerGUID then return end
+    if subevent=="SPELL_DAMAGE" and spellName=="Starfall" then
+        local c=TMW_ST:GetCounter("testsf")+1
+        TMW_ST:UpdateCounter("testsf",c)
+        print(timestamp)
+    end
+end)

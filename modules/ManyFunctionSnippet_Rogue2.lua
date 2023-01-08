@@ -1,4 +1,4 @@
--- Many Function Rogue2 9.2.5/8
+-- Many Function Rogue2 9.2.5/9
 -- Set Priority to 10
 -- Use Many Function Aura Tracker
 
@@ -127,8 +127,17 @@ function IROVar.Rogue2.RTBBuffCount()
     return count
 end
 
+if next(TMW.CNDT.Env.TalentMap)==nil then -- use function TMW to update player talents,
+    TMW.CNDT:PLAYER_TALENT_UPDATE()
+    IROVar.Register_TALENT_CHANGE_scrip_CALLBACK("TMW.CNDT.Env.TalentMap",function() TMW.CNDT:PLAYER_TALENT_UPDATE() end)
+    -- talent's data in TMW.CNDT.Env.TalentMap
+    -- use lower case Ex TMW.CNDT.Env.TalentMap["carnivorous instinct"]
+end
+
 --IROVar.Rogue2.CounterName.KiRstatus
 function IROVar.Rogue2.RTBStatusCounter()
+    --talent [Hidden Opportunity]
+    --TMW.CNDT.Env.TalentMap["hidden opportunity"]>0
     local status = 0
     local KiRStatus = 0
     local RTBCount = IROVar.Rogue2.RTBBuffCount()
@@ -142,6 +151,12 @@ function IROVar.Rogue2.RTBStatusCounter()
             (not IROVar.Aura1.My["True Bearing"]) then
                 status=1
             end
+        elseif TMW.CNDT.Env.TalentMap["hidden opportunity"]>0 then
+            if IROVar.Aura1.My["Grand Melee"] and (not IROVar.Aura1.My["Skull and Crossbones"]) then
+                status=1
+            else
+                status=0
+            end
         elseif IROVar.Aura1.My["Grand Melee"] and IROVar.Aura1.My["Buried Treasure"] then
             status=1
         end
@@ -154,6 +169,12 @@ function IROVar.Rogue2.RTBStatusCounter()
     elseif RTBCount==1 then
         if IROVar.Aura1.My["Loaded Dice"] then
             status=1
+        elseif TMW.CNDT.Env.TalentMap["hidden opportunity"]>0 then
+            if IROVar.Aura1.My["Skull and Crossbones"] then
+                status=0
+            else
+                status=1
+            end
         elseif (IROVar.Aura1.My["Broadside"] or IROVar.Aura1.My["True Bearing"] or IROVar.Aura1.My["Skull and Crossbones"]) then
             status=0
         else
@@ -162,6 +183,7 @@ function IROVar.Rogue2.RTBStatusCounter()
     else
         status=1
     end
+
     IROVar.UpdateCounter(IROVar.Rogue2.CounterName.RTBstatus,status)
     IROVar.UpdateCounter(IROVar.Rogue2.CounterName.KiRstatus,KiRStatus)
     IROVar.Rogue2.RTBCount=RTBCount  -- Remove later

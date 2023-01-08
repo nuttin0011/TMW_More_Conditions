@@ -1,4 +1,4 @@
--- Care Interrupt V 4.6
+-- Care Interrupt V 4.7
 -- Version LUA Snipped
 -- Set Priority to 10
 -- interrupt Only Important Spell at Specific Mob
@@ -203,7 +203,8 @@ IROVar.MobListForInterrupt = {
     ["Shadowmoon Burial Grounds"]={
         ["Shadowmoon Bone-Mender"] = {["Shadow Mend"]=true,["Shadow Bolt"]=true},
         ["Shadowmoon Dominator"] = {["Rending Voidlash"]=true,["Domination"]=true},
-        ["Shadowmoon Exhumer"] = {["Void Bolt"]=true,["Exhume the Crypts"]=true},
+        ["Shadowmoon Exhumer"] = {["Void Bolt"]=true},
+--        ["Shadowmoon Exhumer"] = {["Void Bolt"]=true,["Exhume the Crypts"]=true},
         ["Exhumed Spirit"] = {["Death Blast"]=true},
         ["Monstrous Corpse Spider"] = {["Necrotic Burst"]=true},
         ["Plagued Bat"] = {["Plague Spit"]=true},

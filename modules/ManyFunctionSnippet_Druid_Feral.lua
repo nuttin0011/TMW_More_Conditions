@@ -1,4 +1,4 @@
--- Many Function Version Druid Feral/Tank 10.0.2/4
+-- Many Function Version Druid Feral/Tank 10.0.2/5
 -- Set Priority to 10
 
 --function IROVar.DruidFeral.DotRakeEmpower(unitToken) -- return %Rake DMG , Eg no buff = 100, Has Berserk = 160
@@ -32,8 +32,9 @@
 if not IROVar then IROVar = {} end
 if not IROVar.DruidFeral then IROVar.DruidFeral = {} end
 
-if #TMW.CNDT.Env.TalentMap==0 then -- use function TMW to update player talents,
+if next(TMW.CNDT.Env.TalentMap)==nil then -- use function TMW to update player talents,
     TMW.CNDT:PLAYER_TALENT_UPDATE()
+    IROVar.Register_TALENT_CHANGE_scrip_CALLBACK("TMW.CNDT.Env.TalentMap",function() TMW.CNDT:PLAYER_TALENT_UPDATE() end)
     -- talent's data in TMW.CNDT.Env.TalentMap
     -- use lower case Ex TMW.CNDT.Env.TalentMap["carnivorous instinct"]
 end

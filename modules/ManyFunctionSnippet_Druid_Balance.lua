@@ -1,4 +1,4 @@
--- Many Function Version Druid Balance 9.2.5/6
+-- Many Function Version Druid Balance 9.2.5/7
 -- Set Priority to 10
 
 --var IROVar.DruidBalance.NewMoon ; name spell
@@ -49,54 +49,19 @@ enemy debuff
 
 ]]
 
-
---[[
-    ******************************** Not DONE YET
-    input Counter
-    "wantww" = want AOE; 2 = always AOE , 1 = AOE if possible , 0 = Only Single ; reset to 1 after out combat
-    "wantstarfall" = want Starfall ; 1 = use Starfal , just use onece and reset to 0 after use/outcombat
-    "keepap" = keep astral power ; 1 = keep AP as much as possible ; reset to 0 after outcombat
-
-    use 3 counter condition for use "Starfall" or "Starsurge"
-    dud.ManyMob = "nsunfire">=2
-
-    use Starfall when
-    must
-        IsUsableSpell("Starfall")
-            || Rattled Stars nearly end + predict astral power >= can use Starfall
-                ** must wait for astral power update for use spell
-        ("keepap" == 0) or ("keepap" == 1 and astral power >= 70)
-    any
-        "wantstarfall" == 1
-        "wantww" == 2
-        "wantww" == 1 and dud.ManyMob
-    after use Starfall
-        reset "wantstarfall" to 0
-
-    use Starsurge when
-    must
-        IsUsableSpell("Starsurge")
-            || Rattled Stars nearly end + predict astral power >= can use Starsurge
-                ** must wait for astral power update for use spell
-        ("keepap" == 0) or ("keepap" == 1 and astral power >= 70)
-        condition use Starfall not met
-
-    after out combat
-        reset "wantww" to 1
-        reset "wantstarfall" to 0
-        reset "keepap" to 0
-
-    **Rattled Stars nearly end mean after use current spell/GCD has Buff < 1 GCD
-
-    output counter
-    "starsurgeorfall" ; 0 = use Starsurge , 1 = use Starfall
-]]
-
-
 if not IROVar then IROVar = {} end
 if not IROVar.DruidBalance then IROVar.DruidBalance = {} end
 
-
+local spellCheckAOE={
+    "Starfire",
+    "Sunfire",
+    "Moonfire",
+    "Wild Mushroom",
+    "Fury of Elune",
+    "Full Moon",
+}
+IROVar.SpellHitAOE.Register_Spell_Hit_AOE_Check(spellCheckAOE,8)
+IROVar.SpellHitAOE.Register_Spell_Aura_AOE_Check("Sunfire",8)
 --ENEMY DEBUFF
 local aa="PLAYER HARMFUL"
 local a={

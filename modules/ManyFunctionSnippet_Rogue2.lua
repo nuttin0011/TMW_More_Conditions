@@ -1,4 +1,4 @@
--- Many Function Rogue2 9.2.5/9
+-- Many Function Rogue2 9.2.5/10b
 -- Set Priority to 10
 -- Use Many Function Aura Tracker
 
@@ -134,6 +134,7 @@ if next(TMW.CNDT.Env.TalentMap)==nil then -- use function TMW to update player t
     -- use lower case Ex TMW.CNDT.Env.TalentMap["carnivorous instinct"]
 end
 
+local lastRTBcasted=0
 --IROVar.Rogue2.CounterName.KiRstatus
 function IROVar.Rogue2.RTBStatusCounter()
     --talent [Hidden Opportunity]
@@ -145,20 +146,24 @@ function IROVar.Rogue2.RTBStatusCounter()
         KiRStatus=1
         status=0
     elseif RTBCount==2 then
-        if IROVar.Aura1.My["Loaded Dice"] then
-            if (not IROVar.Aura1.My["Broadside"]) and
-            (not IROVar.Aura1.My["Skull and Crossbones"]) and
-            (not IROVar.Aura1.My["True Bearing"]) then
-                status=1
-            end
-        elseif TMW.CNDT.Env.TalentMap["hidden opportunity"]>0 then
-            if IROVar.Aura1.My["Grand Melee"] and (not IROVar.Aura1.My["Skull and Crossbones"]) then
-                status=1
-            else
-                status=0
-            end
-        elseif IROVar.Aura1.My["Grand Melee"] and IROVar.Aura1.My["Buried Treasure"] then
+        if IROVar.Aura1.My["Loaded Dice"] and (TMW.time>IROVar.Aura1.My["Loaded Dice"]-3) then
             status=1
+        elseif TMW.time-lastRTBcasted>18 then
+            if TMW.CNDT.Env.TalentMap["hidden opportunity"]>0 then --
+                if IROVar.Aura1.My["Loaded Dice"] and
+                IROVar.Aura1.My["Grand Melee"] and
+                (not IROVar.Aura1.My["Skull and Crossbones"]) then
+                    status=1
+                end
+            elseif IROVar.Aura1.My["Loaded Dice"] then --
+                if (not IROVar.Aura1.My["Broadside"]) and
+                (not IROVar.Aura1.My["Skull and Crossbones"]) and
+                (not IROVar.Aura1.My["True Bearing"]) then
+                    status=1
+                end
+            elseif IROVar.Aura1.My["Grand Melee"] and IROVar.Aura1.My["Buried Treasure"] then --
+                status=1
+            end
         end
 
         if (IROVar.Aura1.My["Broadside"]) or
@@ -167,14 +172,20 @@ function IROVar.Rogue2.RTBStatusCounter()
             KiRStatus=1
         end
     elseif RTBCount==1 then
-        if IROVar.Aura1.My["Loaded Dice"] then
-            status=1
-        elseif TMW.CNDT.Env.TalentMap["hidden opportunity"]>0 then
-            if IROVar.Aura1.My["Skull and Crossbones"] then
-                status=0
-            else
+        if TMW.CNDT.Env.TalentMap["hidden opportunity"]>0 then
+            if IROVar.Aura1.My["Loaded Dice"] and (TMW.time>IROVar.Aura1.My["Loaded Dice"]-3) then
                 status=1
+            elseif TMW.time-lastRTBcasted>18 then
+                if IROVar.Aura1.My["Loaded Dice"] then
+                    status=1
+                elseif IROVar.Aura1.My["Skull and Crossbones"] or IROVar.Aura1.My["Broadside"] then
+                    status=0
+                else
+                    status=1
+                end
             end
+        elseif IROVar.Aura1.My["Loaded Dice"] then
+            status=1
         elseif (IROVar.Aura1.My["Broadside"] or IROVar.Aura1.My["True Bearing"] or IROVar.Aura1.My["Skull and Crossbones"]) then
             status=0
         else
@@ -225,7 +236,9 @@ function IROVar.Rogue2.CombatLogSBS(...)
     local timestamp, subevent, _, sourceGUID, sourceName, sourceFlags, sourceRaidFlags,
     destGUID, destName, destFlags, destRaidFlags,spellID,spellName = ...
     if sourceGUID~=playerGUID then return end
-    --print("GUID OK")
+    if subevent=="SPELL_CAST_SUCCESS" and spellName == "Roll the Bones" then
+        lastRTBcasted=TMW.time
+    end
     if spellName=="Serrated Bone Spike" then
         if subevent=="SPELL_DAMAGE" or subevent=="SPELL_PERIODIC_DAMAGE" then
             if not IROVar.Rogue2.SBSMob[destGUID] then

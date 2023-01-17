@@ -131,3 +131,20 @@ IROVar.Register_COMBAT_LOG_EVENT_UNFILTERED_CALLBACK("test",function(...)
         print(timestamp)
     end
 end)
+
+
+TMW_ST:AddEvent("UNIT_SPELLCAST_SENT",function(event,unit)
+    if unit~="player" then return end
+    TimeSENT=GetTime()
+    GCDSENT=select(2,GetSpellCooldown(TMW.GCDSpell))
+end)
+TMW_ST:AddEvent("UNIT_SPELLCAST_SUCCEEDED",function(event,unit)
+    if unit~="player" then return end
+    local TimeSUCCEEDED=GetTime()
+    TimeSENT=TimeSENT or 0
+    local GCDSUCCEEDED=select(2,GetSpellCooldown(TMW.GCDSpell))
+    if math.abs(TimeSENT-TimeSUCCEEDED)<0.01 then
+        --instance cast
+        print(GCDSENT,GCDSUCCEEDED,"GCD Diff : ",GCDSENT-GCDSUCCEEDED)
+    end
+end)

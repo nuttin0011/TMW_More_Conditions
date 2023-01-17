@@ -10,7 +10,12 @@
         "LE_PARTY_CATEGORY_INSTANCE",
         "GameFontNormal",
         "SPELL_CAST_SUCCESS_COMBATLOG_TOOLTIP",
-        "HELP_BUTTON"
+        "HELP_BUTTON",
+        "Vector2D_CalculateAngleBetween",
+        "WorldMapFrame",
+        "GameTooltip",
+        "HIGHLIGHT_FONT_COLOR",
+        "NORMAL_FONT_COLOR"
     ],
     "Lua.diagnostics.disable": [
         "deprecated"

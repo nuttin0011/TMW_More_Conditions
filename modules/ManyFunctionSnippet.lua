@@ -1,4 +1,4 @@
--- Many Function Version 9.0.5/77
+-- Many Function Version 9.0.5/78
 -- Set Priority to 1
 -- this file save many function for paste to TMW Snippet LUA
 
@@ -78,6 +78,7 @@ nameplateShowAll, timeMod, ... = UnitAura(unit, index [, filter])  ]]
 --function IROVar.TargetCastBar(percenCheck ; nil = 0.6 , DontCheckCantKick ; nil = false
     --, Spell ; nil = any spell ; can be Spell Name or SpellID) ; return true/false
     --DontCheckCantKick = true mean kick even notInterruptible (for Stun)
+    --percenCheck ; 0=start cast time , 1=end cast time ; default = 0.6
 
 --function IROVar.Range(unit) ; return range
 --IROVar.ignoreName = {Mob Name = true} ; ignore mob name
@@ -92,6 +93,10 @@ nameplateShowAll, timeMod, ... = UnitAura(unit, index [, filter])  ]]
 --function IROVar.IsUnitCCed(unit) ; return true/false | Dont Break CC
 --function IROVar.KickPress() ; IROVar.KickPressed=true 0.5 sec after turn to false
 --function IROVar.UpdateCounter(n,v) ; update counter name to value
+
+--function IROVar.DelayCT(countername,time)
+    -- when call turn countername to 1 and time sec pass turn to 0
+    -- e.g. IROVar.DelayCT("usehp",1)
 
 local TMW=TMW
 if not IROVar then IROVar={} end
@@ -141,6 +146,17 @@ function IROVar.CounterSetUpdate(c)
     end
 end
 
+local DelayCTHandle=C_Timer.NewTimer(0.1,function() end)
+function IROVar.DelayCT(countername,time)
+    TMW_ST:UpdateCounter(countername,1)
+    DelayCTHandle:Cancel()
+    do
+        local cn=countername
+        DelayCTHandle=C_Timer.NewTimer(time,function()
+            TMW_ST:UpdateCounter(cn,0)
+        end)
+    end
+end
 
 function IROVar.CalculateHaste()
     IROVar.Haste = UnitSpellHaste("player")

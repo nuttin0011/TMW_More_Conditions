@@ -1,4 +1,4 @@
--- Many Function DPS Average 10.0.0/2
+-- Many Function DPS Average 10.0.0/2b
 -- this file save many function for paste to TMW Snippet LUA
 -- Set Priority to 5
 -- counter "targethptimeremain" target HP time remain
@@ -12,10 +12,10 @@ local playerName=UnitName("player")
 
 
 IROVar.DPS.GroupDPSHistory={
-    10000,
+    20000,
 }
 
-IROVar.DPS.Average=10000
+IROVar.DPS.Average=20000
 IROVar.DPS.nMobLastFight=1
 IROVar.DPS.CurrentMobAlive=1
 

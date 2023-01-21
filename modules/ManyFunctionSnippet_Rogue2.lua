@@ -1,4 +1,4 @@
--- Many Function Rogue2 9.2.5/10b
+-- Many Function Rogue2 9.2.5/11
 -- Set Priority to 10
 -- Use Many Function Aura Tracker
 
@@ -176,7 +176,8 @@ function IROVar.Rogue2.RTBStatusCounter()
             if IROVar.Aura1.My["Loaded Dice"] and (TMW.time>IROVar.Aura1.My["Loaded Dice"]-3) then
                 status=1
             elseif TMW.time-lastRTBcasted>18 then
-                if IROVar.Aura1.My["Loaded Dice"] then
+
+                if IROVar.Aura1.My["Loaded Dice"] and not(IROVar.Aura1.My["Skull and Crossbones"]) then
                     status=1
                 elseif IROVar.Aura1.My["Skull and Crossbones"] or IROVar.Aura1.My["Broadside"] then
                     status=0

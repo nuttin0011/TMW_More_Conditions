@@ -1,4 +1,4 @@
--- Care Interrupt V 4.7
+-- Care Interrupt V 4.8
 -- Version LUA Snipped
 -- Set Priority to 10
 -- interrupt Only Important Spell at Specific Mob
@@ -162,7 +162,7 @@ IROVar.MobListForInterrupt = {
         ["Alpha Eagle"] = {["Call of the Flock"]=true},
         ["Algeth'ar Security"] = {["Disrupting Pulse"]=true},
         ["Algeth'ar Echoknight"] = {["Astral Whirlwind"]=true},
-        ["Spectral Invoker"] = {["Astral Bomb"]=true,["Arcane Missiles"]=true},
+        ["Spectral Invoker"] = {["Astral Bomb"]=false,["Arcane Missiles"]=true},
         ["Corrupted Manafiend"] = {["Surge"]=true},
     },
 --------------------------------------------------------
@@ -222,7 +222,7 @@ IROVar.MobListForInterrupt = {
         ["Conjured Lasher"] = {["Mystic Vapors"]=true},
         ["Shrieking Whelp"] = {["Shriek"]=true},
         ["Arcane Elemental"] = {["Waking Bane"]=true},
-        ["Rune Seal Keeper"] = {["Icy Bindings"]=true,["Condensed Frost"]=true},
+        ["Rune Seal Keeper"] = {["Icy Bindings"]=true,["Condensed Frost"]=false},
         ["Crystal Fury"] = {["Piercing Shards"]=true},
         ["Crystal Thrasher"] = {["Splintering Shards"]=true},
         ["Astral Attendant"] = {["Unstable Power"]=true},

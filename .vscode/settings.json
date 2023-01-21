@@ -15,7 +15,18 @@
         "WorldMapFrame",
         "GameTooltip",
         "HIGHLIGHT_FONT_COLOR",
-        "NORMAL_FONT_COLOR"
+        "NORMAL_FONT_COLOR",
+        "tostringall",
+        "StaticPopupDialogs",
+        "StaticPopup_Show",
+        "MAX_TALENT_TIERS",
+        "RELOADUI",
+        "CANCEL",
+        "ReloadUI",
+        "NUM_TALENT_COLUMNS",
+        "OKAY",
+        "LE_PARTY_CATEGORY_HOME",
+        "NONE"
     ],
     "Lua.diagnostics.disable": [
         "deprecated"

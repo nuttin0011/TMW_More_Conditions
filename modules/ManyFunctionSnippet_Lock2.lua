@@ -1,4 +1,4 @@
--- Many Function Version Warlock2 10.0.0/4
+-- Many Function Version Warlock2 10.0.0/5
 -- Set Priority to 10
 -- this file save many function for paste to TMW Snippet LUA
 
@@ -15,13 +15,21 @@
 -- counter "dcore" == Demonic Core Duration
 -- counter "dcorestack" == Demonic Core Stack
 -- counter "dcall" == Demonic Calling Duration
+-- counter "spellhitaoe" tell n mob hit by spell in timeInterval
+-- counter "burningrush" Burning Rush
 
 if not IROVar then IROVar={} end
 if not IROVar.Lock then IROVar.Lock={} end
 
 IROVar.CV.Register_Player_Aura_Duration("Demonic Core","dcore")
 IROVar.CV.Register_Player_Aura_Duration("Demonic Calling","dcall")
+IROVar.CV.Register_Player_Aura_Has("Burning Rush","burningrush")
 IROVar.CV.Register_Player_Aura_Arg("Demonic Core","dcorestack",3)
+IROVar.SpellHitAOE.Register_Spell_Hit_AOE_Check("Hand of Gul'dan",8)
+IROVar.SpellHitAOE.Register_Spell_Aura_AOE_Check("From the Shadows",8)
+IROVar.SpellHitAOE.Register_Spell_FromMyPet_Hit_AOE_Check("Legion Strike",8)
+IROVar.SpellHitAOE.Register_Spell_FromMyPet_Hit_AOE_Check("Felstorm",8)
+
 
 IROVar.Lock.PSS={}
 IROVar.Lock.PSS[265]={ -- aff

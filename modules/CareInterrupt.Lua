@@ -1,4 +1,4 @@
--- Care Interrupt V 4.8
+-- Care Interrupt V 4.11
 -- Version LUA Snipped
 -- Set Priority to 10
 -- interrupt Only Important Spell at Specific Mob
@@ -157,13 +157,15 @@ IROVar.MobListForInterrupt = {
     },
 -------------------- Dragonflight 10.0.2 --Stun / Interrupt List
     ["Algeth'ar Academy"]={
-        ["Spellbound Scepter"] = {["Mystic Blast"]=true},
+        ["Spellbound Scepter"] = {["Mystic Blast"]=true,["Arcane Rain"]=true},
         ["Unruly Textbook"] = {["Monotonous Lecture"]=true},
+        ["Corrupted Manafiend"] = {["Mana Void"]=true,["Surge"]=true},
+        ["Mana Wyrms"] = {["Vicious Lunge"]=true},
         ["Alpha Eagle"] = {["Call of the Flock"]=true},
-        ["Algeth'ar Security"] = {["Disrupting Pulse"]=true},
+        ["Ancient Branch"] = {["Healing Touch"]=true},
         ["Algeth'ar Echoknight"] = {["Astral Whirlwind"]=true},
+        --["Algeth'ar Security"] = {["Disrupting Pulse"]=true},
         ["Spectral Invoker"] = {["Astral Bomb"]=false,["Arcane Missiles"]=true},
-        ["Corrupted Manafiend"] = {["Surge"]=true},
     },
 --------------------------------------------------------
     ["Court of Stars"]={
@@ -202,7 +204,8 @@ IROVar.MobListForInterrupt = {
 --------------------------------------------------------
     ["Shadowmoon Burial Grounds"]={
         ["Shadowmoon Bone-Mender"] = {["Shadow Mend"]=true,["Shadow Bolt"]=true},
-        ["Shadowmoon Dominator"] = {["Rending Voidlash"]=true,["Domination"]=true},
+        ["Shadowmoon Dominator"] = {["Rending Voidlash"]=true,
+            ["Domination"]=[[return UnitIsPlayer("targettarget")]]},--Domination cast to player
         ["Shadowmoon Exhumer"] = {["Void Bolt"]=true},
 --        ["Shadowmoon Exhumer"] = {["Void Bolt"]=true,["Exhume the Crypts"]=true},
         ["Exhumed Spirit"] = {["Death Blast"]=true},
@@ -211,11 +214,16 @@ IROVar.MobListForInterrupt = {
     },
 --------------------------------------------------------
     ["Temple of the Jade Serpent"]={
-        ["Fallen Waterspeaker"] = {["Hydrolance"]=true},
+        ["Fallen Waterspeaker"] = {["Hydrolance"]=true,["Tidal Burst"]=true},
         ["Haunting Sha"] = {["Haunting Scream"]=true},
+        ["The Talking Fish"] = {["Sleepy Soliloquy"]=true},
+        ["The Golden Beetle"] = {["Golden Barrier"]=true},
         ["The Nodding Tiger"] = {["Cat Nap"]=true},
+        ["The Crybaby Hozen"] = {["Fit of Rage"]=true},
         ["Sha-Touched Guardian"] = {["Leg Sweep"]=true},
         ["Depraved Mistweaver"] = {["Defiling Mist"]=true},
+        ["Minion of Doubt"] = {["Dark Claw"]=true},
+        ["Wise Mari"] = {["Hydrolance"]=true},
     },
 --------------------------------------------------------
     ["The Azure Vault"]={
@@ -236,7 +244,7 @@ IROVar.MobListForInterrupt = {
         ["Nokhud Warspear"] = {["Swift Stab"]=true},
         ["Nokhud Hornsounder"] = {["Rally the Clan"]=true},
         ["Primalist Stormspeaker"] = {["Stormbolt"]=true,["Tempest"]=true},
-        ["Primalist Thunderbeast"] = {["Chain Lightning"]=true},
+        ["Primalist Thunderbeast"] = {["Chain Lightning"]=true,["Thunderstrike"]=true,["Thunder Clap"]=true}, --[Thunderstrike][Thunder Clap] ???
         ["Soulharvester Duuren"] = {["Death Bolt Volley"]=true},
         ["Soulharvester Galtmaa"] = {["Death Bolt Volley"]=true},
         ["Soulharvester Tumen"] = {["Death Bolt Volley"]=true},

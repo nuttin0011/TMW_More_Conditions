@@ -1,9 +1,10 @@
--- ManyFunctionSnippet_Counter_Variable 10.0.0/10
+-- ManyFunctionSnippet_Counter_Variable 10.0.0/11
 -- Set Priority to 6
 -- use Many Function Aura Tracker
 --[[
 "targethp" = UnitHealth("target")
 "playerhppercen" = math.floor(UnitHealth("player")/UnitHealthMax("player")*100)
+"targetenraged" = Enraged timer 0 = 0.0-0.39
 
 "intericon" = 
     IROVar.InterruptSpell and 
@@ -43,8 +44,6 @@
 --function IROVar.CV.Register_Target_Aura_Duration(AuraName,counterName,filter)
     --use same filter ll make it faster!!!!!
 --function IROVar.CV.UnRegister_Target_Aura_Duration(AuraName,filter)
-
-
 
 -- Player Unit Power -- refresh every 0.1 sec
 -- function IROVar.CV.Register_Player_Power(PowerType,counterName,[CallBack_function(PowerValue)])
@@ -479,3 +478,28 @@ IROVar.Aura.Register_UNIT_AURA_scrip_CALLBACK("IROVar.CV.DumpTargetAuraDuration"
     if unit=="target" then IROVar.CV.DumpTargetAuraDuration()end
 end)
 IROVar.Register_PLAYER_TARGET_CHANGED_scrip_CALLBACK("IROVar.CV.DumpTargetAuraDuration",IROVar.CV.DumpTargetAuraDuration)
+
+local function TargetEnraged() -- return Enraged
+    local Enraged=0
+    for i=1,40 do
+        local name,_,_,dispelType,_,expirationTime=UnitBuff("target",i)
+        if not name then break end
+        if dispelType=="" then --dispelType="" is Enraged
+            if expirationTime==0 then
+                Enraged=600
+            else
+                Enraged=expirationTime-TMW.time
+            end
+            break
+        end
+    end
+    return Enraged
+end
+local function UpdateEnragedTimer()
+    local t=TargetEnraged()-0.39
+    t = math.ceil(t)
+    IROVar.UpdateCounter("targetenraged",t)
+end
+
+C_Timer.NewTicker(0.45,UpdateEnragedTimer)
+IROVar.Register_PLAYER_TARGET_CHANGED_scrip_CALLBACK("UpdateEnragedTimer",UpdateEnragedTimer)

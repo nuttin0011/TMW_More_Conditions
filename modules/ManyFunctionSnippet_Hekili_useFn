@@ -1,0 +1,58 @@
+-- Many Function Version Hekili addon 10.0.5/1
+-- Set Priority to 5
+
+-- function IROVar.Hekili.GetKeyBind()
+-- counter "hekilikey" as below
+local usedKey={
+    [""]=0,
+    ["1"]=1,
+    ["2"]=2,
+    ["3"]=3,
+    ["4"]=4,
+    ["5"]=5,
+    ["6"]=6,
+    ["7"]=7,
+    ["8"]=8,
+    ["9"]=9,
+    ["0"]=10,
+    ["-"]=11,
+    ["="]=12,
+    ["F1"]=21,
+    ["F2"]=22,
+    ["F3"]=23,
+    ["F4"]=24,
+    ["F5"]=25,
+    ["F6"]=26,
+    ["F7"]=27,
+    ["F8"]=28,
+    ["F9"]=29,
+    ["F10"]=30,
+    ["F11"]=31,
+    ["F12"]=32,
+}
+
+if not IROVar then IROVar={} end
+if not IROVar.Hekili then IROVar.Hekili={} end
+
+local Hekili=Hekili
+
+if not Hekili then
+    print("need Addon Hekili Priority Helper to process!!!!!!!")
+end
+
+function IROVar.Hekili.GetKeyBind()
+    local key=""
+    for i=1,6 do
+        if Hekili.DisplayPool.Primary.Buttons[i] then
+            key=Hekili.DisplayPool.Primary.Buttons[i].Keybinding:GetText()
+            if usedKey[key] then
+                return key
+            end
+        end
+    end
+    return ""
+end
+
+C_Timer.NewTicker(0.1,function()
+    IROVar.UpdateCounter("hekilikey",usedKey[IROVar.Hekili.GetKeyBind()])
+end)

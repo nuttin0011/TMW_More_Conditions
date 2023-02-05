@@ -29,6 +29,12 @@ local usedKey={
     ["F10"]=30,
     ["F11"]=31,
     ["F12"]=32,
+
+    ["A"]=65,
+    ["B"]=66,
+    ["C"]=67,
+
+
 }
 
 if not IROVar then IROVar={} end

@@ -1,4 +1,4 @@
--- ZRO Decoder 9.0.5/ Hekili
+-- ZRO Decoder 9.0.5/ Hekili2
 
 -- Set Priority to 0
 
@@ -127,84 +127,6 @@ IUSC.f2 = CreateFrame("Frame")
 IUSC.f2:RegisterEvent("PLAYER_SPECIALIZATION_CHANGED")
 IUSC.f2:SetScript("OnEvent", IUSC.SpecChanged)
 
-
-------------------------------------------------------------------------------------------------------
-
-function IUSC.Cast_OnEvent(self,Event,arg1,arg2,arg3,arg4)
-	local function StopAllPluse()
-		IUSC.GCDPluseActive=false
-		IUSC.SpellActive=false
-		IUSC.GCDTickHandle:Cancel()
-		IUSC.forceReady()
-	end
-	if (arg1 ~= "player") then return end
-	if (Event=="UNIT_SPELLCAST_SENT") and (arg4==IUSC.SkillPress) then
-		if IUSC.debugmode then
-			IUSC.printdebug("^SENT:"..string.format("%.2f",(GetTime()-IUSC.SkillPressStampTime)))
-		end
-		IUSC.SENTStampTime=GetTime()
-		local nowGCD=GCD()
-		if math.abs(IUSC.GCDAtPluse-nowGCD)>0.08 then
-			IUSC.ReCreateGCDPluse(nowGCD-0.05+IUSC.GCDAdjust,nowGCD)
-		end
-    elseif (Event == "UNIT_SPELLCAST_START")and(arg3==IUSC.SkillPress)then
-		if IUSC.debugmode then
-			IUSC.printdebug("^START")
-		end
-		if not IUSC.GCDPluseActive then
-			IUSC.GCDPluseNextTick=GetTime()+IUSC.GCDCDMinus005-Ping.nowPlus
-		end
-		IUSC.Stage=2
-        IUSC.StopPluse(true)
-        IUSC.CreateCastPluse()
-	elseif (Event == "UNIT_SPELLCAST_SUCCEEDED")and(arg3==IUSC.SkillPress)then
-		local currentTime=GetTime()
-		if (IUSC.SpellActive==false)and((currentTime-IUSC.SENTStampTime)<0.1) then
-			--instance cast
-			if currentTime-IUSC.SkillPressStampTime>Ping.nowPlus then
-				if IUSC.debugmode then
-					IUSC.printdebug("^Instance Cast Skill Adjust GCD")
-				end
-				IUSC.StopPluse()
-				IUSC.CreateGCDPluse(IUSC.GCDAtPluse-0.2)
-			end
-		end
-    elseif (Event == "UNIT_SPELLCAST_STOP")and(arg3==IUSC.SkillPress)then
-		if IUSC.debugmode then
-			IUSC.printdebug("^STOP")
-		end
-    elseif (Event == "UNIT_SPELLCAST_FAILED")and(arg3==IUSC.SkillPress) then
-		if IUSC.debugmode then
-			IUSC.printdebug("^FAILED")
-		end
-		StopAllPluse()
-	elseif (Event == "UNIT_SPELLCAST_INTERRUPTED")and(arg3==IUSC.SkillPress) then
-		if IUSC.SpellActive==true then
-			if IUSC.debugmode then
-				IUSC.printdebug("^INTERRUPTED")
-			end
-			StopAllPluse()
-        end
-	elseif (Event == "UNIT_SPELLCAST_FAILED_QUIET")and(arg3==IUSC.SkillPress) then
-		if IUSC.debugmode then
-			IUSC.printdebug("^FAILED_QUIET")
-		end
-		StopAllPluse()
-	end
-end
---[[ -- not use
-IUSC.f3 = CreateFrame("Frame")
-IUSC.f3:RegisterEvent("UNIT_SPELLCAST_START")
---IUSC.f3:RegisterEvent("UNIT_SPELLCAST_STOP")
-IUSC.f3:RegisterEvent("UNIT_SPELLCAST_FAILED")
-IUSC.f3:RegisterEvent("UNIT_SPELLCAST_INTERRUPTED")
-IUSC.f3:RegisterEvent("UNIT_SPELLCAST_FAILED_QUIET")
-IUSC.f3:RegisterEvent("UNIT_SPELLCAST_SENT")
-IUSC.f3:RegisterEvent("UNIT_SPELLCAST_SUCCEEDED")
-IUSC.f3:SetScript("OnEvent", IUSC.Cast_OnEvent)]]
-
-------------------------------------------------------------------------------------------------------
-
 IUSC.GCDTickHandle=C_Timer.NewTimer(0.1,function() end)
 IUSC.CheckSentEventHandle=C_Timer.NewTimer(0.1,function() end)
 IUSC.GCDPluseActive=false
@@ -231,27 +153,6 @@ function IUSC.forceReady()
 	IUSC.NextReady=0
 end
 
-function IUSC.CreateGCDPluse(T)
-    if IUSC.debugmode then
-        IUSC.printdebug("^GCD pluse")
-    end
-    IUSC.GCDTickHandle:Cancel()
-    IUSC.GCDPluseActive=true
-	IUSC.GCDAtPluse=IUSC.GCDCD
-    IUSC.GCDPluseTimeStamp=GetTime()
-    IUSC.GCDPluseNextTick=IUSC.GCDPluseTimeStamp+T
-	IUSC.NextReady=IUSC.GCDPluseNextTick
-	if T<=0.1 then T=0.1 end
-    IUSC.GCDTickHandle=C_Timer.NewTimer(T,
-        function()
-            if IUSC.debugmode then
-                IUSC.printdebug("^GCD Pluse end")
-            end
-			IUSC.GCDPluseActive=false
-            IUSC.forceReady()
-    end)
-end
-
 function IUSC.StopPluse(nkl)--nkl = Not keep log in debug mode
     if IUSC.debugmode and not nkl then
         IUSC.printdebug("^stop pluse")
@@ -260,49 +161,6 @@ function IUSC.StopPluse(nkl)--nkl = Not keep log in debug mode
     IUSC.GCDPluseActive=false
 	IUSC.SpellActive=false
 end
-
---[[ not finish yet
-function IUSC.GCDAdjusting()*****
-	--use this function by GCD Pluse for adjust
-	IUSC.GCDAdjustT2=IUSC.GCDAdjustT1
-	IUSC.GCDAdjustT1=GetTime()
-	local diff=IUSC.GCDAdjustT1-IUSC.GCDAdjustT2-IUSC.GCDCD
-	if diff<1 then
-		if diff>0.02 and (IUSC.GCDAdjust>-0.1)then
-			IUSC.GCDAdjust=IUSC.GCDAdjust-0.01
-		elseif diff<0 and (IUSC.GCDAdjust<0.1) then
-			IUSC.GCDAdjust=IUSC.GCDAdjust+0.01
-		end
-	end
-end
-]]
-function IUSC.ReCreateGCDPluse(T,nowGCD)-- GCD change to T 
-	if not IUSC.GCDPluseActive then return end
-	if IUSC.debugmode then
-		IUSC.printdebug("^ReCreateGCD pluse")
-	end
-	local curretnT=GetTime()
-	if IUSC.GCDPluseTimeStamp+T-curretnT<0.1 then
-		T=curretnT+0.1-IUSC.GCDPluseTimeStamp
-	end
-	IUSC.GCDTickHandle:Cancel()
-	IUSC.GCDAtPluse=nowGCD
-	--IUSC.GCDPluseActive=true
-	--IUSC.GCDPluseTimeStamp=GetTime()
-	IUSC.GCDPluseNextTick=IUSC.GCDPluseTimeStamp+T
-	IUSC.NextReady=IUSC.GCDPluseNextTick
-	curretnT=IUSC.NextReady-curretnT
-	if curretnT<0.1 then curretnT=0.1 end
-	IUSC.GCDTickHandle=C_Timer.NewTimer(curretnT,
-		function()
-			if IUSC.debugmode then
-				IUSC.printdebug("^GCD Pluse end")
-			end
-			IUSC.GCDPluseActive=false
-			IUSC.forceReady()
-	end)
-end
-
 
 function IUSC.CreateCastPluse()
 	if IUSC.debugmode then
@@ -336,10 +194,6 @@ end
 --Skill Use
 function IUSC.SU(k,t) --k is string e.g. "33" , "3a" , t=GCD /nil=default
 	if IUSC.Stage~=1 then
-		if IUSC.debugmode then
-			print(GetTime())
-			print(k,"!!!! use Skill before ready ^^^ IUSC.Stage = "..IUSC.Stage)
-		end
 		return
 	end
 	local S = IsShiftKeyDown() and 4 or 0
@@ -363,28 +217,10 @@ function IUSC.SU(k,t) --k is string e.g. "33" , "3a" , t=GCD /nil=default
 	end
 	--keep log
 	if IUSC.KeepLogText then IUSC.KeepLogText() end
-	IUSC.Stage=2
 	IUSC.SkillPress=IUSC.NumToID[C] or 0
 	local cTime=GetTime()
-	if IUSC.debugmode then
-		local s=IUSC.NumToSpell[C] or "none"
-		local sL=string.len(s)
-		local Gap=cTime-IUSC.SkillPressStampTime-IUSC.GCDCD
-		if Gap>0.01 then IUSC.GCDAdjust=IUSC.GCDAdjust-0.01 end
-		if Gap<0 then IUSC.GCDAdjust=IUSC.GCDAdjust+0.01 end
-		local SGap
-		local SGap2=string.format("%.2f",Gap).."s"
-		Gap=Gap/IUSC.GCDCD
-		if Gap>5 then SGap="+>5GCD "..SGap2 else
-			SGap="+"..string.format("%.2f",Gap).."GCD "..SGap2
-		end
-		IUSC.SkillNameLen=math.max(IUSC.SkillNameLen,sL)
-		s=s..string.rep(" ",IUSC.SkillNameLen-sL)
-		IUSC.printdebug(">>"..SGap.." "..cTime.." USE: "..s)
-	end
 	IUSC.SkillPressStampTime=cTime
 	IUSC.LastSU=IUSC.NumToSpell[C]
-	IUSC.CreateGCDPluse(t or (IUSC.GCDCDMinus005+IUSC.GCDAdjust))
 	IUSC.AfterSU(IUSC.NumToID[C])
 end
 
@@ -400,19 +236,6 @@ function IUSC.SO(k) --k is string e.g. "33" , "3a"
 	if IUSC.KeepLogText then IUSC.KeepLogText(true) end
 	IUSC.AfterSO(IUSC.NumToID[C])
 end
-
--- this function Change Normal IROcode --> miniIROCode
--- it's ll compress 3 Icon --> 1 Icon
--- ctrl		= 001 00000 = 32	= 0x20
--- alt		= 010 00000 = 64	= 0x40
--- shift	= 100 00000 = 128	= 0x80
--- e.g.
--- c1 = "ff002100" (F1)			--> 0x01
--- c2 = "ff003000" ({Numpad0})	--> 0x0d
--- c3 = "ff042604" (Shift-F6)	--> 0x06 + 0x80 (shift code) --> 0x86
--- c1+c2+c3 = miniIROCode = "ff860d01"
--- NOTE. need to swap byte c1 and c3 cause of EroDPS PixelGetColor function
--- enMiniIROcode("ff002100","ff003000","ff042604")="ff860d01"
 
 local IROcolorCode ={
 	["00"]=0x00,
@@ -446,8 +269,6 @@ local IROcolorCode ={
 	["55"]=0x1c, --MoveJump ; 0x005500 : MoveJump
 }
 
--- 1 = ctrl , 2 = alt , 4 = shift
--- 1 = 001 , 2 = 010 , 4 = 100
 local modStr ={
 	["00"]=0,
 	["01"]=bit.lshift(0x01,5),
@@ -458,37 +279,6 @@ local modStr ={
 	["06"]=bit.lshift(0x06,5),
 	["07"]=bit.lshift(0x07,5),
 }
-
-function enSubMiniIROCode(IROcode)
-	--"ff042604" (Shift-F6)	--> 0x06 + 0x20 (shift code) --> 0x26
-	-- if error return "00"
-	if not IROcode then return "00" end
-	local modstr = modStr[string.sub(IROcode,3,4)]
-	if not modstr then return "00" end
-	local miniIROCode = IROcolorCode[string.sub(IROcode,5,6)]
-	if not miniIROCode then return "00" end
-	return string.format("%02x",miniIROCode+modstr)
-end
-
-function getMetaIconColor(icon)
-	if not icon then return "ff000000" end
-	local a=icon.__currentIcon
-	local b=a and a.__currentIcon or nil
-	while b do
-		a=b
-		b=a.__currentIcon
-	end
-	local c=a and a.States[1].Color or "ff000000"
-	return c
-end
-
-function enMiniIROcode(IROcode1,IROcode2,IROcode3)
-	local miniIROCode1 = enSubMiniIROCode(IROcode1)
-	local miniIROCode2 = enSubMiniIROCode(IROcode2)
-	local miniIROCode3 = enSubMiniIROCode(IROcode3)
-	return "ff"..miniIROCode3..miniIROCode2..miniIROCode1
-end
-
 
 IUSC.ClassType={
 	--[specID]={interruptTier,interruptSpellName,DPSCheckSkill,Range,Role,CastType}
@@ -533,23 +323,26 @@ IUSC.ClassType={
 	,[252] = {'B','Mind Freeze','Death Strike','Melee','DPS','InstanceCast'} -- unholy
 }
 
-C_Timer.NewTicker(0.1,function()
+
+C_Timer.NewTicker(0.05,function()
     local currentTime=GetTime()
     local GCDEnd=CDEnd(TMW.GCDSpell)
-    if GCDEnd>0 and (GCDEnd-currentTime)>0.2 then
+    if GCDEnd>0 and (GCDEnd-currentTime)>0.3 then
         IUSC.Stage=2
         return
     end
+	local cast=true
     local name,_,_,_,endTimeMS = UnitCastingInfo("player")
     if not name then
+		cast=false
         name,_,_,_,endTimeMS = UnitChannelInfo("player")
     end
     if not name then
         IUSC.Stage=1
         return
     end
-    endTimeMS=endTimeMS/1000
-    if endTimeMS-GCDEnd<=0.2 then
+    endTimeMS=(endTimeMS/1000)-currentTime
+    if (cast and endTimeMS<=0.3) or (endTimeMS<=0.2)then
         IUSC.Stage=1
     else
         IUSC.Stage=2

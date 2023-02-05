@@ -1,8 +1,10 @@
--- Many Function Spell Hit AOE 10.0.2/2
+-- Many Function Spell Hit AOE 10.0.2/3
 
--- Set Priority to 5
+-- Set Priority to 6
+-- Use Many Function DPS Average 10.0.0/3 if calculate
 
 -- counter "spellhitaoe" tell n mob hit by spell in timeInterval
+-- counter "spellhitaoetrunk" exclude mob die in 4 sec out
 
 --function IROVar.SpellHitAOE.Register_Spell_Hit_AOE_Check(spellName,Timer)
 --function IROVar.SpellHitAOE.Register_Spell_Aura_AOE_Check(spellName,Timer)
@@ -16,6 +18,7 @@ local AuraCheck={} --{[Aura1]=true,....}
 local MobHited={} --{[MobGUID]=timeExpire}
 local MobHitedTimer=8
 local counterName="spellhitaoe"
+local counterNameTrunk="spellhitaoetrunk"
 
 function IROVar.SpellHitAOE.Register_Spell_Hit_AOE_Check(spellName,Timer)
     MobHitedTimer=Timer or MobHitedTimer
@@ -93,8 +96,10 @@ local function CountMob()
     local tarGUID=UnitGUID("target")
     if not tarGUID then
         IROVar.UpdateCounter(counterName,0)
+        IROVar.UpdateCounter(counterNameTrunk,0)
     elseif (not MobHited[tarGUID])or(MobHited[tarGUID]<TMW.time)  then
         IROVar.UpdateCounter(counterName,1)
+        IROVar.UpdateCounter(counterNameTrunk,1)
     else
         local count=0
         for k,v in pairs(MobHited) do
@@ -105,7 +110,16 @@ local function CountMob()
             end
         end
         IROVar.UpdateCounter(counterName,count)
+
+        count=0
+        for i=1,30 do
+            local np="nameplate"..i
+            local npGUID=UnitGUID(np)
+            count=count+((npGUID and MobHited[npGUID] and IROVar.DPS.PredictUnitLifeTime(np)>4) and 1 or 0)
+        end
+        IROVar.UpdateCounter(counterNameTrunk,count)
     end
 end
+
 C_Timer.NewTicker(0.37,CountMob)
 IROVar.Register_PLAYER_TARGET_CHANGED_scrip_CALLBACK("Spell Hit AOE",CountMob)

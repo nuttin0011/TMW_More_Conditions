@@ -1,4 +1,4 @@
--- ManyFunctionSnippet_Counter_Variable 10.0.0/11
+-- ManyFunctionSnippet_Counter_Variable 10.0.0/12
 -- Set Priority to 6
 -- use Many Function Aura Tracker
 --[[
@@ -108,6 +108,7 @@ local func=function()
     IROVar.UpdateCounter("intericonb",IROVar.TargetCastBar(0.4)and 1 or 0)
 end
 IROVar.CV.InterIconH=C_Timer.NewTicker(IROVar.CV.InterIcon_Trigger_Tick,func)
+IROVar.Register_PLAYER_TARGET_CHANGED_scrip_CALLBACK("Counter_Variable intericon",func)
 
 ----------Stun Icon
 local func2=function()
@@ -115,6 +116,7 @@ local func2=function()
     IROVar.UpdateCounter("stuniconb",IROVar.VVCareInterruptTarget()and 1 or 0)
 end
 IROVar.CV.StunIconH=C_Timer.NewTicker(IROVar.CV.StunIcon_Trigger_Tick,func2)
+IROVar.Register_PLAYER_TARGET_CHANGED_scrip_CALLBACK("Counter_Variable stunicon",func2)
 
 -- target HP
 local function TargetHP()

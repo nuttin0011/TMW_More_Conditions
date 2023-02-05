@@ -26,7 +26,8 @@
         "NUM_TALENT_COLUMNS",
         "OKAY",
         "LE_PARTY_CATEGORY_HOME",
-        "NONE"
+        "NONE",
+        "HP"
     ],
     "Lua.diagnostics.disable": [
         "deprecated"

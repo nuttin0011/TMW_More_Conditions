@@ -1,8 +1,9 @@
--- Many Function DPS Average 10.0.0/2b
+-- Many Function DPS Average 10.0.0/3
 -- this file save many function for paste to TMW Snippet LUA
 -- Set Priority to 5
 -- counter "targethptimeremain" target HP time remain
 
+--function IROVar.DPS.PredictUnitLifeTime(unit) return value in secound
 
 if not IROVar then IROVar = {} end
 if not IROVar.DPS then IROVar.DPS = {} end
@@ -113,6 +114,14 @@ end)
 
 function IROVar.DPS.PredictTargetLifeTime()
     local HP=UnitHealth("target")
+    local nGroup=GetNumGroupMembers()
+    nGroup=(nGroup==0) and 1 or nGroup
+    return math.floor((HP*IROVar.DPS.CurrentMobAlive)/(IROVar.DPS.Average*nGroup))
+end
+
+function IROVar.DPS.PredictUnitLifeTime(unit)
+    local HP=UnitHealth(unit)
+    if (not HP) or HP==0 then return 0 end
     local nGroup=GetNumGroupMembers()
     nGroup=(nGroup==0) and 1 or nGroup
     return math.floor((HP*IROVar.DPS.CurrentMobAlive)/(IROVar.DPS.Average*nGroup))

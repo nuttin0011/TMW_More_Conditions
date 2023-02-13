@@ -117,7 +117,7 @@ local function CountMob()
             local npGUID=UnitGUID(np)
             count=count+((npGUID and MobHited[npGUID] and IROVar.DPS.PredictUnitLifeTime(np)>4) and 1 or 0)
         end
-        IROVar.UpdateCounter(counterNameTrunk,count)
+        IROVar.UpdateCounter(counterNameTrunk,(count>0) and count or 1)
     end
 end
 

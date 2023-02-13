@@ -1,4 +1,4 @@
--- Many Function Version Druid Balance 9.2.5/7
+-- Many Function Version Druid Balance 9.2.5/9
 -- Set Priority to 10
 
 --var IROVar.DruidBalance.NewMoon ; name spell
@@ -12,6 +12,8 @@
 
 --var IROVar.DruidBalance.RSend ; "Rattled Stars" buff endTime
 
+--var IROVar.DruidBalance.StellarFlareTarget : GUID StellarFlareTarget
+
 --counter number of dot
 --"nsunfire",
 --"nmoonfire",
@@ -24,9 +26,6 @@
 --"rsnewmoon" = New Moon = 1sec
 --"rswrath" = Wrath = 1.5sec
 --"rsstarfire" = Starfire = 2.25sec
-
---counter Predict Astral Power after this spell
---"predictastral"
 
 --counter
 --Shooting Stars count "shootingstarscount"
@@ -195,6 +194,7 @@ function dud.CombatEvent(...)
     if sourceGUID~=IROVar.playerGUID then return end
     --274281 274282 274283 ; newMoon HalfMoon FullMoon
 	if subevent=="SPELL_CAST_SUCCESS" then
+        dud.StellarFlareTarget=nil
         if spellID==274283 then
             nextFullMoonFromSpell=true
         end
@@ -204,10 +204,14 @@ function dud.CombatEvent(...)
         dud.NewMoonCast=false
     elseif subevent=="SPELL_CAST_START" then
         dud.predictAPadd=PredictAPBySpell[spellName]
+        if spellName=="Wrath" and TMW.COUNTERS["eclipsesolar"]>0 then
+            dud.predictAPadd=12
+        end
         if isNewMoon(spellID) then
             dud.NewMoonCast=true
         end
     elseif subevent=="SPELL_CAST_FAILED" then
+        dud.StellarFlareTarget=nil
         dud.NewMoonCast=false
     elseif subevent=="SPELL_DAMAGE" then
         if spellID==202497 then -- "Shooting Stars"

@@ -237,49 +237,6 @@ function IUSC.SO(k) --k is string e.g. "33" , "3a"
 	IUSC.AfterSO(IUSC.NumToID[C])
 end
 
-local IROcolorCode ={
-	["00"]=0x00,
-	["21"]=0x01, --{F1}
-	["22"]=0x02, --{F2}
-	["23"]=0x03, --{F3}
-	["24"]=0x04, --{F4}
-	["25"]=0x05, --{F5}
-	["26"]=0x06, --{F6}
-	["27"]=0x07, --{F7}
-	["28"]=0x08, --{F8}
-	["29"]=0x09, --{F9}
-	["2a"]=0x0a, --{F10}
-	["2b"]=0x0b, --{F11}
-	["2c"]=0x0c, --{F12}
-	["30"]=0x0d, --{Numpad0}
-	["31"]=0x0e, --{Numpad1}
-	["32"]=0x0f, --{Numpad2}
-	["33"]=0x10, --{Numpad3}
-	["34"]=0x11, --{Numpad4}
-	["35"]=0x12, --{Numpad5}
-	["36"]=0x13, --{Numpad6}
-	["37"]=0x14, --{Numpad7}
-	["38"]=0x15, --{Numpad8}
-	["39"]=0x16, --{Numpad9}
-	["3a"]=0x17, --{NumpadDot}
-	["3b"]=0x18, --{NumpadAdd}
-	["3c"]=0x19, --{NumpadSub}
-	["3d"]=0x1a, --{NumpadMult}
-	["3e"]=0x1b, --{NumpadDiv}
-	["55"]=0x1c, --MoveJump ; 0x005500 : MoveJump
-}
-
-local modStr ={
-	["00"]=0,
-	["01"]=bit.lshift(0x01,5),
-	["02"]=bit.lshift(0x02,5),
-	["03"]=bit.lshift(0x03,5),
-	["04"]=bit.lshift(0x04,5),
-	["05"]=bit.lshift(0x05,5),
-	["06"]=bit.lshift(0x06,5),
-	["07"]=bit.lshift(0x07,5),
-}
-
 IUSC.ClassType={
 	--[specID]={interruptTier,interruptSpellName,DPSCheckSkill,Range,Role,CastType}
 	[71] = {'B','Pummel','Pummel','Melee','DPS','InstanceCast'} -- Arm

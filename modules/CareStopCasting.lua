@@ -1,4 +1,4 @@
--- Care Stop Casting 3.0
+-- Care Stop Casting 3.1
 -- Set Priority to 10
 -- Stop Cast when Mob Cast Interrupt Spell e.g. "Interrupting Roar", "Quake"
 
@@ -14,6 +14,11 @@ IROVar.CSC.InterruptSpellCast ={
     [342135]=1,--["Interrupting Roar"]=1,
     [339415]=1,--["Deafening Crash"]=1,
     [335495]=2,--["Severing Roar"]=2,
+    [377004]=1,--[Deafening Screech]
+    [196543]=1,--[Unnerving Howl]
+    [199726]=1,-- [Unruly Yell]
+    [384365]=1,--[Disruptive Shout]
+    [397892]=1,--[Scream of Pain]
 }
 
 IROVar.CSC.DebuffAtPlayer ={

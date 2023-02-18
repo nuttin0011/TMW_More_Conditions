@@ -1,4 +1,4 @@
--- Many Function Version Druid Balance 9.2.5/9
+-- Many Function Version Druid Balance 9.2.5/12
 -- Set Priority to 10
 
 --var IROVar.DruidBalance.NewMoon ; name spell
@@ -40,6 +40,10 @@ player buff
     ["Rattled Stars"]="rattledstars",
     ["Eclipse (Solar)"]="eclipsesolar",
     ["Eclipse (Lunar)"]="eclipselunar",
+    ["Touch the Cosmos"]="touchthecosmos",
+    ["Solstice"]="solstice",
+    ******
+    "furyofelune"  = counter 8 to 0 every sec after cast Fury of Elune
 enemy debuff
     ["Moonfire"]="moonfire",
     ["Sunfire"]="sunfire",
@@ -75,7 +79,10 @@ end
 local b={
     ["Rattled Stars"]="rattledstars",
     ["Eclipse (Solar)"]="eclipsesolar",
-    ["Eclipse (Lunar)"]="eclipselunar",}
+    ["Eclipse (Lunar)"]="eclipselunar",
+    ["Touch the Cosmos"]="touchthecosmos",
+    ["Solstice"]="solstice",
+}
 for k,v in pairs(b) do
     IROVar.CV.Register_Player_Aura_Duration(k,v)
 end
@@ -129,44 +136,46 @@ local PredictAPBySpell={
     ["Half Moon"] = 20,[274282]=20,
     ["New Moon"] = 10,[274281]=10,
 }
-local SpellCasting = nil
 
 dud.predictAPadd=0
 --IROVar.RegisterOutcombatCallBackRun("reset dud.predictAPadd",function() IROVar.DruidBalance.predictAPadd=0 end)
-function dud.PredictAPadd() --after cast this spell
+function dud.PredictAPadd() --after cast current spell
     return dud.predictAPadd or 0
 end
 
--- Create an event handler function to track spell casts
-local function OnSpellCast(self, event, unit, castID, spellID)
-  -- Check if the event is for the player
-  if unit == "player" then
-    SpellCasting = spellID
-    dud.predictAPadd=PredictAPBySpell[spellID] or 0
+
+local function checkAPAdd()
+    local spell=UnitCastingInfo("player")
+    if spell and PredictAPBySpell[spell] then
+        if spell=="Wrath" and TMW.COUNTERS["eclipsesolar"]>0 then
+            dud.predictAPadd=12
+        else
+            dud.predictAPadd=PredictAPBySpell[spell]
+        end
+    else
+        dud.predictAPadd=0
+    end
     IROVar.UpdateCounter("lunarpoweradd",TMW_ST:GetCounter("lunarpower")+IROVar.DruidBalance.PredictAPadd())
-  end
 end
 
--- Register the event handler function to listen for UNIT_SPELLCAST_START events
-local eventFrame = CreateFrame("FRAME")
-eventFrame:RegisterEvent("UNIT_SPELLCAST_START")
-eventFrame:SetScript("OnEvent", OnSpellCast)
-
 -- Create a second event frame and function to reset the current spell cast when the cast is finished or fails
-local resetFrame = CreateFrame("FRAME")
-local function ResetCurrentSpellCast(self,event,unit)
+
+local function ResetCurrentSpellCast(event,unit)
     if unit == "player" then
-        dud.predictAPadd=0
-        SpellCasting = nil
-        IROVar.UpdateCounter("lunarpoweradd",TMW_ST:GetCounter("lunarpower")+IROVar.DruidBalance.PredictAPadd())
+        checkAPAdd()
     end
 end
 
 -- Register the reset function to listen for the SPELL_CAST_SUCCESS and SPELL_CAST_FAILED events
+--[[
+local resetFrame = CreateFrame("FRAME")
 resetFrame:RegisterEvent("UNIT_SPELLCAST_STOP")
 resetFrame:RegisterEvent("UNIT_SPELLCAST_FAILED_QUIET")
-resetFrame:SetScript("OnEvent", ResetCurrentSpellCast)
+resetFrame:SetScript("OnEvent", ResetCurrentSpellCast)]]
+TMW_ST:AddEvent("UNIT_SPELLCAST_STOP",ResetCurrentSpellCast)
+TMW_ST:AddEvent("UNIT_SPELLCAST_FAILED_QUIET",ResetCurrentSpellCast)
 
+C_Timer.NewTicker(0.4,checkAPAdd)
 
 function dud.UpdateNewMoon()
     dud.NewMoon = GetSpellInfo("new moon")
@@ -202,11 +211,15 @@ function dud.CombatEvent(...)
             dud.UpdateNewMoon()
         end
         dud.NewMoonCast=false
-    elseif subevent=="SPELL_CAST_START" then
-        dud.predictAPadd=PredictAPBySpell[spellName]
-        if spellName=="Wrath" and TMW.COUNTERS["eclipsesolar"]>0 then
-            dud.predictAPadd=12
+        if spellName=="Fury of Elune" then
+            IROVar.UpdateCounter("furyofelune",8)
+            C_Timer.NewTicker(0.95,function()
+                local c=TMW.COUNTERS["furyofelune"] or 0
+                IROVar.UpdateCounter("furyofelune",c-1)
+            end,8)
         end
+    elseif subevent=="SPELL_CAST_START" then
+        checkAPAdd()
         if isNewMoon(spellID) then
             dud.NewMoonCast=true
         end
@@ -340,7 +353,7 @@ local function CalculateRSSpell()
     end
 end
 
-local function onUnitAura(self, event, unit)
+local function onUnitAura(event, unit)
     if unit ~= "player" then return end
     local Val=select(3,TMW.CNDT.Env.AuraDur("player","rattled stars","HELPFUL PLAYER"))
     if IROVar.DruidBalance.RSend~=Val then
@@ -348,10 +361,10 @@ local function onUnitAura(self, event, unit)
         CalculateRSSpell()
     end
 end
-local frame = CreateFrame("Frame")
+--[[local frame = CreateFrame("Frame")
 frame:RegisterEvent("UNIT_AURA")
-frame:SetScript("OnEvent", onUnitAura)
-
+frame:SetScript("OnEvent", onUnitAura)]]
+TMW_ST:AddEvent("UNIT_AURA",onUnitAura)
 
 --PLAYER RESOURCE
 IROVar.CV.Register_Player_Power(8,"lunarpower",function(AP)

@@ -1,4 +1,4 @@
--- Care Interrupt V 4.11
+-- Care Interrupt V 4.12
 -- Version LUA Snipped
 -- Set Priority to 10
 -- interrupt Only Important Spell at Specific Mob
@@ -205,7 +205,10 @@ IROVar.MobListForInterrupt = {
     ["Shadowmoon Burial Grounds"]={
         ["Shadowmoon Bone-Mender"] = {["Shadow Mend"]=true,["Shadow Bolt"]=true},
         ["Shadowmoon Dominator"] = {["Rending Voidlash"]=true,
-            ["Domination"]=[[return UnitIsPlayer("targettarget")]]},--Domination cast to player
+            ["Domination"]=[[return (function() local n,_,_,sT,eT=UnitChannelInfo("target")return n and (eT-sT<604700000)end)()]]},
+            --[[
+                return (function() local n,_,_,sT,eT=UnitChannelInfo("target")return n and (eT-sT<604800000)end)()
+            ]]
         ["Shadowmoon Exhumer"] = {["Void Bolt"]=true},
 --        ["Shadowmoon Exhumer"] = {["Void Bolt"]=true,["Exhume the Crypts"]=true},
         ["Exhumed Spirit"] = {["Death Blast"]=true},

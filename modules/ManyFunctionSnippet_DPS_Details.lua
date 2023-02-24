@@ -1,4 +1,4 @@
--- Many Function DPS Average 10.0.0/3
+-- Many Function DPS Average 10.0.0/5
 -- this file save many function for paste to TMW Snippet LUA
 -- Set Priority to 5
 -- counter "targethptimeremain" target HP time remain
@@ -11,12 +11,15 @@ if not IROVar.DPS then IROVar.DPS = {} end
 local Details=Details -- details
 local playerName=UnitName("player")
 
+IROVar.DPS.playerHealthMax=UnitHealthMax("player")
+C_Timer.NewTicker(10,function()IROVar.DPS.playerHealthMax=UnitHealthMax("player") end)
+local initDPS=IROVar.DPS.playerHealthMax/10
 
 IROVar.DPS.GroupDPSHistory={
-    20000,
+    initDPS,
 }
 
-IROVar.DPS.Average=20000
+IROVar.DPS.Average=initDPS
 IROVar.DPS.nMobLastFight=1
 IROVar.DPS.CurrentMobAlive=1
 
@@ -50,7 +53,7 @@ function IROVar.DPS.AddGroupDPSHistory(dps)
 end
 
 function IROVar.DPS.DumpGroupDPSLastFight()
-    if not Details then return 10000 end -- if no details
+    if not Details then return IROVar.DPS.playerHealthMax/10 end -- if no details
 
     --get the current combat and the combat time
     local currentCombat = Details:GetCurrentCombat()
@@ -103,6 +106,7 @@ IROVar.RegisterOutcombatCallBackRun("IROVarDPSCountMob",function()
         --print("DPS Too Low!! / Or Combat Time too Fast")
         return
     end
+    nMob=1+(0.6*(nMob-1))
     local DPSperMob=TotalDPS/nMob
     IROVar.DPS.AddGroupDPSHistory(DPSperMob)
     IROVar.DPS.CalculateDPSAverage()
@@ -116,7 +120,8 @@ function IROVar.DPS.PredictTargetLifeTime()
     local HP=UnitHealth("target")
     local nGroup=GetNumGroupMembers()
     nGroup=(nGroup==0) and 1 or nGroup
-    return math.floor((HP*IROVar.DPS.CurrentMobAlive)/(IROVar.DPS.Average*nGroup))
+    local DPSmod=((IROVar.DPS.CurrentMobAlive-1)*0.4)+1
+    return math.floor((HP*IROVar.DPS.CurrentMobAlive)/(IROVar.DPS.Average*DPSmod*nGroup))
 end
 
 function IROVar.DPS.PredictUnitLifeTime(unit)
@@ -131,6 +136,6 @@ IROVar.Register_PLAYER_TARGET_CHANGED_scrip_CALLBACK("Target Life Time Remain",f
     IROVar.UpdateCounter("targethptimeremain",IROVar.DPS.PredictTargetLifeTime())
 end)
 
-C_Timer.NewTicker(0.8,function()
+IROVar.DPS.TickerHandle=C_Timer.NewTicker(0.8,function()
     IROVar.UpdateCounter("targethptimeremain",IROVar.DPS.PredictTargetLifeTime())
 end)

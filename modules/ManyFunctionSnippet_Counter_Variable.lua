@@ -1,10 +1,11 @@
--- ManyFunctionSnippet_Counter_Variable 10.0.0/12
+-- ManyFunctionSnippet_Counter_Variable 10.0.0/13
 -- Set Priority to 6
 -- use Many Function Aura Tracker
 --[[
 "targethp" = UnitHealth("target")
 "playerhppercen" = math.floor(UnitHealth("player")/UnitHealthMax("player")*100)
 "targetenraged" = Enraged timer 0 = 0.0-0.39
+"playernothasquake" = IROVar.CV.Register_Player_Aura_Not_Has("Quake","playernothasquake")
 
 "intericon" = 
     IROVar.InterruptSpell and 
@@ -505,3 +506,4 @@ end
 
 C_Timer.NewTicker(0.45,UpdateEnragedTimer)
 IROVar.Register_PLAYER_TARGET_CHANGED_scrip_CALLBACK("UpdateEnragedTimer",UpdateEnragedTimer)
+IROVar.CV.Register_Player_Aura_Not_Has("Quake","playernothasquake")

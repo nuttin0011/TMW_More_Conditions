@@ -1,8 +1,12 @@
--- Many Function Version Hekili addon 10.0.5/1
--- Set Priority to 5
+-- Many Function Version Hekili addon 10.0.5/3b
+-- Set Priority to 7
 
 -- function IROVar.Hekili.GetKeyBind()
 -- counter "hekilikey" as below
+-- counter "hekilicdstatus" 0 = off , 1 = on
+-- "hekilidefstatus" 0 = off , 1 = on
+-- "hekilimodestatus" 0 = single , 1 = auto
+
 local usedKey={
     [""]=0,
     ["1"]=1,
@@ -30,35 +34,178 @@ local usedKey={
     ["F11"]=31,
     ["F12"]=32,
 
-    ["A"]=65,
-    ["B"]=66,
-    ["C"]=67,
-
+--    ["A"]=65,
+--    ["B"]=66,
+--    ["C"]=67,
 
 }
+
+local CounterToKey={
+    ["a"]="1",
+    ["b"]="2",
+    ["c"]="3",
+    ["d"]="4",
+    ["e"]="5",
+    ["f"]="6",
+    ["g"]="7",
+    ["h"]="8",
+    ["i"]="9",
+    ["j"]="0",
+    ["k"]="-",
+    ["l"]="=",
+    ["m"]="F1",
+    ["n"]="F2",
+    ["o"]="F3",
+    ["p"]="F4",
+    ["q"]="F5",
+    ["r"]="F6",
+    ["s"]="F7",
+    ["t"]="F8",
+    ["u"]="F9",
+    ["v"]="F10",
+    ["w"]="F11",
+    ["x"]="F12",
+}
+
+local KeyEnable={}
+
+for k,v in pairs(CounterToKey) do
+    TMW_ST:UpdateCounter(k,1)
+    KeyEnable[v]=true
+end
 
 if not IROVar then IROVar={} end
 if not IROVar.Hekili then IROVar.Hekili={} end
 
 local Hekili=Hekili
+local COUNTERS=TMW.COUNTERS
+local TMW=TMW
+
+
+--PLAYER_STARTED_MOVING  PLAYER_STOPPED_MOVING
+local PlayerMove=false
+local PlayerLastMove=0
+local PlayerLastStopMove=TMW.time
+TMW_ST:AddEvent("PLAYER_STARTED_MOVING",function()PlayerMove=true PlayerLastMove=TMW.time end)
+TMW_ST:AddEvent("PLAYER_STOPPED_MOVING",function()PlayerMove=false PlayerLastStopMove=TMW.time end)
+local function StandingTime()
+    return PlayerMove and 0 or (TMW.time-PlayerLastStopMove)
+end
+
+local function CheckSpecialTreatment(skillName)
+    --skillName = Hekili SkillName format
+    -- counter "playernothasquake" 1 mean not has quake affic
+    --GetUnitSpeed("target")
+    if IROSpecID==577 then -- DH Havoc
+        if skillName=="eye_beam" then
+            return ((COUNTERS["wantinterrupt"]==0)or(COUNTERS["intericon"]==0))and
+            (COUNTERS["targethptimeremain"]>=8)and UnitCanAttack("player","target")and(IROVar.Range("target")<=8)
+            and(COUNTERS["playernothasquake"]==1)and(StandingTime()>0.4)
+        elseif skillName=="glaive_tempest" then
+            --TMW.CNDT.Env.LibRangeCheck:GetRange("target")
+            --/dump IsSpellInRange("Chaos Strike","target")
+            return UnitCanAttack("player","target")and(IsSpellInRange("Chaos Strike","target")==1)and(GetUnitSpeed("target")==0)
+        elseif skillName=="death_sweep" or skillName=="blade_dance" then
+            return UnitCanAttack("player","target")and(IsSpellInRange("Chaos Strike","target")==1)
+        elseif skillName=="immolation_aura" then
+            return UnitCanAttack("player","target")and(IROVar.Range("target")<=5)
+        elseif skillName=="metamorphosis" then
+            return UnitCanAttack("player","target")and(IROVar.Range("target")<=5)
+        elseif skillName=="essence_break" then
+            return (COUNTERS["targethptimeremain"]>=8)and UnitCanAttack("player","target")and(IROVar.Range("target")<=5)
+        end
+    end
+    return true
+end
+
+function IROVar.Hekili.UpdateToggleCounter()
+    local cd=Hekili.DB.profile.toggles.cooldowns.value and 1 or 0
+    local mode=(Hekili.DB.profile.toggles.mode.value=="automatic") and 1 or 0
+    local def=Hekili.DB.profile.toggles.defensives.value and 1 or 0
+    TMW_ST:UpdateCounter("hekilicdstatus",cd)
+    TMW_ST:UpdateCounter("hekilidefstatus",def)
+    TMW_ST:UpdateCounter("hekilimodestatus",mode)
+end
+C_Timer.After(2,IROVar.Hekili.UpdateToggleCounter)
 
 if not Hekili then
     print("need Addon Hekili Priority Helper to process!!!!!!!")
 end
 
+function IROVar.Hekili.CheckKeyEnable()
+    for k,v in pairs(CounterToKey) do
+        KeyEnable[v]=COUNTERS[k]==1
+    end
+end
+
 function IROVar.Hekili.GetKeyBind()
     local key=""
-    for i=1,6 do
-        if Hekili.DisplayPool.Primary.Buttons[i] then
-            key=Hekili.DisplayPool.Primary.Buttons[i].Keybinding:GetText()
-            if usedKey[key] then
-                return key
+    for i=1,9 do
+        if Hekili.DisplayPool.Primary.Buttons[i] and CheckSpecialTreatment(Hekili.DisplayPool.Primary.Buttons[i].Action) then
+            local UseCD=COUNTERS["hekilicheckcd"]==1
+            if UseCD then
+                local lastStart = Hekili.DisplayPool.Primary.Buttons[i].Cooldown.lastStart or 0
+                --Hekili.DisplayPool.Primary.Buttons[1].Cooldown.lastStart
+                --Hekili.DisplayPool.Primary.Buttons[1].Cooldown.lastDuration
+                --Hekili.DisplayPool.Primary.Buttons[i].unusable
+                local lastDuration= Hekili.DisplayPool.Primary.Buttons[i].Cooldown.lastDuration or 0
+                local CDready = (lastStart+lastDuration-TMW.time)<0.2
+                local usable = not Hekili.DisplayPool.Primary.Buttons[i].unusable
+                if CDready and usable then
+                    key=Hekili.DisplayPool.Primary.Buttons[i].Keybinding:GetText()
+                    if usedKey[key] and KeyEnable[key] then
+                        return key
+                    end
+                end
+            else
+                key=Hekili.DisplayPool.Primary.Buttons[i].Keybinding:GetText()
+                if usedKey[key] and KeyEnable[key] then
+                    return key
+                end
             end
         end
     end
     return ""
 end
 
-C_Timer.NewTicker(0.1,function()
+C_Timer.NewTicker(0.13,function()
     IROVar.UpdateCounter("hekilikey",usedKey[IROVar.Hekili.GetKeyBind()])
 end)
+
+local function cooldownsON()
+    if not Hekili.DB.profile.toggles.cooldowns.value then
+        Hekili:FireToggle("cooldowns")
+        IROVar.Hekili.UpdateToggleCounter()
+    end
+end
+local function cooldownsOFF()
+    if Hekili.DB.profile.toggles.cooldowns.value then
+        Hekili:FireToggle("cooldowns")
+        IROVar.Hekili.UpdateToggleCounter()
+    end
+end
+function IROVar.Hekili.CheckDPS()
+    local t=IROVar.DPS.PredictTargetLifeTime()
+    IROVar.UpdateCounter("targethptimeremain",t)
+    local c=COUNTERS["hekiliautocd"]
+    if c>0 then
+        if t==0 then cooldownsOFF() return end
+        if not UnitCanAttack("player", "target") then cooldownsOFF() return end
+        if t>=c then
+            cooldownsON()
+        else
+            cooldownsOFF()
+        end
+    end
+end
+
+local CheckDPS=IROVar.Hekili.CheckDPS
+
+IROVar.DPS.TickerHandle:Cancel()
+IROVar.DPS.TickerHandle=C_Timer.NewTicker(0.8,CheckDPS)
+
+IROVar.UnRegister_SPELL_UPDATE_COOLDOWN_scrip_CALLBACK("Target Life Time Remain")
+IROVar.Register_PLAYER_TARGET_CHANGED_scrip_CALLBACK("IROVar.DPS CheckDPS",CheckDPS)
+--Hekili.DB.profile.toggles.cooldowns.value==true
+--UnitCanAttack("player", "target")
+--IROVar.Register_PLAYER_TARGET_CHANGED_scrip_CALLBACK(name,callBack)

@@ -1,4 +1,4 @@
--- Many Function Version Druid Balance Rotation 10.0.5/1
+-- Many Function Version Druid Balance Rotation 10.0.5/2
 -- Set Priority to 20
 
 --[[
@@ -214,6 +214,7 @@ function IROVar.DruidBalance.CalDPS()
 
     playerNotMove=playerNotMove and not interruptINC
 
+    local wantToContinueRTS=not starFallAction
     --print(CheckHasSpell("Fury of Elune"),CDReady("Fury of Elune"),eclipselunarBuff,eclipsesoalrBuff,astralPower)
 
     local function CastSSorSF(AP)
@@ -264,13 +265,17 @@ function IROVar.DruidBalance.CalDPS()
     end
 
     if rattledStarsTime and rattledStarLessThan1GCD and resetRattledStarsIntime then --Extented Rattled Stars
-        if CastSSorSF(predictAstral) then return end
+        if wantToContinueRTS then
+            if CastSSorSF(predictAstral) then return end
+        end
     end
 
     if (eclipselunarBuff<=1) and (eclipsesoalrBuff<=1) and -- Enter Eclipse sun
     (not nextEclipseLunar) and (not nextEclipseSolar) and needEnterEclipseSular then
         if rattledStarsTime and rattledStarsTime<starFireCastTime and resetRattledStarsIntime then
-            if CastSSorSF(predictAstral) then return end
+            if wantToContinueRTS then
+                if CastSSorSF(predictAstral) then return end
+            end
         end
         if playerNotMove and IROVar.CSC.HasInterrupting(starFireCastTime+0.3) then
             Cast("Starfire")
@@ -295,7 +300,7 @@ function IROVar.DruidBalance.CalDPS()
         return
     end
 
-    if HighAP then
+    if HighAP and wantToContinueRTS then
         if CastSSorSF() then return end
     end
 
@@ -305,7 +310,7 @@ function IROVar.DruidBalance.CalDPS()
         return
     end
 
-    if predictAstral>=50 and((touchTheCosmos>=1) or nextEclipseLunar or nextEclipseSolar) then-- Set 4 Moonkin
+    if predictAstral>=50 and((touchTheCosmos>=1) or nextEclipseLunar or nextEclipseSolar)and wantToContinueRTS then-- Set 4 Moonkin
         if CastSSorSF() then return end
     end
 
@@ -320,7 +325,9 @@ function IROVar.DruidBalance.CalDPS()
         if rattledStarsTime and (rattledStarsTime>wrathCastTime)and (not HighAP) then
             --cast 1 GCD spell
         else
-            if CastSSorSF() then return end
+            if wantToContinueRTS then
+                if CastSSorSF() then return end
+            end
         end
     end
 
@@ -337,14 +344,14 @@ function IROVar.DruidBalance.CalDPS()
         return
     end
 
-    if CheckHasSpell("Fury of Elune") and CDReady("Fury of Elune") and targetTime20 and
-    (eclipselunarBuff>=6 or eclipsesoalrBuff>=6) and (astralPower<=50) then
+    if (CheckHasSpell("Fury of Elune") and CDReady("Fury of Elune")) and
+    ((targetTime20 and (eclipselunarBuff>=6 or eclipsesoalrBuff>=6) and (astralPower<=50)) or (aoeCount>=4)) then
         Cast("Fury of Elune")
         return
     end
 
-    if aoeAction and ((rattledStarsTime and rattledStarsTime>starFireCastTime) or (not rattledStarsTime))and playerNotMove
-    and IROVar.CSC.HasInterrupting(starFireCastTime+0.3) then
+    if aoeAction and playerNotMove
+    then
         Cast("Starfire")
         return
     else
@@ -357,6 +364,8 @@ function IROVar.DruidBalance.CalDPS()
             return
         end
     end
+
+    if CastSSorSF() then return end
 
     if COUNTERS["sunfire"]<=14 then
         Cast("Sunfire")

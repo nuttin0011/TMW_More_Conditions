@@ -27,7 +27,9 @@
         "OKAY",
         "LE_PARTY_CATEGORY_HOME",
         "NONE",
-        "HP"
+        "HP",
+        "BASE_MOVEMENT_SPEED",
+        "BOSS"
     ],
     "Lua.diagnostics.disable": [
         "deprecated"

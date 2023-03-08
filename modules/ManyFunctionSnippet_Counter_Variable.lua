@@ -1,4 +1,4 @@
--- ManyFunctionSnippet_Counter_Variable 10.0.0/13
+-- ManyFunctionSnippet_Counter_Variable 10.0.0/15
 -- Set Priority to 6
 -- use Many Function Aura Tracker
 --[[
@@ -15,6 +15,7 @@
     NextInterrupter.IsMyTurn() and
     (IsSpellInRange(IROVar.InterruptSpell,"target")==1)
 "intericonb" = IROVar.TargetCastBar(0.4)and 1 or 0)
+"intericonc" = IROVar.TargetCastBar(0.7)and 1 or 0)
 "stunicon" = IROVar.TargetCastBar(0.3,true)and IROVar.OKStunedTarget()and NextInterrupter.ZeroSITarget()and(not IROVar.KickPressed)
 "stuniconb" = IROVar.VVCareInterruptTarget()
 "enemycountviii" = IROEnemyCountInRange(8)
@@ -83,12 +84,15 @@ IROVar.CV.EC8Tick=0.8
 --"item:34368" 8 yard
 --"item:28767" 40 yard
 IROVar.CV.EC8Tick=0.8
+local EC8BanName={
+    ["Explosive"]=true,
+}
 local function EC8()
     local nn
     local c=0
     for i=1,30 do
         nn='nameplate'..i
-        if UnitExists(nn) and UnitCanAttack("player",nn) then
+        if UnitExists(nn) and UnitCanAttack("player",nn) and (not EC8BanName[UnitName(nn)]) then
             c=c+(IsItemInRange("item:34368",nn) and 1 or 0)
         end
         if c>=6 then break end
@@ -107,6 +111,7 @@ IUSC.RegCallBackAfterSU["EC8"]=EC8
 local func=function()
     IROVar.UpdateCounter("intericon",(IROVar.InterruptSpell and IROVar.TargetCastBar(0.1)and IsMyInterruptSpellReady()and IROVar.CareInterrupt("target")and NextInterrupter.IsMyTurn()and(IsSpellInRange(IROVar.InterruptSpell,"target")==1))and 1 or 0)
     IROVar.UpdateCounter("intericonb",IROVar.TargetCastBar(0.4)and 1 or 0)
+    IROVar.UpdateCounter("intericonc",IROVar.TargetCastBar(0.7)and 1 or 0)
 end
 IROVar.CV.InterIconH=C_Timer.NewTicker(IROVar.CV.InterIcon_Trigger_Tick,func)
 IROVar.Register_PLAYER_TARGET_CHANGED_scrip_CALLBACK("Counter_Variable intericon",func)

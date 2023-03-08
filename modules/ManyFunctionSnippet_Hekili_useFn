@@ -1,11 +1,11 @@
--- Many Function Version Hekili addon 10.0.5/3b
+-- Many Function Version Hekili addon 10.0.5/4
 -- Set Priority to 7
 
 -- function IROVar.Hekili.GetKeyBind()
 -- counter "hekilikey" as below
 -- counter "hekilicdstatus" 0 = off , 1 = on
 -- "hekilidefstatus" 0 = off , 1 = on
--- "hekilimodestatus" 0 = single , 1 = auto
+-- "hekilimodestatus" 0 = single , 1 = auto , 2 = aoe
 
 local usedKey={
     [""]=0,
@@ -120,7 +120,8 @@ end
 
 function IROVar.Hekili.UpdateToggleCounter()
     local cd=Hekili.DB.profile.toggles.cooldowns.value and 1 or 0
-    local mode=(Hekili.DB.profile.toggles.mode.value=="automatic") and 1 or 0
+    local modevalue=Hekili.DB.profile.toggles.mode.value
+    local mode=((modevalue=="automatic") and 1) or ((modevalue=="aoe") and 2) or 0
     local def=Hekili.DB.profile.toggles.defensives.value and 1 or 0
     TMW_ST:UpdateCounter("hekilicdstatus",cd)
     TMW_ST:UpdateCounter("hekilidefstatus",def)

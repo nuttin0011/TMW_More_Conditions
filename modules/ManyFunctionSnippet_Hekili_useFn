@@ -1,4 +1,4 @@
--- Many Function Version Hekili addon 10.0.5/4
+-- Many Function Version Hekili addon 10.0.5/5
 -- Set Priority to 7
 
 -- function IROVar.Hekili.GetKeyBind()
@@ -139,7 +139,42 @@ function IROVar.Hekili.CheckKeyEnable()
     end
 end
 
+local _OldKey=nil
+local _CurrentKey=nil
+local _ShouldUseOldKey=false
+--local _ShouldUseOldKeyHandle=C_Timer.NewTimer(0.1,function() end)
+
+local _OldSet=nil
+
+local function DumpSetHekiliPrimary()
+    local set={}
+    for i=1,10 do
+        local action=Hekili.DisplayPool.Primary.Buttons[i].Action
+        if action then
+            table.insert(set,action)
+        else break end
+    end
+    return set
+end
+
+local function IsSameSet(a,b)
+    if #a~=#b then return false end
+    for i=1,#a do
+        if a[i]~=b[i] then
+            return false
+        end
+    end
+    return true
+end
+
 function IROVar.Hekili.GetKeyBind()
+    if _ShouldUseOldKey then
+        if IsSameSet(_OldSet,DumpSetHekiliPrimary()) then
+            return _OldKey
+        else
+            _ShouldUseOldKey=false
+        end
+    end
     local key=""
     for i=1,9 do
         if Hekili.DisplayPool.Primary.Buttons[i] and CheckSpecialTreatment(Hekili.DisplayPool.Primary.Buttons[i].Action) then
@@ -169,8 +204,31 @@ function IROVar.Hekili.GetKeyBind()
     return ""
 end
 
+TMW_ST:AddEvent("UNIT_SPELLCAST_START",function(event,unitToken)
+    if unitToken=="player" then
+        _ShouldUseOldKey=false
+        _OldKey=_CurrentKey
+    end
+end)
+
+TMW_ST:AddEvent("UNIT_SPELLCAST_INTERRUPTED",function(event,unitToken)
+    if unitToken=="player" then
+        _ShouldUseOldKey=true
+        _OldSet=DumpSetHekiliPrimary()
+    end
+end)
+
+TMW_ST:AddEvent("UNIT_SPELLCAST_SUCCEEDED",function(event,unitToken)
+    if unitToken=="player" then
+        _ShouldUseOldKey=false
+    end
+end)
+
+
 C_Timer.NewTicker(0.13,function()
-    IROVar.UpdateCounter("hekilikey",usedKey[IROVar.Hekili.GetKeyBind()])
+    local k=IROVar.Hekili.GetKeyBind()
+    _CurrentKey=k
+    IROVar.UpdateCounter("hekilikey",usedKey[k])
 end)
 
 local function cooldownsON()

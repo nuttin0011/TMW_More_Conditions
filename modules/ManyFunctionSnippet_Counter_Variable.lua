@@ -1,4 +1,4 @@
--- ManyFunctionSnippet_Counter_Variable 10.0.0/15
+-- ManyFunctionSnippet_Counter_Variable 10.0.0/16
 -- Set Priority to 6
 -- use Many Function Aura Tracker
 --[[
@@ -14,6 +14,7 @@
     IROVar.CareInterrupt("target") and 
     NextInterrupter.IsMyTurn() and
     (IsSpellInRange(IROVar.InterruptSpell,"target")==1)
+"intericona" = IROVar.TargetCastBar(0.1)and 1 or 0)
 "intericonb" = IROVar.TargetCastBar(0.4)and 1 or 0)
 "intericonc" = IROVar.TargetCastBar(0.7)and 1 or 0)
 "stunicon" = IROVar.TargetCastBar(0.3,true)and IROVar.OKStunedTarget()and NextInterrupter.ZeroSITarget()and(not IROVar.KickPressed)
@@ -110,6 +111,7 @@ IUSC.RegCallBackAfterSU["EC8"]=EC8
 ----------Interrupt Icon
 local func=function()
     IROVar.UpdateCounter("intericon",(IROVar.InterruptSpell and IROVar.TargetCastBar(0.1)and IsMyInterruptSpellReady()and IROVar.CareInterrupt("target")and NextInterrupter.IsMyTurn()and(IsSpellInRange(IROVar.InterruptSpell,"target")==1))and 1 or 0)
+    IROVar.UpdateCounter("intericona",IROVar.TargetCastBar(0.1)and 1 or 0)
     IROVar.UpdateCounter("intericonb",IROVar.TargetCastBar(0.4)and 1 or 0)
     IROVar.UpdateCounter("intericonc",IROVar.TargetCastBar(0.7)and 1 or 0)
 end

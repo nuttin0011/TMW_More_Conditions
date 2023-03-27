@@ -1,4 +1,4 @@
--- Many Function Version Hekili addon 10.0.5/5
+-- Many Function Version Hekili addon 10.0.5/6
 -- Set Priority to 7
 
 -- function IROVar.Hekili.GetKeyBind()
@@ -113,6 +113,16 @@ local function CheckSpecialTreatment(skillName)
             return UnitCanAttack("player","target")and(IROVar.Range("target")<=5)
         elseif skillName=="essence_break" then
             return (COUNTERS["targethptimeremain"]>=8)and UnitCanAttack("player","target")and(IROVar.Range("target")<=5)
+        end
+    elseif IROSpecID==103 then -- Dud Feral
+        if skillName=="tigers_fury" then
+            return UnitCanAttack("player","target")and(IROVar.Range("target")<=8)
+        elseif skillName=="algethar_puzzle_box" then
+            return UnitCanAttack("player","target")and(IROVar.Range("target")<=8)and(StandingTime()>0.4)
+        elseif (skillName=="incarnation")or(skillName=="berserk")then
+            return UnitCanAttack("player","target")and(IROVar.Range("target")<=8)
+        elseif skillName=="convoke_the_spirits" then
+            return UnitCanAttack("player","target")and(IROVar.Range("target")<=8)
         end
     end
     return true

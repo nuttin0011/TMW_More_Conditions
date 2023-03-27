@@ -1,4 +1,4 @@
--- Many Function Version 9.0.5/80
+-- Many Function Version 9.0.5/80b
 -- Set Priority to 1
 -- this file save many function for paste to TMW Snippet LUA
 
@@ -835,8 +835,8 @@ function IROVar.CastBar.CalculateInterruptTimer(percenC)
         local castTimePercent=castTime*percenC
         startI=castTimePercent+startTime
         endI=endCastTime-maxC
-        if endI-startI < 0.3 then
-            startI=endI-0.3
+        if endI-startI < 0.5 then
+            startI=endI-0.5
         end
     elseif IROVar.CastBar.Channeling then
         local startTime=IROVar.CastBar.Channeling[4]/1000

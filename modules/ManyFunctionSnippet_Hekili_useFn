@@ -1,4 +1,4 @@
--- Many Function Version Hekili addon 10.0.5/8b
+-- Many Function Version Hekili addon 10.0.5/9
 -- Set Priority to 7
 
 -- function IROVar.Hekili.GetKeyBind()
@@ -9,6 +9,20 @@
 -- function IROVar.Hekili.CheckNextSkill(s1,counterName)
     -- if Skill 2 ~= S1 then Set counterName to 1 can 2 sec set back to 0
     -- note s1 = Hikili skill format
+
+local playerName = UnitName("player")
+local realmName = GetRealmName()
+if not TellMeWhenDB.ERODPSHekiliOptions then
+    TellMeWhenDB.ERODPSHekiliOptions={}
+end
+if not TellMeWhenDB.ERODPSHekiliOptions[realmName] then
+    TellMeWhenDB.ERODPSHekiliOptions[realmName]={}
+end
+if not TellMeWhenDB.ERODPSHekiliOptions[realmName][playerName] then
+    TellMeWhenDB.ERODPSHekiliOptions[realmName][playerName]={}
+end
+
+
 local usedKey={
     [""]=0,
     ["1"]=1,
@@ -326,3 +340,68 @@ local function Check1stSpellIsOffGCD()
 end
 
 C_Timer.NewTicker(0.1,Check1stSpellIsOffGCD)
+
+local function SaveOptionToVar()
+    local Options=TellMeWhenDB.ERODPSHekiliOptions[realmName][playerName]
+    local function SaveCounter(a)
+        Options[a]=COUNTERS[a]
+    end
+    for i=97,120 do -- Keep Counter "a" - "x"
+        local counterName=string.char(i)
+        SaveCounter(counterName)
+    end
+    local saveName = {
+        "needusehealskill",
+        "wantinterrupt",
+        "interlevel",
+        "wanthealthstone",
+        "wanthealthpotion",
+        "hekiliautocd",
+        "needusecleanenrage",
+    }
+    for _,v in pairs(saveName) do
+        SaveCounter(v)
+    end
+end
+
+local Loaded = false
+
+C_Timer.NewTicker(3,function()
+    if not Loaded or InCombatLockdown() then return end
+    SaveOptionToVar()
+end)
+
+
+local function LoadOptionFromVar()
+    if not COUNTERS["justrunonce"] or COUNTERS["justrunonce"]==0 then
+        C_Timer.After(2,LoadOptionFromVar)
+        return
+    end
+    Loaded=true
+    local Options=TellMeWhenDB.ERODPSHekiliOptions[realmName][playerName]
+    local function LoadCounter(a)
+        if Options[a] and type(Options[a])=="number" then
+            TMW_ST:UpdateCounter(a,Options[a])
+        end
+    end
+    for i=97,120 do -- Keep Counter "a" - "x"
+        local counterName=string.char(i)
+        LoadCounter(counterName)
+    end
+    IROVar.Hekili.CheckKeyEnable()
+    local saveName = {
+        "needusehealskill",
+        "wantinterrupt",
+        "interlevel",
+        "wanthealthstone",
+        "wanthealthpotion",
+        "hekiliautocd",
+        "needusecleanenrage",
+    }
+    for _,v in pairs(saveName) do
+        LoadCounter(v)
+    end
+    IROVar.Hekili.CheckDPS()
+end
+
+C_Timer.After(2,LoadOptionFromVar) -- load after login,

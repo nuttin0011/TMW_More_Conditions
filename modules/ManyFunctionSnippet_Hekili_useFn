@@ -1,4 +1,4 @@
--- Many Function Version Hekili addon 10.0.5/6
+-- Many Function Version Hekili addon 10.0.5/8b
 -- Set Priority to 7
 
 -- function IROVar.Hekili.GetKeyBind()
@@ -6,7 +6,9 @@
 -- counter "hekilicdstatus" 0 = off , 1 = on
 -- "hekilidefstatus" 0 = off , 1 = on
 -- "hekilimodestatus" 0 = single , 1 = auto , 2 = aoe
-
+-- function IROVar.Hekili.CheckNextSkill(s1,counterName)
+    -- if Skill 2 ~= S1 then Set counterName to 1 can 2 sec set back to 0
+    -- note s1 = Hikili skill format
 local usedKey={
     [""]=0,
     ["1"]=1,
@@ -80,6 +82,7 @@ if not IROVar.Hekili then IROVar.Hekili={} end
 local Hekili=Hekili
 local COUNTERS=TMW.COUNTERS
 local TMW=TMW
+Hekili.State.COUNTERS=COUNTERS
 
 
 --PLAYER_STARTED_MOVING  PLAYER_STOPPED_MOVING
@@ -91,6 +94,8 @@ TMW_ST:AddEvent("PLAYER_STOPPED_MOVING",function()PlayerMove=false PlayerLastSto
 local function StandingTime()
     return PlayerMove and 0 or (TMW.time-PlayerLastStopMove)
 end
+
+local _Wait=255
 
 local function CheckSpecialTreatment(skillName)
     --skillName = Hekili SkillName format
@@ -123,6 +128,24 @@ local function CheckSpecialTreatment(skillName)
             return UnitCanAttack("player","target")and(IROVar.Range("target")<=8)
         elseif skillName=="convoke_the_spirits" then
             return UnitCanAttack("player","target")and(IROVar.Range("target")<=8)
+        end
+    elseif IROSpecID==266 then -- Warlock Demo
+        if skillName=="demonbolt" and COUNTERS["castingdb"]==1 then
+            return _Wait
+        end
+    elseif IROSpecID==72 then -- War Fury
+        if skillName=="whirlwind" and COUNTERS["justuseww"]==1 then
+            return _Wait
+        elseif skillName=="raging_blow" and COUNTERS["justuserb"]==1 then
+            return _Wait
+        end
+    elseif IROSpecID==71 then -- War Arm
+        if skillName=="rend" and COUNTERS["justuserend"]==1 then
+            return _Wait
+        elseif skillName=="slam" and COUNTERS["justuseslam"]==1 then
+            return _Wait
+        elseif skillName=="overpower" and COUNTERS["justuseoverpower"]==1 then
+            return _Wait
         end
     end
     return true
@@ -187,26 +210,30 @@ function IROVar.Hekili.GetKeyBind()
     end
     local key=""
     for i=1,9 do
-        if Hekili.DisplayPool.Primary.Buttons[i] and CheckSpecialTreatment(Hekili.DisplayPool.Primary.Buttons[i].Action) then
-            local UseCD=COUNTERS["hekilicheckcd"]==1
-            if UseCD then
-                local lastStart = Hekili.DisplayPool.Primary.Buttons[i].Cooldown.lastStart or 0
-                --Hekili.DisplayPool.Primary.Buttons[1].Cooldown.lastStart
-                --Hekili.DisplayPool.Primary.Buttons[1].Cooldown.lastDuration
-                --Hekili.DisplayPool.Primary.Buttons[i].unusable
-                local lastDuration= Hekili.DisplayPool.Primary.Buttons[i].Cooldown.lastDuration or 0
-                local CDready = (lastStart+lastDuration-TMW.time)<0.2
-                local usable = not Hekili.DisplayPool.Primary.Buttons[i].unusable
-                if CDready and usable then
+        if Hekili.DisplayPool.Primary.Buttons[i] then
+            local CSTStatus=CheckSpecialTreatment(Hekili.DisplayPool.Primary.Buttons[i].Action)
+            if CSTStatus then
+                if CSTStatus==_Wait then return "" end
+                local UseCD=COUNTERS["hekilicheckcd"]==1
+                if UseCD then
+                    local lastStart = Hekili.DisplayPool.Primary.Buttons[i].Cooldown.lastStart or 0
+                    --Hekili.DisplayPool.Primary.Buttons[1].Cooldown.lastStart
+                    --Hekili.DisplayPool.Primary.Buttons[1].Cooldown.lastDuration
+                    --Hekili.DisplayPool.Primary.Buttons[i].unusable
+                    local lastDuration= Hekili.DisplayPool.Primary.Buttons[i].Cooldown.lastDuration or 0
+                    local CDready = (lastStart+lastDuration-TMW.time)<0.2
+                    local usable = not Hekili.DisplayPool.Primary.Buttons[i].unusable
+                    if CDready and usable then
+                        key=Hekili.DisplayPool.Primary.Buttons[i].Keybinding:GetText()
+                        if usedKey[key] and KeyEnable[key] then
+                            return key
+                        end
+                    end
+                else
                     key=Hekili.DisplayPool.Primary.Buttons[i].Keybinding:GetText()
                     if usedKey[key] and KeyEnable[key] then
                         return key
                     end
-                end
-            else
-                key=Hekili.DisplayPool.Primary.Buttons[i].Keybinding:GetText()
-                if usedKey[key] and KeyEnable[key] then
-                    return key
                 end
             end
         end
@@ -235,7 +262,7 @@ TMW_ST:AddEvent("UNIT_SPELLCAST_SUCCEEDED",function(event,unitToken)
 end)
 
 
-C_Timer.NewTicker(0.13,function()
+C_Timer.NewTicker(0.1,function()
     local k=IROVar.Hekili.GetKeyBind()
     _CurrentKey=k
     IROVar.UpdateCounter("hekilikey",usedKey[k])
@@ -278,3 +305,24 @@ IROVar.Register_PLAYER_TARGET_CHANGED_scrip_CALLBACK("IROVar.DPS CheckDPS",Check
 --Hekili.DB.profile.toggles.cooldowns.value==true
 --UnitCanAttack("player", "target")
 --IROVar.Register_PLAYER_TARGET_CHANGED_scrip_CALLBACK(name,callBack)
+
+function IROVar.Hekili.CheckNextSkill(s1,counterName)
+    local s2=Hekili.DisplayPool.Primary.Recommendations[2].actionName
+    if s1~=s2 then
+        IROVar.DelayCT(counterName,IROVar.CastTime2sec)
+    end
+end
+
+local function Check1stSpellIsOffGCD()
+    local GCDon = TMW.GCD>0
+    local firstAction = Hekili.DisplayPool.Primary.Recommendations[1].actionName
+    if Hekili.State.action[firstAction] then
+        local firstSkillName = Hekili.State.action[firstAction].name
+        local SkillCD = GetSpellCooldown(firstSkillName)
+        local SkillOffGCD = SkillCD==0
+        local OffGCD = GCDon and SkillOffGCD and 1 or 0
+        IROVar.UpdateCounter("hekilioffgcd",OffGCD)
+    end
+end
+
+C_Timer.NewTicker(0.1,Check1stSpellIsOffGCD)

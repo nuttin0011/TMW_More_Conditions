@@ -1,4 +1,4 @@
--- Many Function Version 9.0.5/80b
+-- Many Function Version 9.0.5/80c
 -- Set Priority to 1
 -- this file save many function for paste to TMW Snippet LUA
 
@@ -146,13 +146,15 @@ function IROVar.CounterSetUpdate(c)
     end
 end
 
-local DelayCTHandle=C_Timer.NewTimer(0.1,function() end)
+local DelayCTHandle={}
 function IROVar.DelayCT(countername,time)
     TMW_ST:UpdateCounter(countername,1)
-    DelayCTHandle:Cancel()
+    if DelayCTHandle[countername] then
+        DelayCTHandle[countername]:Cancel()
+    end
     do
         local cn=countername
-        DelayCTHandle=C_Timer.NewTimer(time,function()
+        DelayCTHandle[countername]=C_Timer.NewTimer(time,function()
             TMW_ST:UpdateCounter(cn,0)
         end)
     end

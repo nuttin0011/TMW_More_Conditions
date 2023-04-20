@@ -148,3 +148,8 @@ TMW_ST:AddEvent("UNIT_SPELLCAST_SUCCEEDED",function(event,unit)
         print(GCDSENT,GCDSUCCEEDED,"GCD Diff : ",GCDSENT-GCDSUCCEEDED)
     end
 end)
+
+
+(function()
+    return not IROVar.CastEndTime or IROVar.CastEndTime(thisunit,1.1) and IROVar.CanUseSpellBlock(thisunit)
+end)()

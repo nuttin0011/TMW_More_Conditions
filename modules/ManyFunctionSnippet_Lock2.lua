@@ -1,4 +1,4 @@
--- Many Function Version Warlock2 10.0.0/5
+-- Many Function Version Warlock2 10.0.0/6
 -- Set Priority to 10
 -- this file save many function for paste to TMW Snippet LUA
 
@@ -17,6 +17,7 @@
 -- counter "dcall" == Demonic Calling Duration
 -- counter "spellhitaoe" tell n mob hit by spell in timeInterval
 -- counter "burningrush" Burning Rush
+-- counter "petenemycount" Enemy Count by Pet Skill
 
 if not IROVar then IROVar={} end
 if not IROVar.Lock then IROVar.Lock={} end
@@ -30,11 +31,76 @@ IROVar.SpellHitAOE.Register_Spell_Aura_AOE_Check("From the Shadows",8)
 IROVar.SpellHitAOE.Register_Spell_FromMyPet_Hit_AOE_Check("Legion Strike",8)
 IROVar.SpellHitAOE.Register_Spell_FromMyPet_Hit_AOE_Check("Felstorm",8)
 
+-- Lock Pet Spell Enemy Count (yd)
+local PetSpellEnemyCount = {
+    [6360]   = 10,
+    [7814]   = 7,
+    [30213]  = 7,
+    [115625] = 7,
+    [54049]  = 7,
+    [115778] = 7,
+    --best     = 6360,
+    --count    = 6
+}
+
+local petAction = 0
+local petSlot = 0
+
+local function SetupPetBasedTargetDetection()
+    petAction = 0
+    petSlot = 0
+    local spells = PetSpellEnemyCount
+    local success = false
+    if UnitExists("pet") and not UnitIsDead("pet") then
+        for i = 1, 120 do
+            local slotType, spell = GetActionInfo( i )
+            if slotType and spell and spells[ spell ] then
+                petAction = spell
+                petSlot = i
+                return true
+            end
+        end
+    end
+    return success
+end
+
+local function TargetIsNearPet( unit )
+    return IsActionInRange( petSlot, unit )
+end
+
+local canUsePetEnemyCount=SetupPetBasedTargetDetection()
+
+TMW_ST:AddEvent("ACTIONBAR_HIDEGRID",
+function()
+    canUsePetEnemyCount=SetupPetBasedTargetDetection()
+end)
+
+TMW_ST:AddEvent("UNIT_PET",
+function(event,unit)
+    if unit=="player" then
+        canUsePetEnemyCount=SetupPetBasedTargetDetection()
+    end
+end)
+
+C_Timer.NewTicker(1.2,function()
+    if not canUsePetEnemyCount then return end
+    local count=0
+    for i=1,40 do
+        local nn="nameplate"..i
+        if UnitExists(nn) and UnitCanAttack("player", nn) then
+            if TargetIsNearPet( nn ) then count=count+1 end
+            if count>=5 then break end
+        end
+    end
+    IROVar.UpdateCounter("petenemycount",count)
+end)
+
 
 IROVar.Lock.PSS={}
 IROVar.Lock.PSS[265]={ -- aff
     [324536]=-1, --Malefic Rapture
 }
+
 IROVar.Lock.PSS[266]={ -- demo
     [686]=1, --shadow bolt
     [104316]=-2, --[Call Dreadstalkers]

@@ -1,4 +1,4 @@
--- Many Function DPS Average 10.0.0/5
+-- Many Function DPS Average 10.0.0/6
 -- this file save many function for paste to TMW Snippet LUA
 -- Set Priority to 5
 -- counter "targethptimeremain" target HP time remain
@@ -9,16 +9,23 @@ if not IROVar then IROVar = {} end
 if not IROVar.DPS then IROVar.DPS = {} end
 
 local Details=Details -- details
-local playerName=UnitName("player")
 
-IROVar.DPS.playerHealthMax=UnitHealthMax("player")
-C_Timer.NewTicker(10,function()IROVar.DPS.playerHealthMax=UnitHealthMax("player") end)
-local initDPS=IROVar.DPS.playerHealthMax/10
+local playerName = IROVar.playerName
+local realmName = IROVar.realmName
+if not TellMeWhenDB.IRODPSAverage then
+    TellMeWhenDB.IRODPSAverage={}
+end
+if not TellMeWhenDB.IRODPSAverage[realmName] then
+    TellMeWhenDB.IRODPSAverage[realmName]={}
+end
 
+if not TellMeWhenDB.IRODPSAverage[realmName][playerName] then
+    TellMeWhenDB.IRODPSAverage[realmName][playerName]=UnitHealthMax("player")/10
+end
+local initDPS=TellMeWhenDB.IRODPSAverage[realmName][playerName]
 IROVar.DPS.GroupDPSHistory={
     initDPS,
 }
-
 IROVar.DPS.Average=initDPS
 IROVar.DPS.nMobLastFight=1
 IROVar.DPS.CurrentMobAlive=1
@@ -39,6 +46,7 @@ function IROVar.DPS.CalculateDPSAverage()
         sum=sum+IROVar.DPS.GroupDPSHistory[i]
     end
     IROVar.DPS.Average=sum/n
+    TellMeWhenDB.IRODPSAverage[realmName][playerName]=IROVar.DPS.Average
 end
 
 function IROVar.DPS.AddGroupDPSHistory(dps)
@@ -53,7 +61,7 @@ function IROVar.DPS.AddGroupDPSHistory(dps)
 end
 
 function IROVar.DPS.DumpGroupDPSLastFight()
-    if not Details then return IROVar.DPS.playerHealthMax/10 end -- if no details
+    if not Details then return UnitHealthMax("player")/10 end -- if no details
 
     --get the current combat and the combat time
     local currentCombat = Details:GetCurrentCombat()

@@ -9,9 +9,8 @@
 -- function IROVar.Hekili.CheckNextSkill(s1,counterName)
     -- if Skill 2 ~= S1 then Set counterName to 1 can 2 sec set back to 0
     -- note s1 = Hikili skill format
-
-local playerName = UnitName("player")
-local realmName = GetRealmName()
+local playerName = IROVar.playerName
+local realmName = IROVar.realmName
 if not TellMeWhenDB.ERODPSHekiliOptions then
     TellMeWhenDB.ERODPSHekiliOptions={}
 end
@@ -297,6 +296,7 @@ end
 function IROVar.Hekili.CheckDPS()
     local t=IROVar.DPS.PredictTargetLifeTime()
     IROVar.UpdateCounter("targethptimeremain",t)
+    IROVar.DPS.PredictTargetLifeTime()
     local c=COUNTERS["hekiliautocd"]
     if c>0 then
         if t==0 then cooldownsOFF() return end

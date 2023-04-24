@@ -1,4 +1,4 @@
--- Many Function Version 9.0.5/80c
+-- Many Function Version 9.0.5/80d
 -- Set Priority to 1
 -- this file save many function for paste to TMW Snippet LUA
 
@@ -101,6 +101,9 @@ nameplateShowAll, timeMod, ... = UnitAura(unit, index [, filter])  ]]
 local TMW=TMW
 if not IROVar then IROVar={} end
 --Timer
+IROVar.playerName = UnitName("player")
+IROVar.realmName = GetRealmName()
+
 IROVar.IROEnemyGroupVVHPRunTick=0.5
 IROVar.TickCount01_Tick=0.17
 IROVar.CastBarCheck_Tick=0.41

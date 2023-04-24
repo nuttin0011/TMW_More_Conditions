@@ -52,7 +52,7 @@ local function SetupPetBasedTargetDetection()
     local spells = PetSpellEnemyCount
     local success = false
     if UnitExists("pet") and not UnitIsDead("pet") then
-        for i = 1, 120 do
+        for i = 1, 180 do
             local slotType, spell = GetActionInfo( i )
             if slotType and spell and spells[ spell ] then
                 petAction = spell
@@ -82,7 +82,7 @@ function(event,unit)
     end
 end)
 
-C_Timer.NewTicker(1.2,function()
+C_Timer.NewTicker(1,function()
     if not canUsePetEnemyCount then return end
     local count=0
     for i=1,40 do
@@ -126,12 +126,18 @@ UNIT_SPELLCAST_STOP
 
 UNIT_SPELLCAST_FAILED_QUIET
 ]]
-function IROVar.Lock.PSS.UpdatePSS()
+function IROVar.Lock.PSS.UpdatePSS(dontRepeat)
     local ss=IROVar.Lock.PSS.SS
     local pSS=ss+(IROVar.Lock.PSS[IROSpecID][IROVar.Lock.PSS.CastID] or 0)
     pSS=(pSS>5) and 5 or pSS
     pSS=(pSS<0) and 0 or pSS
     IROVar.UpdateCounter("predss",pSS)
+    if not dontRepeat then
+        C_Timer.After(0.2,function()
+            IROVar.Lock.PSS.SS=UnitPower("player",7)
+            IROVar.Lock.PSS.UpdatePSS(true)
+        end)
+    end
 end
 
 IROVar.CV.Register_Player_Power(7,"ss",function(p)

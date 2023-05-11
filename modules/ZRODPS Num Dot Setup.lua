@@ -16,13 +16,22 @@ local function SetNumDotKey()
         C_Timer.After(1,SetNumDotKey)
     else
         for i =0,9 do
-            SetBindingMacro('NUMPAD'..i,'~!Num'..i)
+            SetBindingClick('NUMPAD'..i,'~!Num'..i)
         end
+        local nDname="~NumDotUsedSkill"
         TMW.CNDT.Env.IRODPSversion()
-        DeleteMacro("~NumDotUsedSkill")
-        DeleteMacro("~NumDotUsedSkill")
-        CreateMacro("~NumDotUsedSkill",460699, M0, true)
-        SetBindingMacro("NUMPADDECIMAL","~NumDotUsedSkill")
+        DeleteMacro(nDname)
+        DeleteMacro(nDname)
+        if not IROKeyButton then IROKeyButton={} end
+        if not IROKeyButton[nDname] then
+            IROKeyButton[nDname]=CreateFrame('Button', nDname, UIParent, "SecureActionButtonTemplate")
+            IROKeyButton[nDname]:SetAttribute("type", "macro")
+            IROKeyButton[nDname]:SetAttribute("macrotext", M0);
+            IROKeyButton[nDname]:RegisterForClicks("LeftButtonDown");
+        else
+            IROKeyButton[nDname]:SetAttribute("macrotext", M0);
+        end
+        SetBindingClick("NUMPADDECIMAL","~NumDotUsedSkill")
         SaveBindings(GetCurrentBindingSet())
     end
 end
@@ -31,14 +40,10 @@ local function SetBindingAddSubMulDiv()
     if InCombatLockdown() then
         C_Timer.After(1,SetBindingAddSubMulDiv)
     else
-        SetBindingMacro("NUMPADMULTIPLY"
-        ,'~!Num12')
-        SetBindingMacro("NUMPADDIVIDE"
-        ,'~!Num13')
-        SetBindingMacro("NUMPADMINUS"
-        ,'~!Num11')
-        SetBindingMacro("NUMPADPLUS"
-        ,'~!Num10')
+        SetBindingClick("NUMPADMULTIPLY",'~!Num12')
+        SetBindingClick("NUMPADDIVIDE",'~!Num13')
+        SetBindingClick("NUMPADMINUS",'~!Num11')
+        SetBindingClick("NUMPADPLUS",'~!Num10')
         SaveBindings(GetCurrentBindingSet())
     end
 end
@@ -55,3 +60,5 @@ IROPressStopCast=function()
             IROStopCasted=nil
     end)
 end
+
+

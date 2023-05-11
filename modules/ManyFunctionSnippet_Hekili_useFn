@@ -7,7 +7,7 @@
 -- "hekilidefstatus" 0 = off , 1 = on
 -- "hekilimodestatus" 0 = single , 1 = auto , 2 = aoe
 -- function IROVar.Hekili.CheckNextSkill(s1,counterName)
-    -- if Skill 2 ~= S1 then Set counterName to 1 can 2 sec set back to 0
+    -- if Skill 2 ~= S1 then Set counterName to 1 then 2 sec set back to 0
     -- note s1 = Hikili skill format
 local playerName = IROVar.playerName
 local realmName = IROVar.realmName
@@ -160,6 +160,16 @@ local function CheckSpecialTreatment(skillName)
         elseif skillName=="overpower" and COUNTERS["justuseoverpower"]==1 then
             return _Wait
         end
+    elseif IROSpecID==254 then -- Hun MM
+        if skillName=="multishot" and COUNTERS["justusemultishot"]==1 then
+            return _Wait
+        elseif skillName=="aimed_shot" and COUNTERS["justuseaimedshot"]==1 then
+            return _Wait
+        elseif skillName=="steady_shot" and COUNTERS["justusesteadyshot"]==1 then
+            return _Wait
+        elseif skillName=="arcane_shot" and COUNTERS["justusearcaneshot"]==1 then
+            return _Wait
+        end
     end
     return true
 end
@@ -275,7 +285,7 @@ TMW_ST:AddEvent("UNIT_SPELLCAST_SUCCEEDED",function(event,unitToken)
 end)
 
 
-C_Timer.NewTicker(0.1,function()
+C_Timer.NewTicker(0.05,function()
     local k=IROVar.Hekili.GetKeyBind()
     _CurrentKey=k
     IROVar.UpdateCounter("hekilikey",usedKey[k])

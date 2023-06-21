@@ -1,4 +1,4 @@
--- Many Function Version Hekili addon 10.0.5/9
+-- Many Function Version Hekili addon 10.0.5/12b
 -- Set Priority to 7
 
 -- function IROVar.Hekili.GetKeyBind()
@@ -9,6 +9,7 @@
 -- function IROVar.Hekili.CheckNextSkill(s1,counterName)
     -- if Skill 2 ~= S1 then Set counterName to 1 then 2 sec set back to 0
     -- note s1 = Hikili skill format
+--function Hekili.State.CheckDragonfireBombDispenser=CheckDragonfireBombDispenser
 local playerName = IROVar.playerName
 local realmName = IROVar.realmName
 if not TellMeWhenDB.ERODPSHekiliOptions then
@@ -20,7 +21,6 @@ end
 if not TellMeWhenDB.ERODPSHekiliOptions[realmName][playerName] then
     TellMeWhenDB.ERODPSHekiliOptions[realmName][playerName]={}
 end
-
 
 local usedKey={
     [""]=0,
@@ -95,7 +95,12 @@ if not IROVar.Hekili then IROVar.Hekili={} end
 local Hekili=Hekili
 local COUNTERS=TMW.COUNTERS
 local TMW=TMW
-Hekili.State.COUNTERS=COUNTERS
+
+if Hekili then
+    Hekili.State.COUNTERS=COUNTERS
+else
+    C_Timer.After(5,function() Hekili.State.COUNTERS=COUNTERS end)
+end
 
 
 --PLAYER_STARTED_MOVING  PLAYER_STOPPED_MOVING
@@ -332,8 +337,9 @@ IROVar.Register_PLAYER_TARGET_CHANGED_scrip_CALLBACK("IROVar.DPS CheckDPS",Check
 
 function IROVar.Hekili.CheckNextSkill(s1,counterName)
     local s2=Hekili.DisplayPool.Primary.Recommendations[2].actionName
-    if s1~=s2 then
-        IROVar.DelayCT(counterName,IROVar.CastTime2sec)
+    local s1_SkillName=Hekili.State.action[s1].name
+    if s1~=s2 and IsCurrentSpell(s1_SkillName)then
+        IROVar.DelayCT(counterName,IROVar.HasteFactor*1.2)
     end
 end
 
@@ -368,6 +374,7 @@ local function SaveOptionToVar()
         "wanthealthpotion",
         "hekiliautocd",
         "needusecleanenrage",
+        --"hekilicdstatus"
     }
     for _,v in pairs(saveName) do
         SaveCounter(v)
@@ -407,6 +414,7 @@ local function LoadOptionFromVar()
         "wanthealthpotion",
         "hekiliautocd",
         "needusecleanenrage",
+        --"hekilicdstatus",
     }
     for _,v in pairs(saveName) do
         LoadCounter(v)
@@ -415,3 +423,25 @@ local function LoadOptionFromVar()
 end
 
 C_Timer.After(2,LoadOptionFromVar) -- load after login,
+
+local function CheckDragonfireBombDispenser()
+    local id=408671
+    --GetSpellCharges(408671)
+    local currentCharges, maxCharges, cooldownStart, cooldownDuration, chargeModRate = GetSpellCharges(id)
+    local FullCharge=currentCharges==3
+    if FullCharge then return true end
+    local nextChargeTime=cooldownStart+cooldownDuration
+    local nearylFullCharge=currentCharges==2 and (nextChargeTime-TMW.time<5 or (select(3,AuraUtil.FindAuraByName("Flash of Inspiration", "player"))or 0)>=58)
+    if nearylFullCharge then return true end
+    local dieTime=COUNTERS["targethptimeremain"]
+    local state=Hekili.State
+    if state.boss and (currentCharges>=2 or (dieTime<=20 and dieTime>=8)) then return true end
+    if state.active_enemies >=3 and dieTime<=7 and dieTime>=1 then return true end
+    return false
+end
+
+if Hekili then
+    Hekili.State.CheckDragonfireBombDispenser=CheckDragonfireBombDispenser
+else
+    C_Timer.After(5,function() Hekili.State.CheckDragonfireBombDispenser=CheckDragonfireBombDispenser end)
+end

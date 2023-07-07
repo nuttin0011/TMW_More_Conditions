@@ -1,4 +1,4 @@
--- Many Function Version Hekili addon 10.0.5/12b
+-- Many Function Version Hekili addon 10.0.5/13
 -- Set Priority to 7
 
 -- function IROVar.Hekili.GetKeyBind()
@@ -173,6 +173,10 @@ local function CheckSpecialTreatment(skillName)
         elseif skillName=="steady_shot" and COUNTERS["justusesteadyshot"]==1 then
             return _Wait
         elseif skillName=="arcane_shot" and COUNTERS["justusearcaneshot"]==1 then
+            return _Wait
+        end
+    elseif IROSpecID==253 then -- Hun BM
+        if skillName=="multishot" and COUNTERS["justusemultishot"]==1 then
             return _Wait
         end
     end

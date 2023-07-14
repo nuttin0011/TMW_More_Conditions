@@ -1,4 +1,4 @@
--- Many Function Version Hekili addon 10.0.5/13
+-- Many Function Version Hekili addon 10.0.5/13b
 -- Set Priority to 7
 
 -- function IROVar.Hekili.GetKeyBind()
@@ -10,6 +10,8 @@
     -- if Skill 2 ~= S1 then Set counterName to 1 then 2 sec set back to 0
     -- note s1 = Hikili skill format
 --function Hekili.State.CheckDragonfireBombDispenser=CheckDragonfireBombDispenser
+--function Hekili.State.PrintVal=PrintVal(a,b,c)
+
 local playerName = IROVar.playerName
 local realmName = IROVar.realmName
 if not TellMeWhenDB.ERODPSHekiliOptions then
@@ -96,8 +98,15 @@ local Hekili=Hekili
 local COUNTERS=TMW.COUNTERS
 local TMW=TMW
 
-local function PrintVal(a)
-    print(GetTime(),a)
+local function PrintVal(a,b,c)
+    local function val(x)
+        if not x then return " " end
+        local t=type(x)
+        if t=="number" or t=="string" then return x end
+        if t=="boolean" then return x and "true" or "false" end
+        return t
+    end
+    print(GetTime(),val(a),val(b),val(c))
     return true
 end
 

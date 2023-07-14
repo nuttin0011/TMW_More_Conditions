@@ -96,12 +96,17 @@ local Hekili=Hekili
 local COUNTERS=TMW.COUNTERS
 local TMW=TMW
 
+local function PrintVal(a)
+    print(GetTime(),a)
+    return true
+end
+
 if Hekili then
     Hekili.State.COUNTERS=COUNTERS
+    Hekili.State.PrintVal=PrintVal
 else
     C_Timer.After(5,function() Hekili.State.COUNTERS=COUNTERS end)
 end
-
 
 --PLAYER_STARTED_MOVING  PLAYER_STOPPED_MOVING
 local PlayerMove=false

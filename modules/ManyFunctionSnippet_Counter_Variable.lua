@@ -1,4 +1,4 @@
--- ManyFunctionSnippet_Counter_Variable 10.0.0/16
+-- Snippet_Counter_Variable 10.0.0/17
 -- Set Priority to 6
 -- use Many Function Aura Tracker
 --[[
@@ -16,6 +16,7 @@
     (IsSpellInRange(IROVar.InterruptSpell,"target")==1)
 "intericona" = IROVar.TargetCastBar(0.1)and 1 or 0)
 "intericonb" = IROVar.TargetCastBar(0.4)and 1 or 0)
+"intericonbb" = IROVar.TargetCastBar(0.6)and 1 or 0)
 "intericonc" = IROVar.TargetCastBar(0.7)and 1 or 0)
 "stunicon" = IROVar.TargetCastBar(0.3,true)and IROVar.OKStunedTarget()and NextInterrupter.ZeroSITarget()and(not IROVar.KickPressed)
 "stuniconb" = IROVar.VVCareInterruptTarget()
@@ -79,40 +80,26 @@ IROVar.CV.InterIcon_Trigger_Tick=0.3
 IROVar.CV.StunIcon_Trigger_Tick=0.31
 IROVar.CV.Targethp_Tick=0.7
 IROVar.CV.PlayerHPPercen_Tick=0.18
-IROVar.CV.EC8Tick=0.8
 
---Enemy Count 8yard
---"item:34368" 8 yard
---"item:28767" 40 yard
-IROVar.CV.EC8Tick=0.8
-local EC8BanName={
-    ["Explosive"]=true,
-}
-local function EC8()
-    local nn
-    local c=0
-    for i=1,30 do
-        nn='nameplate'..i
-        if UnitExists(nn) and UnitCanAttack("player",nn) and (not EC8BanName[UnitName(nn)]) then
-            c=c+(IsItemInRange("item:34368",nn) and 1 or 0)
-        end
-        if c>=6 then break end
-    end
-    IROVar.UpdateCounter("enemycountviii",c)
-end
-IROVar.CV.EC8H=C_Timer.NewTicker(IROVar.CV.EC8Tick,function()
-    if TMW.time-IUSC.SkillPressStampTime>=IROVar.CV.EC8Tick then
-        EC8()
-    end
-end)
-IUSC.RegCallBackAfterSU["EC8"]=EC8
-
+IROVar.UpdateCounter("enemycountviii",1) -- cannot use IsItemInRange any more
 
 ----------Interrupt Icon
 local func=function()
-    IROVar.UpdateCounter("intericon",(IROVar.InterruptSpell and IROVar.TargetCastBar(0.1)and IsMyInterruptSpellReady()and IROVar.CareInterrupt("target")and NextInterrupter.IsMyTurn()and(IsSpellInRange(IROVar.InterruptSpell,"target")==1))and 1 or 0)
+    local CareInterrupt
+    if IROVar.UseNPAWA then
+        local Sname=UnitCastingInfo("target")
+        if not Sname then
+            Sname=UnitChannelInfo("target")
+        end
+        CareInterrupt=IROVar.UseNPAKickSpell and IROVar.UseNPAKickSpell==Sname
+    else
+        CareInterrupt=IROVar.CareInterrupt("target")
+    end
+    local IsMyTurn = true --NextInterrupter.IsMyTurn()
+    IROVar.UpdateCounter("intericon",(IROVar.InterruptSpell and IROVar.TargetCastBar(0.1)and IsMyInterruptSpellReady()and CareInterrupt and IsMyTurn and(IsSpellInRange(IROVar.InterruptSpell,"target")==1))and 1 or 0)
     IROVar.UpdateCounter("intericona",IROVar.TargetCastBar(0.1)and 1 or 0)
     IROVar.UpdateCounter("intericonb",IROVar.TargetCastBar(0.4)and 1 or 0)
+    IROVar.UpdateCounter("intericonbb",IROVar.TargetCastBar(0.6)and 1 or 0)
     IROVar.UpdateCounter("intericonc",IROVar.TargetCastBar(0.7)and 1 or 0)
 end
 IROVar.CV.InterIconH=C_Timer.NewTicker(IROVar.CV.InterIcon_Trigger_Tick,func)
@@ -120,8 +107,18 @@ IROVar.Register_PLAYER_TARGET_CHANGED_scrip_CALLBACK("Counter_Variable intericon
 
 ----------Stun Icon
 local func2=function()
-    IROVar.UpdateCounter("stunicon",(IROVar.TargetCastBar(0.3,true)and IROVar.OKStunedTarget()and NextInterrupter.ZeroSITarget()and(not IROVar.KickPressed))and 1 or 0)
-    IROVar.UpdateCounter("stuniconb",IROVar.VVCareInterruptTarget()and 1 or 0)
+    IROVar.UpdateCounter("stunicon",(IROVar.TargetCastBar(0.2,true)and IROVar.OKStunedTarget()and NextInterrupter.ZeroSITarget()and(not IROVar.KickPressed))and 1 or 0)
+    local VVCareInterruptTarget
+    if IROVar.UseNPAWA then
+        local Sname=UnitCastingInfo("target")
+        if not Sname then
+            Sname=UnitChannelInfo("target")
+        end
+        CareInterrupt=IROVar.UseNPAStunSpell and IROVar.UseNPAStunSpell==Sname
+    else
+        VVCareInterruptTarget=IROVar.VVCareInterruptTarget()
+    end
+    IROVar.UpdateCounter("stuniconb",VVCareInterruptTarget and 1 or 0)
 end
 IROVar.CV.StunIconH=C_Timer.NewTicker(IROVar.CV.StunIcon_Trigger_Tick,func2)
 IROVar.Register_PLAYER_TARGET_CHANGED_scrip_CALLBACK("Counter_Variable stunicon",func2)
@@ -236,10 +233,10 @@ function IROVar.CV.DumpAuraArg()
     end
 end
 IROVar.Aura.Register_UNIT_AURA_scrip_CALLBACK("DumpAuraDuration + DumpAuraArg",function(unit)
-    if unit=="player" then
-        IROVar.CV.DumpAuraDuration()
-        IROVar.CV.DumpAuraArg()
-    end
+        if unit=="player" then
+            IROVar.CV.DumpAuraDuration()
+            IROVar.CV.DumpAuraArg()
+        end
 end)
 
 -- Aura has 0 = not sure , 1 = has
@@ -261,7 +258,7 @@ function IROVar.CV.Aura_Has_Update1(n,c)
         do
             local a,CC=n,c
             IROVar.CV.AuraHasHandle[a]=C_Timer.NewTimer(NextUpdateAuraHas(du),function()
-                IROVar.CV.Aura_Has_Update1(a,CC)
+                    IROVar.CV.Aura_Has_Update1(a,CC)
             end)
         end
     end
@@ -278,17 +275,17 @@ function IROVar.CV.UnRegister_Player_Aura_Has(AuraName)
     IROVar.CV.AuraHas[AuraName]=nil
 end
 IROVar.Aura.Register_UNIT_AURA_scrip_CALLBACK("IROVar.CV.AuraHas",function(unit)
-    if unit=="player" then
-        for k,v in pairs(IROVar.CV.AuraHas) do
-            if IROVar.Aura1.Changed[k] then
-                if IROVar.CV.AuraHasHandle[k] then
-                    IROVar.CV.AuraHasHandle[k]:Cancel()
-                    IROVar.CV.AuraHasHandle[k]=nil
+        if unit=="player" then
+            for k,v in pairs(IROVar.CV.AuraHas) do
+                if IROVar.Aura1.Changed[k] then
+                    if IROVar.CV.AuraHasHandle[k] then
+                        IROVar.CV.AuraHasHandle[k]:Cancel()
+                        IROVar.CV.AuraHasHandle[k]=nil
+                    end
+                    IROVar.CV.Aura_Has_Update1(k,v)
                 end
-                IROVar.CV.Aura_Has_Update1(k,v)
             end
         end
-    end
 end)
 -- Aura not has 0 = not sure , 1 = not has
 IROVar.CV.AuraNotHas={}
@@ -306,7 +303,7 @@ function IROVar.CV.Aura_Not_Has_Update1(n,c)
         do
             local a,CC=n,c
             IROVar.CV.AuraNotHasHandle[a]=C_Timer.NewTimer(NextUpdateAuraNotHas(du),function()
-                IROVar.CV.Aura_Not_Has_Update1(a,CC)
+                    IROVar.CV.Aura_Not_Has_Update1(a,CC)
             end)
         end
     else
@@ -325,17 +322,17 @@ function IROVar.CV.UnRegister_Player_Aura_Not_Has(AuraName)
     IROVar.CV.AuraNotHas[AuraName]=nil
 end
 IROVar.Aura.Register_UNIT_AURA_scrip_CALLBACK("IROVar.CV.AuraNotHas",function(unit)
-    if unit=="player" then
-        for k,v in pairs(IROVar.CV.AuraNotHas) do
-            if IROVar.Aura1.Changed[k] then
-                if IROVar.CV.AuraNotHasHandle[k] then
-                    IROVar.CV.AuraNotHasHandle[k]:Cancel()
-                    IROVar.CV.AuraNotHasHandle[k]=nil
+        if unit=="player" then
+            for k,v in pairs(IROVar.CV.AuraNotHas) do
+                if IROVar.Aura1.Changed[k] then
+                    if IROVar.CV.AuraNotHasHandle[k] then
+                        IROVar.CV.AuraNotHasHandle[k]:Cancel()
+                        IROVar.CV.AuraNotHasHandle[k]=nil
+                    end
+                    IROVar.CV.Aura_Not_Has_Update1(k,v)
                 end
-                IROVar.CV.Aura_Not_Has_Update1(k,v)
             end
         end
-    end
 end)
 
 -- Player Unit Power -- refresh every 0.1 sec
@@ -373,7 +370,7 @@ function IROVar.CV.CheckPower(cN,pT)
         IROVar.CV.PowerRunning[pT]=true
         do local cc,pp=cN,pT
             C_Timer.After(0.13,function()
-                IROVar.CV.CheckPower(cc,pp)
+                    IROVar.CV.CheckPower(cc,pp)
             end)
         end
     else
@@ -385,14 +382,14 @@ local function SetupUnitPowerFrame()
     IROVar.CV.UnitPowerFrame=CreateFrame("Frame")
     IROVar.CV.UnitPowerFrame:RegisterEvent("UNIT_POWER_FREQUENT")
     IROVar.CV.UnitPowerFrame:SetScript("OnEvent",function(_,_,unit,powerType)
-        if unit~="player" then return end
-        powerType=IROVar.CV.PowerType[powerType] or -1
-        local c=IROVar.CV.Power[powerType]
-        if not c then return end
-        IROVar.CV.PowerChange[powerType]=true
-        if not IROVar.CV.PowerRunning[powerType] then
-            IROVar.CV.CheckPower(c,powerType)
-        end
+            if unit~="player" then return end
+            powerType=IROVar.CV.PowerType[powerType] or -1
+            local c=IROVar.CV.Power[powerType]
+            if not c then return end
+            IROVar.CV.PowerChange[powerType]=true
+            if not IROVar.CV.PowerRunning[powerType] then
+                IROVar.CV.CheckPower(c,powerType)
+            end
     end)
 end
 
@@ -413,7 +410,7 @@ function IROVar.CV.UnRegister_Player_Power(PowerType)
 end
 
 --function IROVar.CV.Register_Target_Aura_Duration(AuraName,counterName,filter)
-    --use same filter ll make it faster!!!!!
+--use same filter ll make it faster!!!!!
 --function IROVar.CV.UnRegister_Target_Aura_Duration(AuraName)
 
 IROVar.CV.TargetAuraDuration={}
@@ -429,7 +426,7 @@ local function UpdateTargetAura(AuraName,filter)
         end
         IROVar.UpdateCounter(IROVar.CV.TargetAuraDuration[f][a],0)
     end
-
+    
     local exp=IROVar.Aura2.tar[filter] and IROVar.Aura2.tar[filter][AuraName]
     if not exp then
         Reset0(AuraName,filter)
@@ -485,7 +482,7 @@ function IROVar.CV.UnRegister_Target_Aura_Duration(AuraName,filter)
 end
 
 IROVar.Aura.Register_UNIT_AURA_scrip_CALLBACK("IROVar.CV.DumpTargetAuraDuration",function(unit)
-    if unit=="target" then IROVar.CV.DumpTargetAuraDuration()end
+        if unit=="target" then IROVar.CV.DumpTargetAuraDuration()end
 end)
 IROVar.Register_PLAYER_TARGET_CHANGED_scrip_CALLBACK("IROVar.CV.DumpTargetAuraDuration",IROVar.CV.DumpTargetAuraDuration)
 
@@ -514,3 +511,4 @@ end
 C_Timer.NewTicker(0.45,UpdateEnragedTimer)
 IROVar.Register_PLAYER_TARGET_CHANGED_scrip_CALLBACK("UpdateEnragedTimer",UpdateEnragedTimer)
 IROVar.CV.Register_Player_Aura_Not_Has("Quake","playernothasquake")
+

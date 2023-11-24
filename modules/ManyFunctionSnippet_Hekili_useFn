@@ -1,4 +1,4 @@
--- Many Function Version Hekili addon 10.0.5/13b
+-- Many Function Version Hekili addon 10.0.5/15
 -- Set Priority to 7
 
 -- function IROVar.Hekili.GetKeyBind()
@@ -11,6 +11,13 @@
     -- note s1 = Hikili skill format
 --function Hekili.State.CheckDragonfireBombDispenser=CheckDragonfireBombDispenser
 --function Hekili.State.PrintVal=PrintVal(a,b,c)
+--function Hekili.State.SetImpsRequiredToZero()
+--function Hekili.State.TurnOffCycleTarget()
+--function IROVar.Hekili.DelaySkill(s,t)
+--[[Function Demo Lock
+local function CheckTyrantHoGTimer()
+local function ResetTyrantHoGTimer()
+]]
 
 local playerName = IROVar.playerName
 local realmName = IROVar.realmName
@@ -50,6 +57,7 @@ local usedKey={
     ["F10"]=30,
     ["F11"]=31,
     ["F12"]=32,
+    ["cycle"]=99, -- click next enemy
 
 --    ["A"]=65,
 --    ["B"]=66,
@@ -94,25 +102,64 @@ end
 if not IROVar then IROVar={} end
 if not IROVar.Hekili then IROVar.Hekili={} end
 
+
+local dealySkill={}
+
+function IROVar.Hekili.DelaySkill(s,t)
+    if not dealySkill[s] then
+        dealySkill[s]=true
+        do
+            local tt=t
+            local ss=s
+            C_Timer.After(tt,function() dealySkill[ss]=nil end)
+        end
+    end
+end
+
+
 local Hekili=Hekili
 local COUNTERS=TMW.COUNTERS
 local TMW=TMW
 
+local function val(x)
+    if not x then return "nil" end
+    local t=type(x)
+    if t=="number" or t=="string" then return x end
+    if t=="boolean" then return x and "true" or "false" end
+    return t
+end
+
 local function PrintVal(a,b,c)
-    local function val(x)
-        if not x then return " " end
-        local t=type(x)
-        if t=="number" or t=="string" then return x end
-        if t=="boolean" then return x and "true" or "false" end
-        return t
-    end
     print(GetTime(),val(a),val(b),val(c))
+    return true
+end
+
+local function PrintVal1stIndex(a,b,c)
+    if Hekili.State.index==1 then
+        print(GetTime(),val(a),val(b),val(c))
+    end
+    return true
+end
+
+local function SetImpsRequiredToZero()
+    Hekili.State.settings.spec.settings.dcon_imps=0
+    return true
+end
+
+local function TurnOffCycleTarget()
+    Hekili.DB.profile.specs[IROSpecID].cycle=false
     return true
 end
 
 if Hekili then
     Hekili.State.COUNTERS=COUNTERS
+    Hekili.State.IsSpellOverlayed=Hekili.State.IsSpellOverlayed or IsSpellOverlayed
+    Hekili.State.EroTyrant=EroTyrant
     Hekili.State.PrintVal=PrintVal
+    Hekili.State.PrintVal1stIndex=PrintVal1stIndex
+    Hekili.State.SetImpsRequiredToZero=SetImpsRequiredToZero
+    Hekili.State.TurnOffCycleTarget=TurnOffCycleTarget
+    Hekili.State.CheckInteractDistance=CheckInteractDistance
 else
     C_Timer.After(5,function() Hekili.State.COUNTERS=COUNTERS end)
 end
@@ -128,8 +175,13 @@ local function StandingTime()
 end
 
 local _Wait=255
+local _Tyrant=266
+local _HoG=556
 
 local function CheckSpecialTreatment(skillName)
+    if dealySkill[skillName] then
+        return _Wait
+    end
     --skillName = Hekili SkillName format
     -- counter "playernothasquake" 1 mean not has quake affic
     --GetUnitSpeed("target")
@@ -162,8 +214,43 @@ local function CheckSpecialTreatment(skillName)
             return UnitCanAttack("player","target")and(IROVar.Range("target")<=8)
         end
     elseif IROSpecID==266 then -- Warlock Demo
-        if skillName=="demonbolt" and COUNTERS["castingdb"]==1 then
+        if skillName=="demonbolt" and
+        Hekili.DisplayPool.Primary.Buttons[1].Action=="demonbolt" and
+        Hekili.DisplayPool.Primary.Buttons[2].Action=="summon_demonic_tyrant" then
+            if Hekili.State.soul_shard >= 1 then
+                return _HoG
+            else
+                return _Tyrant
+            end
+        elseif skillName=="shadow_bolt" and
+        Hekili.DisplayPool.Primary.Buttons[1].Action=="shadow_bolt" and
+        Hekili.DisplayPool.Primary.Buttons[2].Action=="summon_demonic_tyrant" then
+            if Hekili.State.soul_shard >= 1 then
+                return _HoG
+            else
+                return _Tyrant
+            end
+        elseif skillName=="shadow_bolt" and
+        Hekili.DisplayPool.Primary.Buttons[1].Action=="shadow_bolt" and
+        Hekili.DisplayPool.Primary.Buttons[2].Action=="hand_of_guldan" and
+        Hekili.DisplayPool.Primary.Buttons[3].Action=="summon_demonic_tyrant" and
+        Hekili.State.soul_shard >= 1 and
+        Hekili.State.buff.nether_portal.up then
+            return _HoG
+        elseif skillName=="soul_strike" and
+        Hekili.DisplayPool.Primary.Buttons[1].Action=="soul_strike" and
+        Hekili.DisplayPool.Primary.Buttons[2].Action=="summon_demonic_tyrant" then
+            return _Tyrant
+        elseif skillName=="demonbolt" and COUNTERS["castingdb"]==1 then
             return _Wait
+        elseif skillName=="hand_of_guldan" and (COUNTERS["castinghog"]==1 or not IsUsableSpell("Hand of Gul'dan"))  then --hand_of_guldan
+            return _Wait
+        elseif skillName=="call_dreadstalkers" and not IsUsableSpell("call dreadstalkers")  then --call DS
+            return _Wait
+        elseif skillName=="power_siphon" and-- power_siphon
+        Hekili.DisplayPool.Primary.Buttons[1].Action=="power_siphon" and
+        Hekili.DisplayPool.Primary.Buttons[2].Action=="summon_demonic_tyrant" then
+            return _Tyrant
         end
     elseif IROSpecID==72 then -- War Fury
         if skillName=="whirlwind" and COUNTERS["justuseww"]==1 then
@@ -193,6 +280,8 @@ local function CheckSpecialTreatment(skillName)
         if skillName=="multishot" and COUNTERS["justusemultishot"]==1 then
             return _Wait
         end
+    elseif IROSpecID==252 then -- DK Unholy
+
     end
     return true
 end
@@ -246,6 +335,16 @@ local function IsSameSet(a,b)
     return true
 end
 
+local function FindAndUseKey(skill)
+    local key=""
+    --Hekili.KeybindInfo.hand_of_guldan.upper[1]
+    for _,v in pairs(Hekili.KeybindInfo[skill].upper) do
+        if usedKey[v] and KeyEnable[v] then
+            return v
+        end
+    end
+end
+
 function IROVar.Hekili.GetKeyBind()
     if _ShouldUseOldKey then
         if IsSameSet(_OldSet,DumpSetHekiliPrimary()) then
@@ -255,12 +354,25 @@ function IROVar.Hekili.GetKeyBind()
         end
     end
     local key=""
+    if Hekili.DisplayPool.Primary.Recommendations[1].exact_time and
+    Hekili.DisplayPool.Primary.Recommendations[1].exact_time-GetTime()>0.3 then
+        return ""
+    end
     for i=1,9 do
         if Hekili.DisplayPool.Primary.Buttons[i] then
             local CSTStatus=CheckSpecialTreatment(Hekili.DisplayPool.Primary.Buttons[i].Action)
             if CSTStatus then
                 if CSTStatus==_Wait then return "" end
+                if CSTStatus==_Tyrant then
+                    local key2=FindAndUseKey("summon_demonic_tyrant")
+                    if key2 then return key2 else print("ERROR CANNOT FIND KEY summon_demonic_tyrant") end
+                end
+                if CSTStatus==_HoG then
+                    local key2=FindAndUseKey("hand_of_guldan")
+                    if key2 then return key2 else print("ERROR CANNOT FIND KEY hand_of_guldan")  end
+                end
                 local UseCD=COUNTERS["hekilicheckcd"]==1
+                local UseCycleEnemy=COUNTERS["cycleenemy"]==1
                 if UseCD then
                     local lastStart = Hekili.DisplayPool.Primary.Buttons[i].Cooldown.lastStart or 0
                     --Hekili.DisplayPool.Primary.Buttons[1].Cooldown.lastStart
@@ -272,12 +384,20 @@ function IROVar.Hekili.GetKeyBind()
                     if CDready and usable then
                         key=Hekili.DisplayPool.Primary.Buttons[i].Keybinding:GetText()
                         if usedKey[key] and KeyEnable[key] then
+                            if UseCycleEnemy and Hekili.DisplayPool.Primary.Recommendations[i].indicator == "cycle" then
+                                return "cycle"
+                            end
+                            --if not IsUsableSpell(Hekili.State.action[Hekili.DisplayPool.Primary.Buttons[i].Action].name) then return ""end
                             return key
                         end
                     end
                 else
                     key=Hekili.DisplayPool.Primary.Buttons[i].Keybinding:GetText()
                     if usedKey[key] and KeyEnable[key] then
+                        if UseCycleEnemy and Hekili.DisplayPool.Primary.Recommendations[i].indicator == "cycle" then
+                            return "cycle"
+                        end
+                        --if not IsUsableSpell(Hekili.State.action[Hekili.DisplayPool.Primary.Buttons[i].Action].name) then return ""end
                         return key
                     end
                 end
@@ -393,6 +513,9 @@ local function SaveOptionToVar()
         "hekiliautocd",
         "needusecleanenrage",
         --"hekilicdstatus"
+        "cycleenemy",
+        "cyclekick",
+        "stoptargetoutcombat",
     }
     for _,v in pairs(saveName) do
         SaveCounter(v)
@@ -433,6 +556,9 @@ local function LoadOptionFromVar()
         "hekiliautocd",
         "needusecleanenrage",
         --"hekilicdstatus",
+        "cycleenemy",
+        "cyclekick",
+        "stoptargetoutcombat",
     }
     for _,v in pairs(saveName) do
         LoadCounter(v)
@@ -458,8 +584,40 @@ local function CheckDragonfireBombDispenser()
     return false
 end
 
+local CallDSEnd=0
+local HoGEnd=GetTime()+30000
+
+if Hekili.Class.specs[266] then
+    table.insert(Hekili.Class.specs[266].hooks.COMBAT_LOG_EVENT_UNFILTERED,
+    function( _, subtype, _, source, _, _, _, destGUID, _, _, _, spellID, spellName )
+        if source~=IROVar.playerGUID then return end
+        if subtype == "SPELL_CAST_SUCCESS" then
+            if spellID == 104316 then -- Call DSs
+                CallDSEnd=GetTime()+12
+                HoGEnd=CallDSEnd+30000
+            end
+            if spellID == 105174 then -- HoG
+                local now=GetTime()
+                if now<CallDSEnd then
+                    HoGEnd=min(HoGEnd,CallDSEnd,Hekili.State.gcd.execute*8+now)
+                end
+            end
+        end
+    end)
+end
+
+local function GetHoGTimerAfterCallDSs(t)
+    t=t or GetTime()
+    local ans=HoGEnd-t
+    return ans>0 and ans or 3000
+end
+
 if Hekili then
+    Hekili.State.GetHoGTimerAfterCallDSs=GetHoGTimerAfterCallDSs
     Hekili.State.CheckDragonfireBombDispenser=CheckDragonfireBombDispenser
 else
-    C_Timer.After(5,function() Hekili.State.CheckDragonfireBombDispenser=CheckDragonfireBombDispenser end)
+    C_Timer.After(5,function()
+        Hekili.State.GetHoGTimerAfterCallDSs=GetHoGTimerAfterCallDSs
+        Hekili.State.CheckDragonfireBombDispenser=CheckDragonfireBombDispenser
+    end)
 end

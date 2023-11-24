@@ -1,4 +1,4 @@
--- Many Function DPS Average 10.0.0/6
+-- Many Function DPS Average 10.0.0/7
 -- this file save many function for paste to TMW Snippet LUA
 -- Set Priority to 5
 -- counter "targethptimeremain" target HP time remain
@@ -85,8 +85,19 @@ function IROVar.DPS.DumpGroupDPSLastFight()
     return totalDPS
 end
 
+local function enemyCountInCombat()
+    local count =0
+    for i=1,40 do
+        local nn="nameplate"..i
+        if UnitExists(nn) and UnitAffectingCombat(nn) and UnitCanAttack("player", nn) then
+            count=count+1
+        end
+    end
+    return count
+end
+
 function IROVar.DPS.CheckMobIncombat()
-    local nMob=IROEnemyCountInRange(40)
+    local nMob=enemyCountInCombat()
     if nMob==0 then nMob=1 end
     IROVar.DPS.CurrentMobAlive=nMob
     if nMob>=1 then

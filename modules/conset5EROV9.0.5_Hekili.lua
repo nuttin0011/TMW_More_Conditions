@@ -1,7 +1,8 @@
--- ZRO Decoder 9.0.5/ Hekili2
+-- ZRO Decoder 9.0.5/ Hekili 3
 
 -- Set Priority to 0
 
+local Hekili=Hekili
 
 if not IROUsedSkillControl then
     IROUsedSkillControl={}
@@ -280,28 +281,66 @@ IUSC.ClassType={
 	,[252] = {'B','Mind Freeze','Death Strike','Melee','DPS','InstanceCast'} -- unholy
 }
 
+local LastGCD=1.3
 
-C_Timer.NewTicker(0.05,function()
+C_Timer.NewTicker(0.02,function()
+	if TMW.GCD>0.5 then LastGCD=TMW.GCD end
+
     local currentTime=GetTime()
     local GCDEnd=CDEnd(TMW.GCDSpell)
-    if GCDEnd>0 and (GCDEnd-currentTime)>0.3 then
-        IUSC.Stage=2
-        return
+
+    if GCDEnd>0 then
+		if LastGCD>=1.20 then
+			if GCDEnd-currentTime>0.25 then
+				IUSC.Stage=2
+				return
+			end
+		elseif LastGCD>=0.95 then
+			if GCDEnd-currentTime>0.11 then
+				IUSC.Stage=2
+				return
+			end
+		else
+			if GCDEnd-currentTime>0.07 then
+				IUSC.Stage=2
+				return
+			end
+		end
     end
+
 	local cast=true
-    local name,_,_,_,endTimeMS = UnitCastingInfo("player")
+    local name,_,_,startTimeMS,endTimeMS = UnitCastingInfo("player")
     if not name then
 		cast=false
-        name,_,_,_,endTimeMS = UnitChannelInfo("player")
+        name,_,_,startTimeMS,endTimeMS = UnitChannelInfo("player")
+
     end
     if not name then
         IUSC.Stage=1
         return
     end
-    endTimeMS=(endTimeMS/1000)-currentTime
-    if (cast and endTimeMS<=0.3) or (endTimeMS<=0.2)then
-        IUSC.Stage=1
-    else
-        IUSC.Stage=2
-    end
+	local castRemain=(endTimeMS/1000)-currentTime
+	--[[if name=="Drain Soul" and Hekili.DisplayPool.Primary.Recommendations[1].actionName~="drain_soul" then --IROSpecID == 265 -- lock Aff
+		startTimeMS=startTimeMS/1000
+		endTimeMS=endTimeMS/1000
+		local DSCastime=endTimeMS-startTimeMS
+		local DSSegment=DSCastime/5
+		local padT=0.2
+		local tt
+		for i=2,5 do
+			tt=startTimeMS+(DSSegment*i)
+			if currentTime<tt-padT then
+				IUSC.Stage=2
+				return
+			elseif currentTime<tt+padT then
+				IUSC.Stage=1
+				return
+			end
+		end
+	end]]
+	if (cast and castRemain<=0.22) or (castRemain<=0.17) then
+		IUSC.Stage=1
+	else
+		IUSC.Stage=2
+	end
 end)

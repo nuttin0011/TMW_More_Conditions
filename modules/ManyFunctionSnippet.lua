@@ -54,6 +54,11 @@
 --var IROVar.TickCount01 = Tick Count every 0.1 sec; use to detemin Update CD
 --var IROVar.TargetChangeCount=0;
 
+--var IROVar.UseNPAKickSpell;
+--var IROVar.UseNPAStunSpell;
+--var IROVar.UseNPA;
+--var IROVar.UseNAPHandle;
+
 --var IROVar.Haste ; player Haste
 --var IROVar.CastTime2sec ; cast time in second mod by haste
 --var IROVar.CastTime2_25sec
@@ -107,7 +112,11 @@ IROVar.realmName = GetRealmName()
 IROVar.IROEnemyGroupVVHPRunTick=0.5
 IROVar.TickCount01_Tick=0.17
 IROVar.CastBarCheck_Tick=0.41
---
+
+IROVar.UseNAPKickHandle=C_Timer.NewTimer(1,function()end)
+IROVar.UseNAPStunHandle=C_Timer.NewTimer(1,function()end)
+
+IROVar.OnlyInterruptThisSpell=nil
 IROVar.Icon = {}
 function IROVar.IsIconShow(icon)
     return icon and icon.attributes.shown and not icon:Update() and icon.attributes.realAlpha > 0
@@ -323,7 +332,7 @@ function IROVar.Range(unit)
     return 300
 end
 
-function IROEnemyCountInRange(nRange)
+--[[function IROEnemyCountInRange(nRange)
     nRange = nRange or 8
     local OldVal=IROVar.ERO_Old_Val.Check("IROEnemyCountInRange",nRange)
     if OldVal then return OldVal end
@@ -345,7 +354,7 @@ function IROEnemyCountInRange(nRange)
     end
     IROVar.ERO_Old_Val.Update("IROEnemyCountInRange",nRange,count)
     return count
-end
+end]]
 
 function PercentCastbar2(PercentCast, MustInterruptAble,unit, MinTMS,MaxTMS)
     PercentCast = PercentCast or 0.5
@@ -948,7 +957,7 @@ end
 --IROVar.SPELL_UPDATE_COOLDOWN_count
 IROInterruptTier.CDEnd=0
 IROVar.Register_SPELL_UPDATE_COOLDOWN_scrip_CALLBACK("IsMyInterruptSpellReady",function(GCDCDEnd)
-    local st,du=GetSpellCooldown(IROVar.InterruptSpell)
+    local st,du=GetSpellCooldown(IROVar.InterruptSpell or " ")
     if st then IROInterruptTier.CDEnd=st+du else IROInterruptTier.CDEnd=0 end
 end)
 
@@ -1023,6 +1032,7 @@ end
 IROVar.KickPressed=false
 function IROVar.KickPress()
     IROVar.KickPressed=true
+    IROVar.UseNAPCycle=nil
     C_Timer.After(0.4,function()
         IROVar.KickPressed=false
     end)
@@ -1034,3 +1044,27 @@ function IROVar.UpdateCounter(n,v)
         TMW:Fire("TMW_COUNTER_MODIFIED",n)
     end
 end
+
+IROVar.UseNAPCycle=nil
+function IROVar.IsTargetllBeKicked()
+    if not IROVar.UseNAPCycle then return end
+    print("TargetEnemy")
+    if UnitGUID("target")~=IROVar.UseNAPUnitGUID then
+        local s = UnitCastingInfo(IROVar.UseNAPUnitToken)
+        if not s then
+            s=UnitChannelInfo(IROVar.UseNAPUnitToken)
+        end
+        if s and s==IROVar.UseNPAKickSpell or s==IROVar.UseNPAStunSpell then
+            IROVar.UseNAPCycle=true
+            return
+        end
+    end
+    IROVar.UseNAPCycle=nil
+    IROVar.UseNAPCyclingH:Cancel()
+    IROVar.UseNAPCycling=nil
+    IROVar.UpdateCounter("usenapcycling",0)
+    IROVar.UpdateCounter("usenapcycle",0)
+    print("FoundEnemy")
+end
+
+IROVar.UseNAPCyclingH=C_Timer.NewTimer(1,function()end)

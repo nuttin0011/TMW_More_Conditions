@@ -29,7 +29,9 @@
         "NONE",
         "HP",
         "BASE_MOVEMENT_SPEED",
-        "BOSS"
+        "BOSS",
+        "SlashCmdList",
+        "ItemRefTooltip"
     ],
     "Lua.diagnostics.disable": [
         "deprecated"

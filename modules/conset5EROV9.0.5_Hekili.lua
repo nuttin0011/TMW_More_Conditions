@@ -239,6 +239,7 @@ function IUSC.SO(k) --k is string e.g. "33" , "3a"
 end
 
 IUSC.ClassType={
+	--IUSC.ClassType[IROSpecID][3]
 	--[specID]={interruptTier,interruptSpellName,DPSCheckSkill,Range,Role,CastType}
 	[71] = {'B','Pummel','Pummel','Melee','DPS','InstanceCast'} -- Arm
 	,[72] = {'B','Pummel','Pummel','Melee','DPS','InstanceCast'} -- fury
@@ -279,6 +280,9 @@ IUSC.ClassType={
 	,[250] = {'A','Mind Freeze','Death Strike','Melee','Tank','InstanceCast'} -- Blood
 	,[251] = {'B','Mind Freeze','Death Strike','Melee','DPS','InstanceCast'} -- frost
 	,[252] = {'B','Mind Freeze','Death Strike','Melee','DPS','InstanceCast'} -- unholy
+	,[1467] = {'C','Quell','Azure Strike','Range','DPS','Caster'} -- Devastation
+	,[1468] = {'C','Quell','Azure Strike','Healer','Healer','Caster'} -- Preservation
+	,[1473] = {'C','Quell','Azure Strike','Range','DPS','Caster'} -- Augmentation
 }
 
 local LastGCD=1.3

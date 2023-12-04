@@ -1,4 +1,4 @@
--- Many Function Version Hekili addon 10.0.5/15
+-- Many Function Version Hekili addon 10.0.5/16
 -- Set Priority to 7
 
 -- function IROVar.Hekili.GetKeyBind()
@@ -17,6 +17,11 @@
 --[[Function Demo Lock
 local function CheckTyrantHoGTimer()
 local function ResetTyrantHoGTimer()
+
+function IROVar.Hekili.cooldownsON()
+function IROVar.Hekili.cooldownsOFF()
+
+    counter "overridecd" 0 = no override CD, 1 = always off , 2 = always on
 ]]
 
 local playerName = IROVar.playerName
@@ -29,6 +34,18 @@ if not TellMeWhenDB.ERODPSHekiliOptions[realmName] then
 end
 if not TellMeWhenDB.ERODPSHekiliOptions[realmName][playerName] then
     TellMeWhenDB.ERODPSHekiliOptions[realmName][playerName]={}
+end
+
+--dud 102 103 104 105
+if IROSpecID>=102 and IROSpecID<=105 then
+    IROVar.CV.Register_Player_Aura_Has("Berserk","playerhasberserk")
+    IROVar.CV.Register_Player_Aura_Has("Incarnation: Avatar of Ashamane","playerhasincarnationaoa")
+    IROVar.CV.Register_Player_Aura_Has("Apex Predator's Craving","playerhasapexpc")
+    IROVar.CV.Register_Player_Power(3,"en")
+end
+--Warlock 265 266 267
+if IROSpecID>=265 and IROSpecID<=267 then
+    IROVar.CV.Register_Player_Power(7,"soulshard")
 end
 
 local usedKey={
@@ -179,6 +196,9 @@ local _Tyrant=266
 local _HoG=556
 
 local function CheckSpecialTreatment(skillName)
+    local function SSmorethan(n)
+        return (COUNTERS.soulshard>=n) or (COUNTERS.soulshard + (UnitCastingInfo("player")=="Shadow Bolt" and 1 or 0)>=n)
+    end
     if dealySkill[skillName] then
         return _Wait
     end
@@ -188,7 +208,7 @@ local function CheckSpecialTreatment(skillName)
     if IROSpecID==577 then -- DH Havoc
         if skillName=="eye_beam" then
             return ((COUNTERS["wantinterrupt"]==0)or(COUNTERS["intericon"]==0))and
-            (COUNTERS["targethptimeremain"]>=8)and UnitCanAttack("player","target")and(IROVar.Range("target")<=8)
+            (COUNTERS["targethptimeremain"]>=8)and UnitCanAttack("player","target")and(IsSpellInRange("Chaos Strike","target")==1)
             and(COUNTERS["playernothasquake"]==1)and(StandingTime()>0.4)
         elseif skillName=="glaive_tempest" then
             --TMW.CNDT.Env.LibRangeCheck:GetRange("target")
@@ -197,35 +217,51 @@ local function CheckSpecialTreatment(skillName)
         elseif skillName=="death_sweep" or skillName=="blade_dance" then
             return UnitCanAttack("player","target")and(IsSpellInRange("Chaos Strike","target")==1)
         elseif skillName=="immolation_aura" then
-            return UnitCanAttack("player","target")and(IROVar.Range("target")<=5)
+            return UnitCanAttack("player","target")and(IsSpellInRange("Chaos Strike","target")==1)
         elseif skillName=="metamorphosis" then
-            return UnitCanAttack("player","target")and(IROVar.Range("target")<=5)
+            return UnitCanAttack("player","target")and(IsSpellInRange("Chaos Strike","target")==1)
         elseif skillName=="essence_break" then
-            return (COUNTERS["targethptimeremain"]>=8)and UnitCanAttack("player","target")and(IROVar.Range("target")<=5)
+            return (COUNTERS["targethptimeremain"]>=8)and UnitCanAttack("player","target")and(IsSpellInRange("Chaos Strike","target")==1)
         end
     elseif IROSpecID==103 then -- Dud Feral
         if skillName=="tigers_fury" then
-            return UnitCanAttack("player","target")and(IROVar.Range("target")<=8)
+            return UnitCanAttack("player","target")and(IsSpellInRange("Rake","target")==1)
         elseif skillName=="algethar_puzzle_box" then
-            return UnitCanAttack("player","target")and(IROVar.Range("target")<=8)and(StandingTime()>0.4)
+            return UnitCanAttack("player","target")and(IsSpellInRange("Rake","target")==1)and(StandingTime()>0.4)
         elseif (skillName=="incarnation")or(skillName=="berserk")then
-            return UnitCanAttack("player","target")and(IROVar.Range("target")<=8)
+            return UnitCanAttack("player","target")and(IsSpellInRange("Rake","target")==1)
         elseif skillName=="convoke_the_spirits" then
-            return UnitCanAttack("player","target")and(IROVar.Range("target")<=8)
+            return UnitCanAttack("player","target")and(IsSpellInRange("Rake","target")==1)
+        elseif skillName=="ferocious_bite" then
+            if COUNTERS.playerhasapexpc==1 then
+                return true
+            end
+            if Hekili.State.talent.soul_of_the_forest.enabled and COUNTERS.playerhasberserk==1 or COUNTERS.playerhasincarnationaoa==1 then
+                return true
+            end
+            local enUse=50
+            if Hekili.State.talent.relentless_predator.enabled then
+                enUse=45
+            end
+            if COUNTERS.en>=enUse then
+                return true
+            else
+                return _Wait
+            end
         end
     elseif IROSpecID==266 then -- Warlock Demo
         if skillName=="demonbolt" and
         Hekili.DisplayPool.Primary.Buttons[1].Action=="demonbolt" and
         Hekili.DisplayPool.Primary.Buttons[2].Action=="summon_demonic_tyrant" then
-            if Hekili.State.soul_shard >= 1 then
+            if SSmorethan(1) then
                 return _HoG
             else
                 return _Tyrant
             end
         elseif skillName=="shadow_bolt" and
         Hekili.DisplayPool.Primary.Buttons[1].Action=="shadow_bolt" and
-        Hekili.DisplayPool.Primary.Buttons[2].Action=="summon_demonic_tyrant" then
-            if Hekili.State.soul_shard >= 1 then
+        Hekili.DisplayPool.Primary.Buttons[2].Action=="summon_demonic_tyrant"  then
+            if SSmorethan(1) then
                 return _HoG
             else
                 return _Tyrant
@@ -234,7 +270,7 @@ local function CheckSpecialTreatment(skillName)
         Hekili.DisplayPool.Primary.Buttons[1].Action=="shadow_bolt" and
         Hekili.DisplayPool.Primary.Buttons[2].Action=="hand_of_guldan" and
         Hekili.DisplayPool.Primary.Buttons[3].Action=="summon_demonic_tyrant" and
-        Hekili.State.soul_shard >= 1 and
+        SSmorethan(1) and
         Hekili.State.buff.nether_portal.up then
             return _HoG
         elseif skillName=="soul_strike" and
@@ -434,13 +470,13 @@ C_Timer.NewTicker(0.05,function()
     IROVar.UpdateCounter("hekilikey",usedKey[k])
 end)
 
-local function cooldownsON()
+function IROVar.Hekili.cooldownsON()
     if not Hekili.DB.profile.toggles.cooldowns.value then
         Hekili:FireToggle("cooldowns")
         IROVar.Hekili.UpdateToggleCounter()
     end
 end
-local function cooldownsOFF()
+function IROVar.Hekili.cooldownsOFF()
     if Hekili.DB.profile.toggles.cooldowns.value then
         Hekili:FireToggle("cooldowns")
         IROVar.Hekili.UpdateToggleCounter()
@@ -450,14 +486,16 @@ function IROVar.Hekili.CheckDPS()
     local t=IROVar.DPS.PredictTargetLifeTime()
     IROVar.UpdateCounter("targethptimeremain",t)
     IROVar.DPS.PredictTargetLifeTime()
+    local a=COUNTERS.overridecd
+    if a>=1 then return end
     local c=COUNTERS["hekiliautocd"]
     if c>0 then
-        if t==0 then cooldownsOFF() return end
-        if not UnitCanAttack("player", "target") then cooldownsOFF() return end
+        if t==0 then IROVar.Hekili.cooldownsOFF() return end
+        if not UnitCanAttack("player", "target") then IROVar.Hekili.cooldownsOFF() return end
         if t>=c then
-            cooldownsON()
+            IROVar.Hekili.cooldownsON()
         else
-            cooldownsOFF()
+            IROVar.Hekili.cooldownsOFF()
         end
     end
 end
@@ -516,6 +554,7 @@ local function SaveOptionToVar()
         "cycleenemy",
         "cyclekick",
         "stoptargetoutcombat",
+        "wantstun",
     }
     for _,v in pairs(saveName) do
         SaveCounter(v)
@@ -559,6 +598,7 @@ local function LoadOptionFromVar()
         "cycleenemy",
         "cyclekick",
         "stoptargetoutcombat",
+        "wantstun",
     }
     for _,v in pairs(saveName) do
         LoadCounter(v)

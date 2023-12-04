@@ -31,7 +31,9 @@
         "BASE_MOVEMENT_SPEED",
         "BOSS",
         "SlashCmdList",
-        "ItemRefTooltip"
+        "ItemRefTooltip",
+        "enabled",
+        "USE"
     ],
     "Lua.diagnostics.disable": [
         "deprecated"

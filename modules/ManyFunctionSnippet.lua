@@ -1,12 +1,9 @@
--- Many Function Version 9.0.5/80d
+-- Many Function Version 9.0.5/82
 -- Set Priority to 1
 -- this file save many function for paste to TMW Snippet LUA
 
---function IROEnemyCountInRange(nRange) ; return count, nRange = yard e.g. 2 5 8 15 20 30 40 50 200
---function PercentCastbar2(PercentCast, MustInterruptAble,unit, MinTMS,MaxTMS); return true/false
 --function GCDActiveLessThan(ttime) ; return true/false
 --function SumHPMobinCombat() ; return SumHP
---function SumHPMobin8yd() ; return SumHP
 --function IROTargetVVHP(nMultipy,unit) ; return (nMultipy*playerHealth*nG)<targetHealth;unit is unit or "target"
 --function IROEnemyGroupVVHP(nMultipy) ; return (nMultipy*playerHealth*nG)<EnemyGroupHP
 --function GCDCDTime() ; return GCD length time, = 1.5*(100/(100+UnitSpellHaste("player")))
@@ -31,7 +28,6 @@
 --function IROVar.IsIconShow(icon) ; return true/false
 --function IROVar.IconSweepCompair(icon,max,min) ; return (max > SweepCD > min) (true/false)
 --function IROVar.IconSweepRemain(icon) -- return SecRemain,MaxRemain
---var IROVar.activeConduits ; dump soulbind to table
 --var IROVar.playerGUID ;
 --var IROVar.incombat ;
 
@@ -52,12 +48,6 @@
 --function IROVar.Register_TALENT_CHANGE_scrip_CALLBACK(name,callback)
 --var IROVar.SPELL_UPDATE_COOLDOWN_count = Count Event Call; use to detemin Update CD
 --var IROVar.TickCount01 = Tick Count every 0.1 sec; use to detemin Update CD
---var IROVar.TargetChangeCount=0;
-
---var IROVar.UseNPAKickSpell;
---var IROVar.UseNPAStunSpell;
---var IROVar.UseNPA;
---var IROVar.UseNAPHandle;
 
 --var IROVar.Haste ; player Haste
 --var IROVar.CastTime2sec ; cast time in second mod by haste
@@ -80,21 +70,11 @@ nameplateShowAll, timeMod, ... = UnitAura(unit, index [, filter])  ]]
     }
 ]]
 
---function IROVar.TargetCastBar(percenCheck ; nil = 0.6 , DontCheckCantKick ; nil = false
-    --, Spell ; nil = any spell ; can be Spell Name or SpellID) ; return true/false
-    --DontCheckCantKick = true mean kick even notInterruptible (for Stun)
-    --percenCheck ; 0=start cast time , 1=end cast time ; default = 0.6
-
---function IROVar.Range(unit) ; return range
 --IROVar.ignoreName = {Mob Name = true} ; ignore mob name
 --IROVar.TargetName = TargetName;
 --IROVar.TargetGUID = TargetGUID;
---IROVar.TargetLV = UnitLevel("target")
-    --e.g. "IROVar and (not IROVar.ignoreName[IROVar.TargetName])"
 --function IROVar.CompareTable(a,b) ; return true|false
---function IROVar.DecurseInGroup() ; reutnr number
---function IROVar.UnitCount(n) ; return unit in nameplate
---var IROVar.PLAYER_TARGET_CHANGED_Time = GetTime()
+
 --function IROVar.IsUnitCCed(unit) ; return true/false | Dont Break CC
 --function IROVar.KickPress() ; IROVar.KickPressed=true 0.5 sec after turn to false
 --function IROVar.UpdateCounter(n,v) ; update counter name to value
@@ -103,8 +83,10 @@ nameplateShowAll, timeMod, ... = UnitAura(unit, index [, filter])  ]]
     -- when call turn countername to 1 and time sec pass turn to 0
     -- e.g. IROVar.DelayCT("usehp",1)
 
+--function IROVar.CTTOK(GUID) -- check Mob Cannot CC by Addon CantTouchThis
+
 local TMW=TMW
-if not IROVar then IROVar={} end
+IROVar=IROVar or {}
 --Timer
 IROVar.playerName = UnitName("player")
 IROVar.realmName = GetRealmName()
@@ -131,7 +113,6 @@ IROVar.SkillCheckDPSRange = nil
 IROVar.InstanceName = GetInstanceInfo()
 IROVar.activeConduits = {}
 IROVar.EditKeyMacroForAutoTarget = 50 -- Update Macro After Restart
-IROVar.PLAYER_TARGET_CHANGED_Time = GetTime()
 IROVar.CCDebuff={}
 for k,v in ipairs(TMW.BE.debuffs.CrowdControl) do
     IROVar.CCDebuff[v]=true
@@ -284,111 +265,6 @@ IROVar.ERO_Old_Val = {Timer=0,Old_Val={},
     end
 }
 
-local ItemRangeCheck2 = {
-    [2] =37727, -- Ruby Acorn -- not work
-    [3] =42732, -- Everfrost Razor -- not work
-    [4] =129055, -- Shoe Shine Kit
-    [5] =8149, -- Voodoo Charm
-    [7] =61323, -- Ruby Seeds
-    [8] =34368, -- Attuned Crystal Cores
-    [10] =32321, -- Sparrowhawk Net
-    [15] =33069, -- Sturdy Rope
-    [20] =10645, -- Gnomish Death Ray
-    [25] =24268, -- Netherweave Net
-    [30] =835, -- Large Rope Net
-    [35] =24269, -- Heavy Netherweave Net
-    [38] =140786, -- Ley Spider Eggs
-    [40] =28767, -- The Decapitator
-    [45] =23836, -- Goblin Rocket Launcher
-    [50] =116139, -- Haunting Memento
-    [55] =74637, -- Kiryn's Poison Vial
-    [60] =32825, -- Soul Cannon
-    [70] =41265, -- Eyesore Blaster
-    [80] =35278, -- Reinforced Net
-    [90] =133925, -- Fel Lash
-    [100] =33119, -- Malister's Frost Wand
-    [150] =46954, -- Flaming Spears
-    [200] =75208, -- Rancher's Lariat
-}
-local ItemRangeCheck2_2={}
-for k,v in pairs(ItemRangeCheck2) do
-    ItemRangeCheck2_2[k]="item:"..v
-end
-local ItemRangeCheckOrder = {}
-for i=1,200 do
-    if ItemRangeCheck2[i] then
-        table.insert(ItemRangeCheckOrder,i)
-    end
-end
-
-IROVar.ItemNameToCheck8 = "item:34368"
-
-function IROVar.Range(unit)
-    for i=1,#ItemRangeCheckOrder do
-        if IsItemInRange(ItemRangeCheck2_2[ItemRangeCheckOrder[i]],unit) then
-            return ItemRangeCheckOrder[i-1] or 0
-        end
-    end
-    return 300
-end
-
---[[function IROEnemyCountInRange(nRange)
-    nRange = nRange or 8
-    local OldVal=IROVar.ERO_Old_Val.Check("IROEnemyCountInRange",nRange)
-    if OldVal then return OldVal end
-    if nRange<2 then nRange=2 end
-    while(ItemRangeCheck2[nRange]==nil)do
-        nRange=nRange-1
-    end
-    local ItemNameToCheck = ItemRangeCheck2_2[nRange]
-    local nn
-    local count=0
-    for i=1,30 do
-        nn='nameplate'..i
-        if UnitExists(nn) and UnitCanAttack("player", nn) then
-            if IsItemInRange(ItemNameToCheck,nn)and(UnitAffectingCombat(nn) or (nRange<=8) or IsItemInRange(IROVar.ItemNameToCheck8, nn)) then
-                count=count+1
-            end
-        end
-        if count>=8 then break end
-    end
-    IROVar.ERO_Old_Val.Update("IROEnemyCountInRange",nRange,count)
-    return count
-end]]
-
-function PercentCastbar2(PercentCast, MustInterruptAble,unit, MinTMS,MaxTMS)
-    PercentCast = PercentCast or 0.5
-    if MustInterruptAble == nil then MustInterruptAble = true end
-    MaxTMS = MaxTMS or 2000
-    MinTMS = MinTMS or 200
-    unit = unit or "target"
-    local _, _, _, startTimeMS, endTimeMS, _, _, notInterruptible = UnitCastingInfo(unit)
-    local wantInterrupt = false
-    local totalcastTime
-    local currentcastTime
-    local percentcastTime
-    if (startTimeMS ~= nil) and(not(notInterruptible and MustInterruptAble)) then
-        totalcastTime = endTimeMS-startTimeMS
-        currentcastTime = (GetTime()*1000)-startTimeMS
-    -- if cast time > MaxTMS ms dont interrupt
-    -- if cast time < MinTMS ms dont interrupt
-        if ((totalcastTime-currentcastTime)>=MinTMS) and ((totalcastTime-currentcastTime)<=MaxTMS) then
-            percentcastTime = currentcastTime/totalcastTime
-            wantInterrupt = percentcastTime >= PercentCast
-        end
-        return wantInterrupt
-    end
-    local _, _, _, CstartTimeMS, CendTimeMS,_, CnotInterruptible= UnitChannelInfo(unit)
-    if (CstartTimeMS ~= nil) and (not (CnotInterruptible and MustInterruptAble)) then
-        totalcastTime = CendTimeMS-CstartTimeMS
-        currentcastTime = (GetTime()*1000)-CstartTimeMS
-        if (currentcastTime>=MinTMS) and (currentcastTime<=(totalcastTime-MinTMS)) then
-            wantInterrupt = true
-        end
-    end
-    return wantInterrupt
-end
-
 function GCDActiveLessThan(ttime)
     ttime = ttime or 0.2
     local s,d = GetSpellCooldown(TMW.GCDSpell)
@@ -439,17 +315,6 @@ function SumHPMobinCombat()
     return sumhp
 end
 
-function SumHPMobin8yd()
-    local sumhp =0
-    local nn
-    for ii =1,30 do
-        nn='nameplate'..ii
-        if UnitExists(nn) and CheckInteractDistance(nn,2) and UnitCanAttack("player", nn) then
-            sumhp=sumhp+ UnitHealth(nn)
-    end end
-    return sumhp
-end
-
 function IROTargetVVHP(nMultipy,unit)
     unit=unit or "target"
     nMultipy=nMultipy or 2
@@ -457,31 +322,6 @@ function IROTargetVVHP(nMultipy,unit)
     local targetHealth=UnitHealth(unit)
     return (nMultipy*playerHealth)<targetHealth
 end
-
-IROVar.IROEnemyGroupVVHPOldVal={}
-IROVar.IROEnemyGroupVVHPRun=false
-function IROEnemyGroupVVHP(nMultipy)
-    IROVar.IROEnemyGroupVVHPRun=true
-    nMultipy=nMultipy or 3
-    if IROVar.IROEnemyGroupVVHPOldVal[nMultipy] then
-        IROVar.IROEnemyGroupVVHPRun=false
-        return IROVar.IROEnemyGroupVVHPOldVal[nMultipy]
-    end
-    local playerHealth=SumPartyHP()
-    local EnemyGroupHP=SumHPMobinCombat()
-    local ans=(nMultipy*playerHealth)<EnemyGroupHP
-    IROVar.IROEnemyGroupVVHPOldVal[nMultipy]=ans
-    IROVar.IROEnemyGroupVVHPRun=false
-    return ans
-end
-C_Timer.NewTicker(IROVar.IROEnemyGroupVVHPRunTick,function()
-    if not IROVar.IROEnemyGroupVVHPRun and next(IROVar.IROEnemyGroupVVHPOldVal) then
-        IROVar.IROEnemyGroupVVHPOldVal={}
-    end
-end)
-
-
-
 
 local IROClassGCDOneSec = {
     [259]=true,[260]=true,[261]=true, -- rogue
@@ -598,95 +438,6 @@ function IROVar.IconSweepRemain(icon) -- return SecRemain,MaxRemain
     return remain,du
 end
 
-function IROVar.DetermineActiveCovenantAndSoulbindAndConduits()
-    local covenantID = C_Covenants.GetActiveCovenantID();
-    if ( not covenantID or covenantID == 0 ) then
-      --No active covenants
-      return nil;
-    end
-    local covenantData = C_Covenants.GetCovenantData(covenantID);
-    if ( not covenantData ) then 
-      --No covenant found
-      return nil;
-    end
-    local covenantName = covenantData.name;
-    local soulbindID = C_Soulbinds.GetActiveSoulbindID();
-    if ( not soulbindID or soulbindID == 0 ) then 
-      --No active soulbinds
-      return nil;
-    end
-    local soulbindData = C_Soulbinds.GetSoulbindData(soulbindID);
-    if ( not soulbindData ) then
-      --No active soulbinds
-      return nil;
-    end
-    local id = soulbindData["ID"];
-    --local covenantID = soulbindData["covenantID"];
-    local soulbindName = soulbindData["name"];
-    local description = soulbindData["description"];
-    local tree = soulbindData["tree"];
-    local nodes = tree["nodes"];
-    local activeConduitsSpells = {};
-    activeConduitsSpells.covenantName = covenantName;
-    activeConduitsSpells.soulbindName = soulbindName;
-    activeConduitsSpells.conduits = {};
-    for _, ve in pairs(nodes) do
-      local node_id = ve["ID"];
-      local node_row = ve.row;
-      local node_column = ve.column;
-      local node_spellID = ve.spellID; -- this will be 0 for uninit spell, not nil
-      local node_conduitID = ve.conduitID; -- this will be 0 for uninit conduit, not nil
-      local node_conduitRank = ve.conduitRank;
-      local node_state = ve.state;
-      local node_conduitType = ve.conduitType; -- this can be nil
-      if ( node_state == 3 ) then
-        local node_spellName;
-        if ( node_spellID ~= 0 ) then
-          node_spellName = GetSpellInfo(node_spellID);
-        elseif ( node_conduitID ~= 0 ) then
-          local conduitSpellID = C_Soulbinds.GetConduitSpellID(node_conduitID,node_conduitRank);
-          node_spellID = conduitSpellID;
-          node_spellName = GetSpellInfo(conduitSpellID);
-        else
-          node_spellID = nil;
-          node_spellName = nil;
-        end
-        if ( node_spellID ) then
-          activeConduitsSpells.conduits[#activeConduitsSpells.conduits + 1] = { spellID = node_spellID, spellName = node_spellName };
-          activeConduitsSpells[node_spellID]=true
-          activeConduitsSpells[node_spellName]=true
-        end
-      end
-    end
-    return activeConduitsSpells;
-end
-
-IROVar.justCheckActiveConduits=0
-
-IROVar.fconduitOnEvent=function()
-    local now=GetTime()
-    if now <= IROVar.justCheckActiveConduits then return end
-    IROVar.justCheckActiveConduits=now+0.4
-    C_Timer.After(0.5,function()
-        IROVar.activeConduits=IROVar.DetermineActiveCovenantAndSoulbindAndConduits()
-        if not IROVar.activeConduits then IROVar.activeConduits={} end
-    end)
-end
-
--- patch 9.x.x Shadowlands SL
--- listen to soulbinds/conduits changes
-IROVar.fconduit = CreateFrame("Frame")
-IROVar.fconduit:RegisterEvent("COVENANT_CALLINGS_UPDATED")
-IROVar.fconduit:RegisterEvent("COVENANT_CHOSEN")
-IROVar.fconduit:RegisterEvent("SOULBIND_ACTIVATED")
-IROVar.fconduit:RegisterEvent("SOULBIND_PATH_CHANGED")
---IROVar.fconduit:RegisterEvent("SOULBIND_CONDUITS_RESET")
-IROVar.fconduit:RegisterEvent("SOULBIND_NODE_UPDATED")
-IROVar.fconduit:RegisterEvent("GARRISON_UPDATE")
-IROVar.fconduit:SetScript("OnEvent", IROVar.fconduitOnEvent)
-
-C_Timer.After(1,IROVar.fconduitOnEvent)
-
 
 IROVar.incombatCallBackRun={}
 IROVar.outcombatCallBackRun={}
@@ -785,155 +536,6 @@ IROVar.TickCount01_Handle=C_Timer.NewTicker(IROVar.TickCount01_Tick,function()
     IROVar.TickCount01=IROVar.TickCount01+1
 end)
 
-IROVar.CastBar={}
-IROVar.CastBar.Casting=nil
-IROVar.CastBar.Channeling=nil
-IROVar.CastBar.Calculated={}
---kick mean interrupt
---IROVar.CastBar.Calculated[percent][1]=0 --start Kick
---IROVar.CastBar.Calculated[percent][2]=0 --end Kick
-IROVar.CastBar.Spell=nil
-IROVar.CastBar.SpellId=nil
-IROVar.CastBar.CantKick=false
-function IROVar.CastBar.CheckCasting()
-    local C={UnitCastingInfo("target")}
-    if C[1] then IROVar.CastBar.Casting=C
-    else IROVar.CastBar.Casting=nil
-    end
-end
-
-function IROVar.CastBar.CheckChanneling()
-    local C={UnitChannelInfo("target")}
-    if C[1] then IROVar.CastBar.Channeling=C
-    else IROVar.CastBar.Channeling=nil
-    end
-end
-
-function IROVar.CastBar.ResetKick()
-    IROVar.CastBar.CantKick=false
-    IROVar.CastBar.Spell=nil
-    IROVar.CastBar.SpellId=nil
-    IROVar.CastBar.Calculated={}
-end
-
-function IROVar.CastBar.CheckSpellInfo()
-    local notInterruptible = false
-    local spell = nil
-    local SpellId = nil
-    if IROVar.CastBar.Casting then
-        notInterruptible=IROVar.CastBar.Casting[8]
-        spell=IROVar.CastBar.Casting[1]
-        SpellId=IROVar.CastBar.Casting[9]
-    elseif IROVar.CastBar.Channeling then
-        notInterruptible=IROVar.CastBar.Channeling[7]
-        spell=IROVar.CastBar.Channeling[1]
-        SpellId=IROVar.CastBar.Channeling[8]
-    end
-    IROVar.CastBar.CantKick=notInterruptible
-    IROVar.CastBar.Spell=spell
-    IROVar.CastBar.SpellId=SpellId
-end
-
-function IROVar.CastBar.CalculateInterruptTimer(percenC)
-    -- minC = dont interrupt before this time
-    -- percenC = interrupt after this percent of the cast time
-    -- maxC = dont interrupt after endCastTime-max time
-    local maxC=0.2
-    percenC=percenC or 0.6
-    local startI = 0
-    local endI = 0
-    if IROVar.CastBar.Casting then
-        local startTime=IROVar.CastBar.Casting[4]/1000
-        local endCastTime=IROVar.CastBar.Casting[5]/1000
-        local castTime=endCastTime-startTime
-        local castTimePercent=castTime*percenC
-        startI=castTimePercent+startTime
-        endI=endCastTime-maxC
-        if endI-startI < 0.5 then
-            startI=endI-0.5
-        end
-    elseif IROVar.CastBar.Channeling then
-        local startTime=IROVar.CastBar.Channeling[4]/1000
-        local endCastTime=IROVar.CastBar.Channeling[5]/1000
-        local castTime=endCastTime-startTime
-        if castTime>=1 then
-            startI=startTime+0.2
-            endI=endCastTime-maxC
-        end
-    end
-    IROVar.CastBar.Calculated[percenC]={startI,endI}
-end
-
-IROVar.TargetChangeCount=0
-IROVar.TargetName=UnitName("target")
-IROVar.TargetGUID=UnitGUID("target")
-IROVar.TargetLV=UnitLevel("target")
-
-function IROVar.CastBar.CheckAll()
-    IROVar.CastBar.CheckCasting()
-    IROVar.CastBar.CheckChanneling()
-    IROVar.CastBar.ResetKick()
-    IROVar.CastBar.CheckSpellInfo()
-end
-
-IROVar.CastBar.CastFrame=CreateFrame("Frame")
-IROVar.CastBar.CastFrame:RegisterEvent("UNIT_SPELLCAST_START")
-IROVar.CastBar.CastFrame:RegisterEvent("UNIT_SPELLCAST_CHANNEL_START")
-IROVar.CastBar.CastFrame:RegisterEvent("PLAYER_TARGET_CHANGED")
-IROVar.CastBar.CastFrame:SetScript("OnEvent",function(self,event,arg1,...)
-    if event=="UNIT_SPELLCAST_START" and arg1=="target" then
-        IROVar.CastBar.Channeling=nil
-        IROVar.CastBar.CheckCasting()
-        IROVar.CastBar.ResetKick()
-        IROVar.CastBar.CheckSpellInfo()
-    elseif event=="UNIT_SPELLCAST_CHANNEL_START" and arg1=="target" then
-        IROVar.CastBar.Casting=nil
-        IROVar.CastBar.CheckChanneling()
-        IROVar.CastBar.ResetKick()
-        IROVar.CastBar.CheckSpellInfo()
-    elseif event=="PLAYER_TARGET_CHANGED" then
-        IROVar.PLAYER_TARGET_CHANGED_Time=GetTime()
-        IROVar.TargetChangeCount=IROVar.TargetChangeCount+1
-        IROVar.TargetName=UnitName("target")
-        IROVar.TargetGUID=UnitGUID("target")
-        IROVar.TargetLV=UnitLevel("target")
-        IROVar.CastBar.CheckAll()
-    end
-end)
-
-C_Timer.NewTicker(IROVar.CastBarCheck_Tick,IROVar.CastBar.CheckAll)
-
-IROVar.CastBar.CastFrame2=CreateFrame("Frame")
-IROVar.CastBar.CastFrame2:RegisterEvent("UNIT_SPELLCAST_FAILED_QUIET")
-IROVar.CastBar.CastFrame2:RegisterEvent("UNIT_SPELLCAST_CHANNEL_STOP")
-IROVar.CastBar.CastFrame2:RegisterEvent("UNIT_SPELLCAST_STOP")
-IROVar.CastBar.CastFrame2:SetScript("OnEvent",function(self,event,arg1,...)
-    if arg1=="target" then
-        IROVar.CastBar.Casting=nil
-        IROVar.CastBar.Channeling=nil
-        IROVar.CastBar.ResetKick()
-    end
-end)
-
-function IROVar.TargetCastBar(percenCheck,DontCheckCantKick,Spell)
-    if Spell and Spell~=IROVar.CastBar.SpellId and Spell~=IROVar.CastBar.Spell then
-        return false
-    end
-    percenCheck=percenCheck or 0.6
-    --Spell = nil ; mean any spell ; can be ID and Name
-    --DontCheckCantKick = true mean kick even notInterruptible (for Stun)
-    if not IROVar.CastBar.Calculated[percenCheck] then
-        IROVar.CastBar.CalculateInterruptTimer(percenCheck)
-    end
-    local startKick=IROVar.CastBar.Calculated[percenCheck][1]
-    local endKick=IROVar.CastBar.Calculated[percenCheck][2]
-    if not DontCheckCantKick and IROVar.CastBar.CantKick then
-            return false
-    end
-    local currentTime=GetTime()
-    return currentTime>=startKick and currentTime<=endKick
-end
-
 function IROVar.CompareTable(a,b)
     local function subcompare(aa,bb)
         if (not aa) or (not bb) then return false end
@@ -966,69 +568,6 @@ function IsMyInterruptSpellReady()
     return IROInterruptTier.CDEnd<=GetTime()
 end
 
---UnitGroupRolesAssigned(n)
---TANK, HEALER, DAMAGER, NONE
---className, classFilename, classId = UnitClass(unit)
---[[
-1	Warrior	WARRIOR	
-2	Paladin	PALADIN	
-3	Hunter	HUNTER	
-4	Rogue	ROGUE	
-5	Priest	PRIEST	
-6	Death Knight	DEATHKNIGHT	Added in 3.0.2
-7	Shaman	SHAMAN	
-8	Mage	MAGE	
-9	Warlock	WARLOCK	
-10	Monk	MONK	Added in 4.0.1
-11	Druid	DRUID	
-12	Demon Hunter	DEMONHUNTER	Added in 7.0.3
-]]
-local classDecurse =
-{
-    ["MAGE"]=true,
-    ["SHAMAN"]=true,
-    ["DRUID"]=true,
-}
-IROVar.decurseInGroup=0
-
-function IROVar.DecurseCheck()-- return number of Decurser
-    local function DecurseClass(UnitToken)
-        local _,class=UnitClass(UnitToken)
-        return classDecurse[class]
-    end
-    local Dn=0
-    if IsInRaid() then
-        for i=1,40 do
-            local n="raid"..i
-            if UnitExists(n) and DecurseClass(n) then Dn=Dn+1 end
-        end
-    elseif IsInGroup() then
-        for i=1,4 do
-            local n="party"..i
-            if UnitExists(n) and DecurseClass(n) then Dn=Dn+1 end
-        end
-        if DecurseClass("player") then Dn=Dn+1 end
-    else
-        if DecurseClass("player") then Dn=Dn+1 end
-    end
-    IROVar.decurseInGroup=Dn
-end
-
-IROVar.IsDecurseF=CreateFrame("Frame")
-IROVar.IsDecurseF:RegisterEvent("GROUP_ROSTER_UPDATE")
-IROVar.IsDecurseF:SetScript("OnEvent",function()
-    IROVar.DecurseCheck()
-end)
-C_Timer.NewTicker(6,IROVar.DecurseCheck,10)
-
-function IROVar.DecurseInGroup()
-    return IROVar.decurseInGroup
-end
-
-function IROVar.UnitCount(n)
-    return IROVar.AutoTarget and IROVar.AutoTarget.UnitCount[n] or 0
-end
-
 IROVar.KickPressed=false
 function IROVar.KickPress()
     IROVar.KickPressed=true
@@ -1045,26 +584,20 @@ function IROVar.UpdateCounter(n,v)
     end
 end
 
-IROVar.UseNAPCycle=nil
-function IROVar.IsTargetllBeKicked()
-    if not IROVar.UseNAPCycle then return end
-    print("TargetEnemy")
-    if UnitGUID("target")~=IROVar.UseNAPUnitGUID then
-        local s = UnitCastingInfo(IROVar.UseNAPUnitToken)
-        if not s then
-            s=UnitChannelInfo(IROVar.UseNAPUnitToken)
-        end
-        if s and s==IROVar.UseNPAKickSpell or s==IROVar.UseNPAStunSpell then
-            IROVar.UseNAPCycle=true
-            return
-        end
+function IROVar.CTTOK(GUID)
+    if CTT and CTT.immuneKnown then
+        local NPCID=CTT.GetNPCId(GUID or "")
+        return not(NPCID and CTT.immuneFound[NPCID] or CTT.immuneKnown[NPCID])
+    else
+        return true
     end
-    IROVar.UseNAPCycle=nil
-    IROVar.UseNAPCyclingH:Cancel()
-    IROVar.UseNAPCycling=nil
-    IROVar.UpdateCounter("usenapcycling",0)
-    IROVar.UpdateCounter("usenapcycle",0)
-    print("FoundEnemy")
+end
+
+IROVar.UseNAPCycle=nil
+function IROVar.IsTargeted()
+    if not IROVar.TargetEnemy.Cycle then return end
+    print("TargetEnemy")
+    if IROVar.TargetEnemy.AfterTargetEnemyMacro() then print("FoundEnemy") end
 end
 
 IROVar.UseNAPCyclingH=C_Timer.NewTimer(1,function()end)

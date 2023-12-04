@@ -7,17 +7,8 @@
 "targetenraged" = Enraged timer 0 = 0.0-0.39
 "playernothasquake" = IROVar.CV.Register_Player_Aura_Not_Has("Quake","playernothasquake")
 
-"intericon" = 
-    IROVar.InterruptSpell and 
-    IROVar.TargetCastBar(0.1) and 
-    IsMyInterruptSpellReady() and 
-    IROVar.CareInterrupt("target") and 
-    NextInterrupter.IsMyTurn() and
-    (IsSpellInRange(IROVar.InterruptSpell,"target")==1)
-"intericona" = IROVar.TargetCastBar(0.1)and 1 or 0)
-"intericonb" = IROVar.TargetCastBar(0.4)and 1 or 0)
-"intericonbb" = IROVar.TargetCastBar(0.6)and 1 or 0)
-"intericonc" = IROVar.TargetCastBar(0.7)and 1 or 0)
+"intericon" = 0 dont interrupt , >=1 interrupt
+
 "stunicon" = IROVar.TargetCastBar(0.3,true)and IROVar.OKStunedTarget()and NextInterrupter.ZeroSITarget()and(not IROVar.KickPressed)
 "stuniconb" = IROVar.VVCareInterruptTarget()
 "enemycountviii" = IROEnemyCountInRange(8)
@@ -76,8 +67,7 @@
 if not IROVar then IROVar = {} end
 if not IROVar.CV then IROVar.CV = {} end
 
-IROVar.CV.InterIcon_Trigger_Tick=0.3
-IROVar.CV.StunIcon_Trigger_Tick=0.31
+IROVar.CV.InterIcon_Trigger_Tick=0.25
 IROVar.CV.Targethp_Tick=0.7
 IROVar.CV.PlayerHPPercen_Tick=0.18
 
@@ -85,43 +75,53 @@ IROVar.UpdateCounter("enemycountviii",1) -- cannot use IsItemInRange any more
 
 ----------Interrupt Icon
 local func=function()
-    local CareInterrupt
-    if IROVar.UseNPAWA then
-        local Sname=UnitCastingInfo("target")
-        if not Sname then
-            Sname=UnitChannelInfo("target")
-        end
-        CareInterrupt=IROVar.UseNPAKickSpell and IROVar.UseNPAKickSpell==Sname
-    else
-        CareInterrupt=IROVar.CareInterrupt("target")
+    -- Kick counter "intericon"
+    -- 0 = dont Kick , 1 = Kick Not Has NPA
+    -- 2 = Kick Has NPA but Kick Not Ready , 3 = Kick NPA
+    -- Stun counter "stunicon"
+    -- 0 = dont Stun , 1 = Stun Not Has NPA
+    -- 2 = Stun Has NPA
+    local notInterruptible,spellId,startTimeMS, endTimeMS , casting
+    casting=true
+    _,_,_,startTimeMS, endTimeMS,_,_,notInterruptible,spellId=UnitCastingInfo("target")
+    if not spellId then
+        casting=false
+        _,_,_,startTimeMS, endTimeMS,_,notInterruptible,spellId=UnitChannelInfo("target")
     end
-    local IsMyTurn = true --NextInterrupter.IsMyTurn()
-    IROVar.UpdateCounter("intericon",(IROVar.InterruptSpell and IROVar.TargetCastBar(0.1)and IsMyInterruptSpellReady()and CareInterrupt and IsMyTurn and(IsSpellInRange(IROVar.InterruptSpell,"target")==1))and 1 or 0)
-    IROVar.UpdateCounter("intericona",IROVar.TargetCastBar(0.1)and 1 or 0)
-    IROVar.UpdateCounter("intericonb",IROVar.TargetCastBar(0.4)and 1 or 0)
-    IROVar.UpdateCounter("intericonbb",IROVar.TargetCastBar(0.6)and 1 or 0)
-    IROVar.UpdateCounter("intericonc",IROVar.TargetCastBar(0.7)and 1 or 0)
+    if not spellId then
+        IROVar.UpdateCounter("intericon",0)
+        IROVar.UpdateCounter("stunicon",0)
+        return
+    end
+    local interlevel=casting and TMW_ST:GetCounter("interlevel")/100 or 0.2
+    local spellpercen=(TMW.time-startTimeMS/1000)/((endTimeMS-startTimeMS)/1000)
+
+    local CounterVal,CounterValStun=0,0
+
+    if IROVar.UseNPAWA then
+        if IROVar.NPA.SpellID["kick"][spellId] then
+            if spellpercen>interlevel then
+                if IsMyInterruptSpellReady() then
+                    CounterVal=3
+                else
+                    CounterVal=2
+                end
+            end
+        elseif IROVar.NPA.SpellID["stun"][spellId] then
+            if spellpercen>0.2 then
+                CounterValStun=2
+            end
+        end
+    else
+        if spellpercen>interlevel and not notInterruptible and IsMyInterruptSpellReady() then
+            CounterVal=1
+        end
+    end
+    IROVar.UpdateCounter("intericon",CounterVal)
+    IROVar.UpdateCounter("stunicon",CounterValStun)
 end
 IROVar.CV.InterIconH=C_Timer.NewTicker(IROVar.CV.InterIcon_Trigger_Tick,func)
 IROVar.Register_PLAYER_TARGET_CHANGED_scrip_CALLBACK("Counter_Variable intericon",func)
-
-----------Stun Icon
-local func2=function()
-    IROVar.UpdateCounter("stunicon",(IROVar.TargetCastBar(0.2,true)and IROVar.OKStunedTarget()and NextInterrupter.ZeroSITarget()and(not IROVar.KickPressed))and 1 or 0)
-    local VVCareInterruptTarget
-    if IROVar.UseNPAWA then
-        local Sname=UnitCastingInfo("target")
-        if not Sname then
-            Sname=UnitChannelInfo("target")
-        end
-        CareInterrupt=IROVar.UseNPAStunSpell and IROVar.UseNPAStunSpell==Sname
-    else
-        VVCareInterruptTarget=IROVar.VVCareInterruptTarget()
-    end
-    IROVar.UpdateCounter("stuniconb",VVCareInterruptTarget and 1 or 0)
-end
-IROVar.CV.StunIconH=C_Timer.NewTicker(IROVar.CV.StunIcon_Trigger_Tick,func2)
-IROVar.Register_PLAYER_TARGET_CHANGED_scrip_CALLBACK("Counter_Variable stunicon",func2)
 
 -- target HP
 local function TargetHP()

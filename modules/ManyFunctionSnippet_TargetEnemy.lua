@@ -41,8 +41,8 @@ function IROVar.TargetEnemy.NextJob()
         if v.DoneThis() then
             table.insert(deleteTable,k)
         else
-            if min>IROVar.TargetEnemy.Queue.priority then
-                min=IROVar.TargetEnemy.Queue.priority
+            if min>v.priority then
+                min=v.priority
                 vv=v
             end
         end
@@ -74,13 +74,13 @@ function IROVar.TargetEnemy.NextJob()
     end
 end
 
-function IROVar.TargetEnemy.ClickTargetEnemy() -- use after /TargetEnemy
+--[[function IROVar.TargetEnemy.ClickTargetEnemy() -- use after /TargetEnemy
     if not IROVar.TargetEnemy.Cycling then return end
     if UnitGUID("target")==IROVar.TargetEnemy.tGUID then
         IROVar.TargetEnemy.Cycle=false
         IROVar.UpdateCounter("cycletargetenemy",0)
     end
-end
+end]]
 
 function IROVar.TargetEnemy.IntervalCheck() -- run check every 0.1 sec if Cycling
     if not IROVar.TargetEnemy.Cycling then return end -- should Kill Tick Check interval
@@ -92,7 +92,38 @@ function IROVar.TargetEnemy.IntervalCheck() -- run check every 0.1 sec if Cyclin
     end
 end
 
-C_Timer.NewTicker(0.11,IROVar.TargetEnemy.IntervalCheck)
+C_Timer.NewTicker(0.15,IROVar.TargetEnemy.IntervalCheck)
 
 ---ClickMouse To Change Target is Pause Targeting for 1 sec
 
+function IROVar.TargetEnemy.AfterTargetEnemyMacro() -- Use after use Macro /targetenemy
+    if not IROVar.TargetEnemy.Cycling then return end
+    if UnitGUID("target")==IROVar.TargetEnemy.tGUID then
+        IROVar.TargetEnemy.Cycle=false
+        IROVar.UpdateCounter("cycletargetenemy",0)
+        return true
+    else
+        IROVar.TargetEnemy.Cycle=true
+        IROVar.UpdateCounter("cycletargetenemy",1)
+        return false
+    end
+end
+
+function IROVar.TargetEnemy.IsTargetCasting(tGUID,tUnitToken) -- Check Target token/GUID is casting?
+    if UnitGUID(tUnitToken)~=tGUID then
+        local m
+        for i=1,30 do
+            local mm="nameplate"..i
+            if UnitGUID(mm)==tGUID then
+                m=mm
+                break
+            end
+        end
+        if m then tGUID=m else return false end
+    end
+    local n=UnitCastingInfo(tUnitToken)
+    if not n then
+        n=UnitChannelInfo(tUnitToken)
+    end
+    if n then return true else return false end
+end

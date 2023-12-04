@@ -496,55 +496,92 @@ end
 -----------------------------------------------------
 ------------------ GeRODPS MOD ----------------------
 -----------------------------------------------------
+
+local StunSpell={
+    [103]={"Mighty Bash"}, -- feral
+    [253]={"Intimidation"}, -- BM
+    [254]={"Intimidation"}, -- MM
+    [255]={"Intimidation"}, -- Sur
+}
+local function isStunSpellReady()
+    if not IROVar.NPA.UseStun[IROSpecID] then return false end
+    for k,v in pairs(IROVar.NPA.UseStun[IROSpecID][1]) do
+        if IROVar.NPA.UseStun[IROSpecID][2][k] and TMW.CNDT.Env.CooldownDuration(v)==0 then
+            return true
+        end
+    end
+    return false
+end
 C_Timer.After(3,function()
+    IROVar=IROVar or {}
     IROVar.UseNPAWA=1
+    IROVar.NPA=IROVar.NPA or {}
+    IROVar.NPA.SpellID=IROVar.NPA.SpellID or {}
+    for k,_ in pairs(aura_env.validSpellTypes) do
+        IROVar.NPA.SpellID[k]={}
+    end
+    IROVar.NPA.UseStun={}-- { [SpecID] = {{"Spell1","Spell1"}, {[spellKnown1],[spellKnown2]}}
+    for k,v in pairs(StunSpell) do
+        IROVar.NPA.UseStun[k]={{},{}}
+        for kk,vv in pairs(v) do
+            table.insert(IROVar.NPA.UseStun[k][1],vv)
+            table.insert(IROVar.NPA.UseStun[k][2],GetSpellInfo(vv)~=nil)
+        end
+    end
+    if not IROVar.fspecOnEventCallBack["UseNAP"] then
+        IROVar.Register_TALENT_CHANGE_scrip_CALLBACK("UseNAP",function() -- recheck Known Skill?
+            if not IROVar.NPA.UseStun[IROSpecID] then return end
+            for k,v in pairs(IROVar.NPA.UseStun[IROSpecID]) do
+                IROVar.NPA.UseStun[IROSpecID][2][k]=GetSpellInfo(v)~=nil
+            end
+        end)
+    end
 end)
 
 local GeroCheckSound = aura_env.CheckSound
-
 aura_env.CheckSound = function(...)
     local spellId, spellType, unitToken, event, enableSound, range, onlyIfTargeted, ttsTargeted, ttsInput=...
     local interruptReady, ccReady, unmuteIfTargeted
     enableSound, interruptReady, ccReady, unmuteIfTargeted = GeroCheckSound(...)
-    if enableSound and (spellType == "kick" or spellType == "stun") then
-        local TargetIsunitToken = UnitIsUnit("target",unitToken)
-        if TargetIsunitToken then
-            IROVar.UseNAPCycle=nil
-            IROVar.UpdateCounter("usenapcycle",0)
-        else
-            IROVar.UseNAPCycle=true
-            IROVar.UpdateCounter("usenapcycle",1)
-        end
-        IROVar.UseNAPCycling=true
-        IROVar.UpdateCounter("usenapcycling",1)
-        IROVar.UseNAPUnitGUID=UnitGUID(unitToken)
-        IROVar.UseNAPUnitToken=unitToken
-        if spellType == "kick" then
-            print("KICK : ",spellId)
-            IROVar.UseNPAKickSpell=GetSpellInfo(spellId)
-            IROVar.UseNAPKickHandle:Cancel()
-            IROVar.UseNAPKickHandle=C_Timer.NewTimer(5,function() IROVar.UseNPAKickSpell=nil end)
-        elseif spellType == "stun" then
-            print("STUN : ",spellId)
-            IROVar.UseNPAStunSpell=GetSpellInfo(spellId)
-            IROVar.UseNAPStunHandle:Cancel()
-            IROVar.UseNAPStunHandle=C_Timer.NewTimer(5,function() IROVar.UseNPAStunSpell=nil end)
-        end
-        IROVar.UseNAPCyclingH:Cancel()
+
+    IROVar.NPA.SpellID[spellType][spellId]=1
+
+    if enableSound then
+        local n=GetSpellInfo(spellId)
+        print(enableSound and "sound" or "NOsound",spellId,spellType,n)
+    end
+    if spellType=="damage" then
+        IROVar.UpdateCounter("npadmgnotify",1)
+        C_Timer.After(2,function()
+            IROVar.UpdateCounter("npadmgnotify",0)
+        end)
+    end
+
+    if enableSound and spellType=="kick" and TMW_ST:GetCounter("cyclekick")==1 then
         do
-            local uT=unitToken
-            IROVar.UseNAPCyclingH=C_Timer.NewTicker(0.1,function()
-                local s= UnitCastingInfo(uT)
-                if not s then s=UnitChannelInfo(uT) end
-                if not s then
-                    IROVar.UseNAPCycle=nil
-                    IROVar.UpdateCounter("usenapcycle",0)
-                    IROVar.UseNAPCyclingH:Cancel()
-                    IROVar.UseNAPCycling=nil
-                    IROVar.UpdateCounter("usenapcycling",0)
-                end
-            end)
+            local tGUID=UnitGUID(unitToken)
+            local tToken=unitToken
+            if tGUID then
+                print("Queue KICK")
+                IROVar.TargetEnemy.RegisterTargetting(tGUID,10,function()
+                    return not IsMyInterruptSpellReady() or not IROVar.TargetEnemy.IsTargetCasting(tGUID,tToken)
+                end)
+            end
         end
     end
+
+    if enableSound and spellType=="stun" and TMW_ST:GetCounter("cyclekick")==1 and isStunSpellReady() then
+        do
+            local tGUID=UnitGUID(unitToken)
+            local tToken=unitToken
+            if tGUID then
+                print("Queue STUN")
+                IROVar.TargetEnemy.RegisterTargetting(tGUID,10,function()
+                    return not isStunSpellReady() or not IROVar.TargetEnemy.IsTargetCasting(tGUID,tToken)
+                end)
+            end
+        end
+    end
+
     return enableSound, interruptReady, ccReady, unmuteIfTargeted
 end

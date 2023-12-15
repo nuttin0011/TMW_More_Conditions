@@ -33,7 +33,8 @@
         "SlashCmdList",
         "ItemRefTooltip",
         "enabled",
-        "USE"
+        "USE",
+        "BOOKTYPE_SPELL"
     ],
     "Lua.diagnostics.disable": [
         "deprecated"

@@ -30,7 +30,7 @@ end
 
 
 -- used to check nameplate ranges for "avoid" spellType
-aura_env.LRC = LibStub("LibRangeCheck-3.0")
+--aura_env.LRC = LibStub("LibRangeCheck-3.0")
 
 -- displays or hides the glow effect.
 local LCG = LibStub("LibCustomGlow-1.0")
@@ -85,7 +85,8 @@ end
 aura_env.CheckInterrupt = function()
     for spell,_ in pairs(aura_env.settings["interruptList"]) do
         if spell then
-            if IsUsableSpell(spell) and IsSpellKnown(spell) then 
+            if IsUsableSpell(spell) and (IsSpellKnown(spell) or IsSpellKnown(spell, true)) then 
+                --if IsUsableSpell(spell) and IsSpellKnown(spell) then 
                 local _,cd = GetSpellCooldown(spell)
                 local _,gcd = GetSpellCooldown(61304)
                 if cd - gcd <= 0 then 
@@ -100,7 +101,7 @@ end
 aura_env.CheckCC = function()
     for spell,_ in pairs(aura_env.settings["ccList"]) do
         if spell then
-            if IsUsableSpell(spell) and IsSpellKnown(spell) then 
+            if IsUsableSpell(spell) and (IsSpellKnown(spell) or IsSpellKnown(spell, true)) then 
                 local _,cd = GetSpellCooldown(spell)
                 local _,gcd = GetSpellCooldown(61304)
                 if cd - gcd <= 0 then 
@@ -161,19 +162,26 @@ aura_env.CheckSound = function(spellId, spellType, unitToken, event, enableSound
         end
     end
     
-    -- thanks for killing this, blizzard :<
+    -- range-check using player's abilities.
+    -- accuray depends on the spec but better than nothing.
+    if range then
+        local inRange = aura_env.CheckRange(range, unitToken)
+        if not inRange then enableSound = false end  
+    end
+    
+    -- Range-check using LibRangeCheck. Disabled for now in favor of a custom range-check.
+    -- If this ever gets improved, LibRangeCheck is loaded in line 33
     --[[
     -- if a custom range has been specified in the tags, disable sound if player is out of range.
-    if range and enableSound then
+    if range then
         
         local rangeChecker = aura_env.LRC:GetSmartChecker(range, false, true)
         
         local inRange = rangeChecker(unitToken)
-        print(UnitName(unitToken), inRange)
         if not inRange then enableSound = false end
-
-end
-]]--
+        
+    end
+    ]]--
     
     -- this prevents a sound from being repeated if a cast goes into a channel with the same spellId.
     if event == "UNIT_SPELLCAST_CHANNEL_START" then
@@ -182,7 +190,6 @@ end
             unmuteIfTargeted = false
         end
     end
-
     return enableSound, interruptReady, ccReady, unmuteIfTargeted
 end
 
@@ -241,10 +248,13 @@ aura_env.ParseSpellType = function(spellTypeUser)
         enableGlow = false
         enableBar = false
         enableSound = false
+        
+        --[[
     elseif spellType == "avoid" then
         -- setting default range for avoid spells.
         -- could be changed with a custom tag in the upcoming loop.
         range = 7
+        ]]--
     end 
     
     -- applying overrides if any
@@ -274,8 +284,8 @@ aura_env.ParseSpellType = function(spellTypeUser)
             cleu = "success"
         elseif string.match(v, "ignorecombat") then
             ignoreCombat = true
-        elseif string.match(v, "delaytargeting_") then
-            delayTargeting = v:gsub("delaytargeting_", "")
+        elseif string.match(v, "delaytargetcheck_") then
+            delayTargeting = v:gsub("delaytargetcheck_", "")
             delayTargeting = tonumber(delayTargeting)
         end
     end
@@ -353,6 +363,11 @@ aura_env.PlaySound = function(spellType, ttsEnable, ttsInput, soundFileId, delay
             if ( GetTime() - aura_env.lastPlayed[spellType] <= aura_env.soundThrottle )
             and not priority then
                 return
+                
+            elseif priority 
+            and ( GetTime() - aura_env.lastPlayed[spellType] <= 0.2 ) then
+                return
+                
             else
                 aura_env.lastPlayed[spellType] = GetTime()
             end
@@ -493,91 +508,278 @@ aura_env.CreateMergedList = function()
     setglobal("NPA_mergedList", aura_env.mergedList)
 end
 
+aura_env.UpdateSpellRangeList = function()
+    aura_env.rangeTableUnsorted = {}
+    aura_env.rangeTable = {}
+    
+    -- iterate through spellbook to get all known harmful spells.
+    -- dumping them in an unsorted list with their range as the key.
+    for i = 1, GetNumSpellTabs() do
+        local _, _, offset, numSlots = GetSpellTabInfo(i)
+        for j = offset+1, offset+numSlots do
+            local spellType, id = GetSpellBookItemInfo(j, BOOKTYPE_SPELL)
+            local spellInfo = C_SpellBook.GetSpellInfo(id)
+            if spellInfo then
+                
+                local minRange = spellInfo["minRange"]
+                if minRange == 0 then
+                    minRange = 5
+                end
+                
+                local spellName = spellInfo["name"]
+                local isHarmful = IsHarmfulSpell(j, BOOKTYPE_SPELL)
+                if isHarmful and IsSpellKnown(id) and SpellHasRange(spellName) then
+                    if not aura_env.rangeTableUnsorted[minRange] then
+                        aura_env.rangeTableUnsorted[minRange] = {}
+                    end
+                    aura_env.rangeTableUnsorted[minRange][spellName] = true
+                end
+            end
+        end
+    end
+    
+    -- this sorts the previous list by range.
+    local sortedKeys = {}
+    for i in pairs(aura_env.rangeTableUnsorted) do table.insert(sortedKeys, i) end
+    table.sort(sortedKeys)
+    
+    for _,v in ipairs(sortedKeys) do
+        table.insert(aura_env.rangeTable, {[v] = aura_env.rangeTableUnsorted[v]})
+    end
+    
+end
+
+-- returns true if player is within the specified range of a given unit.
+-- also returns true if the closest spell to check is already out of range.
+aura_env.CheckRange = function(rangeToTest, unitToken)
+    if not UnitExists(unitToken) then
+        return false
+    end
+    
+    for index, rangeTable in pairs(aura_env.rangeTable) do
+        for rangeValue, spellList in pairs(rangeTable) do 
+            for spellName, status in pairs(spellList) do
+                if status then
+                    if rangeValue < rangeToTest then
+                        local spellInRange = IsSpellInRange(spellName, unitToken)
+                        if spellInRange == 1 then
+                            return true
+                        end
+                        
+                    else
+                        local spellInRange = IsSpellInRange(spellName, unitToken)
+                        if spellInRange == 1 then
+                            return true                            
+                        else
+                            return false
+                        end
+                        
+                    end
+                    
+                end
+            end
+        end
+    end
+    
+    return true
+end
+
+-----------------------------------------------------
+------------------ GeRODPS MOD ----------------------
+-----------------------------------------------------
 -----------------------------------------------------
 ------------------ GeRODPS MOD ----------------------
 -----------------------------------------------------
 
 local StunSpell={
+    -- [65]={},
     [103]={"Mighty Bash"}, -- feral
     [253]={"Intimidation"}, -- BM
     [254]={"Intimidation"}, -- MM
     [255]={"Intimidation"}, -- Sur
+    [259]={"Kidney Shot","Gouge","Blind"}, -- ass
+    [260]={"Kidney Shot","Gouge","Blind"}, -- outlaw
+    [261]={"Kidney Shot","Gouge","Blind"}, -- sub
+    [265]={"Fear"}, -- aff
+    [266]={"Fear"}, -- demo
+    [267]={"Fear"}, -- des
+    [71]={"Storm Bolt","Shockwave","Intimidating Shout"}, -- war arm
+    [72]={"Storm Bolt","Shockwave","Intimidating Shout"}, -- war fury
+    [73]={"Storm Bolt","Shockwave","Intimidating Shout"}, -- war port
+    [65]={"Hammer of Justice"},-- Holy
+    [66]={"Hammer of Justice"},-- Port
+    [67]={"Hammer of Justice"},-- Ret
 }
+local StunSpellKnown={}
+
 local function isStunSpellReady()
-    if not IROVar.NPA.UseStun[IROSpecID] then return false end
-    for k,v in pairs(IROVar.NPA.UseStun[IROSpecID][1]) do
-        if IROVar.NPA.UseStun[IROSpecID][2][k] and TMW.CNDT.Env.CooldownDuration(v)==0 then
+    if not StunSpell[IROSpecID] then return false end
+    for k,v in ipairs(StunSpell[IROSpecID]) do
+        if StunSpellKnown[IROSpecID][k] and TMW.CNDT.Env.CooldownDuration(v)==0 then
             return true
         end
     end
     return false
 end
 C_Timer.After(3,function()
-    IROVar=IROVar or {}
-    IROVar.UseNPAWA=1
-    IROVar.NPA=IROVar.NPA or {}
-    IROVar.NPA.SpellID=IROVar.NPA.SpellID or {}
-    for k,_ in pairs(aura_env.validSpellTypes) do
-        IROVar.NPA.SpellID[k]={}
-    end
-    IROVar.NPA.UseStun={}-- { [SpecID] = {{"Spell1","Spell1"}, {[spellKnown1],[spellKnown2]}}
-    for k,v in pairs(StunSpell) do
-        IROVar.NPA.UseStun[k]={{},{}}
-        for kk,vv in pairs(v) do
-            table.insert(IROVar.NPA.UseStun[k][1],vv)
-            table.insert(IROVar.NPA.UseStun[k][2],GetSpellInfo(vv)~=nil)
+        if not IROVar then return end
+        IROVar.UseNPAWA=1
+        IROVar.NPA=IROVar.NPA or {}
+        IROVar.NPA.SpellID=IROVar.NPA.SpellID or {}
+        IROVar.NPA.isStunSpellReady=isStunSpellReady
+        for k,_ in pairs(aura_env.validSpellTypes) do
+            IROVar.NPA.SpellID[k]={}
         end
-    end
-    if not IROVar.fspecOnEventCallBack["UseNAP"] then
-        IROVar.Register_TALENT_CHANGE_scrip_CALLBACK("UseNAP",function() -- recheck Known Skill?
-            if not IROVar.NPA.UseStun[IROSpecID] then return end
-            for k,v in pairs(IROVar.NPA.UseStun[IROSpecID]) do
-                IROVar.NPA.UseStun[IROSpecID][2][k]=GetSpellInfo(v)~=nil
+
+        for k,v in pairs(StunSpell) do
+            StunSpellKnown[k]={}
+            for kk,vv in ipairs(v) do
+                StunSpellKnown[k][kk]=GetSpellInfo(vv)~=nil
             end
-        end)
-    end
+        end
+
+        if IROVar.fspecOnEventCallBack then
+            if not IROVar.fspecOnEventCallBack["UseNPA"] then
+                IROVar.Register_TALENT_CHANGE_scrip_CALLBACK("UseNPA",function() -- recheck Known Skill?
+                        if not StunSpell[IROSpecID] then return end
+                        for k,v in ipairs(StunSpell[IROSpecID]) do
+                            StunSpellKnown[IROSpecID][k]=GetSpellInfo(v)~=nil
+                        end
+                end)
+            end
+        end
+        IROVar.NPA.stopcastingHandle=C_Timer.NewTimer(0.1,function() end)
+        IROVar.NPA.stopcastingCheckHandle=C_Timer.NewTimer(0.1,function() end)
 end)
 
 local GeroCheckSound = aura_env.CheckSound
+
+local function EndTimeUnitCast(u)
+    u=u or "target"
+    local _, _, _, _, EndTimeMS = UnitCastingInfo("player")
+    if not EndTimeMS then
+        _, _, _, _, EndTimeMS = UnitChannelInfo("player")
+    end
+    return EndTimeMS
+end
+
+local spellTypeDmgHandle=C_Timer.NewTimer(0,function() end)
+
 aura_env.CheckSound = function(...)
     local spellId, spellType, unitToken, event, enableSound, range, onlyIfTargeted, ttsTargeted, ttsInput=...
     local interruptReady, ccReady, unmuteIfTargeted
     enableSound, interruptReady, ccReady, unmuteIfTargeted = GeroCheckSound(...)
 
-    IROVar.NPA.SpellID[spellType][spellId]=1
+    if not IROVar then return enableSound, interruptReady, ccReady, unmuteIfTargeted end
 
+    IROVar.NPA.SpellID[spellType][spellId]=1
     if enableSound then
         local n=GetSpellInfo(spellId)
-        print(enableSound and "sound" or "NOsound",spellId,spellType,n)
-    end
-    if spellType=="damage" then
-        IROVar.UpdateCounter("npadmgnotify",1)
-        C_Timer.After(2,function()
-            IROVar.UpdateCounter("npadmgnotify",0)
-        end)
+        --print(enableSound and "sound" or "NOsound",spellId,spellType,n,ttsInput)
+        print(spellType,unitToken,UnitIsUnit("target",unitToken) and "TARGETED!!" or "",n,ttsInput and ttsInput or "")
     end
 
-    if enableSound and spellType=="kick" and TMW_ST:GetCounter("cyclekick")==1 then
+    if enableSound and spellType=="damage" then
+        IROVar.UpdateCounter("npadmgnotify",ttsInput=="defensive" and 2 or 1)
+        spellTypeDmgHandle:Cancel()
+        do
+            local ttt=EndTimeUnitCast(unitToken)
+            ttt=ttt and (ttt/1000 - TMW.time + 0.1) or 2
+            spellTypeDmgHandle=C_Timer.NewTimer(ttt,function()
+                    IROVar.UpdateCounter("npadmgnotify",0)
+            end)
+        end
+    end
+
+    if ttsInput=="stop casting" then
+        IROVar.UpdateCounter("npastopcastingnotify",1)
+        local time_to_safe
+        local _, _, _, _, endTimeMS = UnitCastingInfo(unitToken)
+        time_to_safe = endTimeMS and (endTimeMS/1000) or (2 + TMW.time)
+        do
+            local ssId_Check,uT,TimeToSave=spellId,unitToken,time_to_safe
+            IROVar.NPA.stopcastingCheckHandle:Cancel()
+            IROVar.NPA.stopcastingCheckHandle=C_Timer.NewTicker(0.2,function()
+                    local  _, _, _, _, playereTMS, _, _, _, ssId = UnitCastingInfo(uT)
+                    if not ssId or ssId_Check~=ssId then
+                        --print("enemy Stop Cast")
+                        IROVar.NPA.stopcastingCheckHandle:Cancel()
+                        IROVar.NPA.stopcastingHandle:Cancel()
+                        IROVar.UpdateCounter("npastopcastingnotify",0)
+                        IROVar.UpdateCounter("npastopplayercasting",0)
+                    else
+                        --print("enemy Cast")
+                        playereTMS = EndTimeUnitCast("player")
+                        IROVar.UpdateCounter("npastopplayercasting",playereTMS and playereTMS/1000 > TimeToSave and 1 or 0)
+                    end
+            end)
+        end
+
+        IROVar.NPA.stopcastingHandle:Cancel()
+        IROVar.NPA.stopcastingHandle=C_Timer.NewTimer(time_to_safe-TMW.time,function()
+                IROVar.UpdateCounter("npastopcastingnotify",0)
+                IROVar.UpdateCounter("npastopplayercasting",0)
+                IROVar.NPA.stopcastingHandle:Cancel()
+        end)
+
+    end
+
+    if enableSound and spellType=="kick" and TMW_ST:GetCounter("cyclekick")==1 and TMW_ST:GetCounter("wantinterrupt")==1 then
         do
             local tGUID=UnitGUID(unitToken)
             local tToken=unitToken
             if tGUID then
-                print("Queue KICK")
+                if UnitIsUnit("target",unitToken) then
+                    print("Queue KICK : TARGETED!!")
+                else
+                    print("Queue KICK : not target")
+                end
                 IROVar.TargetEnemy.RegisterTargetting(tGUID,10,function()
-                    return not IsMyInterruptSpellReady() or not IROVar.TargetEnemy.IsTargetCasting(tGUID,tToken)
+                        return not IsMyInterruptSpellReady() or not IROVar.TargetEnemy.IsTargetCasting(tGUID,tToken)
                 end)
             end
         end
     end
 
-    if enableSound and spellType=="stun" and TMW_ST:GetCounter("cyclekick")==1 and isStunSpellReady() then
+    --[[if enableSound then -- CHECK STUN CONDITION
+        print("enableSound")
+        if spellType=="stun" then
+            print("stun")
+            if TMW_ST:GetCounter("cyclekick")==1 then
+                print("cyclekick==1")
+                if isStunSpellReady() then
+                    print("isStunSpellReady")
+                    if UnitGUID(unitToken) then
+                        print("UnitGUID(unitToken)")
+                    else
+                        print(" NOT UnitGUID(unitToken)")
+                    end
+                else
+                    print("NOT isStunSpellReady")
+                end
+            else
+                print("NOT cyclekick==1")
+            end
+        else
+            print("NOT stun")
+        end
+    end]]
+
+    if enableSound and spellType=="stun" and TMW_ST:GetCounter("cyclekick")==1 and isStunSpellReady() and TMW_ST:GetCounter("wantstun")==1 then
+        --print ("stun trigger !!!!!")
         do
             local tGUID=UnitGUID(unitToken)
             local tToken=unitToken
+            --print("Token :",unitToken)
+            --print("tGUID :",tGUID)
             if tGUID then
-                print("Queue STUN")
+                if UnitIsUnit("target",unitToken) then
+                    print("Queue STUN : TARGETED!!")
+                else
+                    print("Queue STUN : not target")
+                end
                 IROVar.TargetEnemy.RegisterTargetting(tGUID,10,function()
-                    return not isStunSpellReady() or not IROVar.TargetEnemy.IsTargetCasting(tGUID,tToken)
+                        return not isStunSpellReady() or not IROVar.TargetEnemy.IsTargetCasting(tGUID,tToken)
                 end)
             end
         end
@@ -585,3 +787,4 @@ aura_env.CheckSound = function(...)
 
     return enableSound, interruptReady, ccReady, unmuteIfTargeted
 end
+

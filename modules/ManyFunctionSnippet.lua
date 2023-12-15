@@ -593,11 +593,4 @@ function IROVar.CTTOK(GUID)
     end
 end
 
-IROVar.UseNAPCycle=nil
-function IROVar.IsTargeted()
-    if not IROVar.TargetEnemy.Cycle then return end
-    print("TargetEnemy")
-    if IROVar.TargetEnemy.AfterTargetEnemyMacro() then print("FoundEnemy") end
-end
 
-IROVar.UseNAPCyclingH=C_Timer.NewTimer(1,function()end)

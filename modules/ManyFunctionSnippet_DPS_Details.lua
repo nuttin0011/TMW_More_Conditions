@@ -151,6 +151,12 @@ function IROVar.DPS.PredictUnitLifeTime(unit)
     return math.floor((HP*IROVar.DPS.CurrentMobAlive)/(IROVar.DPS.Average*nGroup))
 end
 
+function IROVar.DPS.PredictHealthDieIn(t)
+    local nGroup=GetNumGroupMembers()
+    nGroup=(nGroup==0) and 1 or nGroup
+    return t*(IROVar.DPS.Average*(((IROVar.DPS.CurrentMobAlive-1)*0.4)+1)*nGroup)/IROVar.DPS.CurrentMobAlive
+end
+
 IROVar.Register_PLAYER_TARGET_CHANGED_scrip_CALLBACK("Target Life Time Remain",function()
     IROVar.UpdateCounter("targethptimeremain",IROVar.DPS.PredictTargetLifeTime())
 end)

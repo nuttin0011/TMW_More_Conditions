@@ -1,27 +1,24 @@
--- Many Function Version Hekili addon 10.0.5/16
+-- Many Function Version Hekili addon 10.0.5/17c
 -- Set Priority to 7
-
--- function IROVar.Hekili.GetKeyBind()
--- counter "hekilikey" as below
--- counter "hekilicdstatus" 0 = off , 1 = on
--- "hekilidefstatus" 0 = off , 1 = on
--- "hekilimodestatus" 0 = single , 1 = auto , 2 = aoe
--- function IROVar.Hekili.CheckNextSkill(s1,counterName)
-    -- if Skill 2 ~= S1 then Set counterName to 1 then 2 sec set back to 0
-    -- note s1 = Hikili skill format
---function Hekili.State.CheckDragonfireBombDispenser=CheckDragonfireBombDispenser
---function Hekili.State.PrintVal=PrintVal(a,b,c)
---function Hekili.State.SetImpsRequiredToZero()
---function Hekili.State.TurnOffCycleTarget()
---function IROVar.Hekili.DelaySkill(s,t)
---[[Function Demo Lock
-local function CheckTyrantHoGTimer()
-local function ResetTyrantHoGTimer()
+--[[
+function IROVar.Hekili.GetKeyBind()
+counter "hekilikey" as below
+counter "hekilicdstatus" 0 = off , 1 = on
+"hekilidefstatus" 0 = off , 1 = on
+"hekilimodestatus" 0 = single , 1 = auto , 2 = aoe
+function IROVar.Hekili.CheckNextSkill(s1,counterName)
+    if Skill 2 ~= S1 then Set counterName to 1 then 2 sec set back to 0
+    note s1 = Hikili skill format
+function Hekili.State.CheckDragonfireBombDispenser=CheckDragonfireBombDispenser
+function Hekili.State.PrintVal=PrintVal(a,b,c)
+function Hekili.State.SetImpsRequiredToZero()
+function Hekili.State.TurnOffCycleTarget()
+function IROVar.Hekili.DelaySkill(s,t)
 
 function IROVar.Hekili.cooldownsON()
 function IROVar.Hekili.cooldownsOFF()
 
-    counter "overridecd" 0 = no override CD, 1 = always off , 2 = always on
+counter "overridecd" 0 = no override CD, 1 = always off , 2 = always on
 ]]
 
 local playerName = IROVar.playerName
@@ -35,6 +32,8 @@ end
 if not TellMeWhenDB.ERODPSHekiliOptions[realmName][playerName] then
     TellMeWhenDB.ERODPSHekiliOptions[realmName][playerName]={}
 end
+
+local TMWDB=TellMeWhenDB.ERODPSHekiliOptions[realmName][playerName]
 
 --dud 102 103 104 105
 if IROSpecID>=102 and IROSpecID<=105 then
@@ -68,12 +67,12 @@ local usedKey={
     ["F4"]=24,
     ["F5"]=25,
     ["F6"]=26,
-    ["F7"]=27,
-    ["F8"]=28,
-    ["F9"]=29,
-    ["F10"]=30,
-    ["F11"]=31,
-    ["F12"]=32,
+    ["F7"]=27,["CF7"]=271,["SF7"]=272,
+    ["F8"]=28,["CF8"]=281,["SF8"]=282,
+    ["F9"]=29,["CF9"]=291,["SF9"]=292,
+    ["F10"]=30,["CF10"]=301,["SF10"]=302,
+    ["F11"]=31,["CF11"]=311,["SF11"]=312,
+    ["F12"]=32,["CF12"]=321,["SF12"]=322,
     ["cycle"]=99, -- click next enemy
 
 --    ["A"]=65,
@@ -101,12 +100,12 @@ local CounterToKey={
     ["p"]="F4",
     ["q"]="F5",
     ["r"]="F6",
-    ["s"]="F7",
-    ["t"]="F8",
-    ["u"]="F9",
-    ["v"]="F10",
-    ["w"]="F11",
-    ["x"]="F12",
+    ["s"]="F7",["ss"]="CF7",["sss"]="SF7",
+    ["t"]="F8",["tt"]="CF8",["ttt"]="SF8",
+    ["u"]="F9",["uu"]="CF9",["uuu"]="SF9",
+    ["v"]="F10",["vv"]="CF10",["vvv"]="SF10",
+    ["w"]="F11",["ww"]="CF11",["www"]="SF11",
+    ["x"]="F12",["xx"]="CF12",["xxx"]="SF12",
 }
 
 local KeyEnable={}
@@ -171,12 +170,12 @@ end
 if Hekili then
     Hekili.State.COUNTERS=COUNTERS
     Hekili.State.IsSpellOverlayed=Hekili.State.IsSpellOverlayed or IsSpellOverlayed
-    Hekili.State.EroTyrant=EroTyrant
     Hekili.State.PrintVal=PrintVal
     Hekili.State.PrintVal1stIndex=PrintVal1stIndex
     Hekili.State.SetImpsRequiredToZero=SetImpsRequiredToZero
     Hekili.State.TurnOffCycleTarget=TurnOffCycleTarget
     Hekili.State.CheckInteractDistance=CheckInteractDistance
+    Hekili.State.GetSpellCount=GetSpellCount
 else
     C_Timer.After(5,function() Hekili.State.COUNTERS=COUNTERS end)
 end
@@ -202,6 +201,11 @@ local function CheckSpecialTreatment(skillName)
     if dealySkill[skillName] then
         return _Wait
     end
+    if COUNTERS.npastopcastingnotify == 1 then
+        if select(4,GetSpellInfo(Hekili.State.action[skillName].name)) > 0 then
+            return _Wait
+        end
+    end
     --skillName = Hekili SkillName format
     -- counter "playernothasquake" 1 mean not has quake affic
     --GetUnitSpeed("target")
@@ -211,8 +215,6 @@ local function CheckSpecialTreatment(skillName)
             (COUNTERS["targethptimeremain"]>=8)and UnitCanAttack("player","target")and(IsSpellInRange("Chaos Strike","target")==1)
             and(COUNTERS["playernothasquake"]==1)and(StandingTime()>0.4)
         elseif skillName=="glaive_tempest" then
-            --TMW.CNDT.Env.LibRangeCheck:GetRange("target")
-            --/dump IsSpellInRange("Chaos Strike","target")
             return UnitCanAttack("player","target")and(IsSpellInRange("Chaos Strike","target")==1)and(GetUnitSpeed("target")==0)
         elseif skillName=="death_sweep" or skillName=="blade_dance" then
             return UnitCanAttack("player","target")and(IsSpellInRange("Chaos Strike","target")==1)
@@ -253,7 +255,7 @@ local function CheckSpecialTreatment(skillName)
         if skillName=="demonbolt" and
         Hekili.DisplayPool.Primary.Buttons[1].Action=="demonbolt" and
         Hekili.DisplayPool.Primary.Buttons[2].Action=="summon_demonic_tyrant" then
-            if SSmorethan(1) then
+            if SSmorethan(2) then
                 return _HoG
             else
                 return _Tyrant
@@ -261,7 +263,7 @@ local function CheckSpecialTreatment(skillName)
         elseif skillName=="shadow_bolt" and
         Hekili.DisplayPool.Primary.Buttons[1].Action=="shadow_bolt" and
         Hekili.DisplayPool.Primary.Buttons[2].Action=="summon_demonic_tyrant"  then
-            if SSmorethan(1) then
+            if SSmorethan(2) then
                 return _HoG
             else
                 return _Tyrant
@@ -270,13 +272,9 @@ local function CheckSpecialTreatment(skillName)
         Hekili.DisplayPool.Primary.Buttons[1].Action=="shadow_bolt" and
         Hekili.DisplayPool.Primary.Buttons[2].Action=="hand_of_guldan" and
         Hekili.DisplayPool.Primary.Buttons[3].Action=="summon_demonic_tyrant" and
-        SSmorethan(1) and
+        SSmorethan(2) and
         Hekili.State.buff.nether_portal.up then
             return _HoG
-        elseif skillName=="soul_strike" and
-        Hekili.DisplayPool.Primary.Buttons[1].Action=="soul_strike" and
-        Hekili.DisplayPool.Primary.Buttons[2].Action=="summon_demonic_tyrant" then
-            return _Tyrant
         elseif skillName=="demonbolt" and COUNTERS["castingdb"]==1 then
             return _Wait
         elseif skillName=="hand_of_guldan" and (COUNTERS["castinghog"]==1 or not IsUsableSpell("Hand of Gul'dan"))  then --hand_of_guldan
@@ -318,6 +316,10 @@ local function CheckSpecialTreatment(skillName)
         end
     elseif IROSpecID==252 then -- DK Unholy
 
+    elseif IROSpecID==263 then -- Shaman Enh
+        if skillName=="sundering" then
+            return UnitCanAttack("player","target")and(IsSpellInRange("Lava Lash","target")==1)
+        end
     end
     return true
 end
@@ -372,8 +374,6 @@ local function IsSameSet(a,b)
 end
 
 local function FindAndUseKey(skill)
-    local key=""
-    --Hekili.KeybindInfo.hand_of_guldan.upper[1]
     for _,v in pairs(Hekili.KeybindInfo[skill].upper) do
         if usedKey[v] and KeyEnable[v] then
             return v
@@ -390,7 +390,10 @@ function IROVar.Hekili.GetKeyBind()
         end
     end
     local key=""
+
+    --not TMWDB.offGCDSpellName[Hekili.DisplayPool.Primary.Buttons[1].Action]
     if Hekili.DisplayPool.Primary.Recommendations[1].exact_time and
+    not TMWDB.offGCDSpellName[Hekili.DisplayPool.Primary.Buttons[1].Action] and
     Hekili.DisplayPool.Primary.Recommendations[1].exact_time-GetTime()>0.3 then
         return ""
     end
@@ -485,7 +488,6 @@ end
 function IROVar.Hekili.CheckDPS()
     local t=IROVar.DPS.PredictTargetLifeTime()
     IROVar.UpdateCounter("targethptimeremain",t)
-    IROVar.DPS.PredictTargetLifeTime()
     local a=COUNTERS.overridecd
     if a>=1 then return end
     local c=COUNTERS["hekiliautocd"]
@@ -519,22 +521,27 @@ function IROVar.Hekili.CheckNextSkill(s1,counterName)
     end
 end
 
-local function Check1stSpellIsOffGCD()
-    local GCDon = TMW.GCD>0
-    local firstAction = Hekili.DisplayPool.Primary.Recommendations[1].actionName
-    if Hekili.State.action[firstAction] then
-        local firstSkillName = Hekili.State.action[firstAction].name
-        local SkillCD = GetSpellCooldown(firstSkillName)
-        local SkillOffGCD = SkillCD==0
-        local OffGCD = GCDon and SkillOffGCD and 1 or 0
-        IROVar.UpdateCounter("hekilioffgcd",OffGCD)
+if not TMWDB.offGCDSpellName then
+    TMWDB.offGCDSpellName={}
+end
+--UNIT_SPELLCAST_SUCCEEDED
+TMW_ST:AddEvent("UNIT_SPELLCAST_SUCCEEDED",
+function(event,arg1,arg2)
+    if arg1~="player" then return end
+    if not TMWDB.offGCDSpellName[Hekili.State.player.lastoffgcd] then
+        TMWDB.offGCDSpellName[Hekili.State.player.lastoffgcd]=true
     end
+end)
+
+local function Check1stSpellIsOffGCD()
+    local firstAction = Hekili.DisplayPool.Primary.Recommendations[1].actionName
+    IROVar.UpdateCounter("hekilioffgcd",TMWDB.offGCDSpellName[firstAction] and 1 or 0)
 end
 
 C_Timer.NewTicker(0.1,Check1stSpellIsOffGCD)
 
 local function SaveOptionToVar()
-    local Options=TellMeWhenDB.ERODPSHekiliOptions[realmName][playerName]
+    local Options=TMWDB
     local function SaveCounter(a)
         Options[a]=COUNTERS[a]
     end
@@ -555,6 +562,8 @@ local function SaveOptionToVar()
         "cyclekick",
         "stoptargetoutcombat",
         "wantstun",
+        "needuseminordefensive",
+        "healingpotionselected",
     }
     for _,v in pairs(saveName) do
         SaveCounter(v)
@@ -575,7 +584,7 @@ local function LoadOptionFromVar()
         return
     end
     Loaded=true
-    local Options=TellMeWhenDB.ERODPSHekiliOptions[realmName][playerName]
+    local Options=TMWDB
     local function LoadCounter(a)
         if Options[a] and type(Options[a])=="number" then
             TMW_ST:UpdateCounter(a,Options[a])
@@ -599,6 +608,8 @@ local function LoadOptionFromVar()
         "cyclekick",
         "stoptargetoutcombat",
         "wantstun",
+        "needuseminordefensive",
+        "healingpotionselected",
     }
     for _,v in pairs(saveName) do
         LoadCounter(v)
@@ -661,3 +672,5 @@ else
         Hekili.State.CheckDragonfireBombDispenser=CheckDragonfireBombDispenser
     end)
 end
+
+

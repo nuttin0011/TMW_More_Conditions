@@ -591,6 +591,21 @@ end
 ------------------ GeRODPS MOD ----------------------
 -----------------------------------------------------
 
+local function PredictTimeDmgCome(unitToken) -- return start time , end time
+    local notInterruptible,spellId,startTimeMS, endTimeMS , channel
+    channel=true
+    _,_,_,startTimeMS, endTimeMS,_,_,notInterruptible,spellId=UnitCastingInfo("unitToken")
+    if not spellId then
+        channel=false
+        _,_,_,startTimeMS, endTimeMS,_,notInterruptible,spellId=UnitChannelInfo("unitToken")
+    end
+    if not spellId then return GeRODPS.time+10000,GeRODPS.time+10000 end
+    if channel then
+        return GeRODPS.time,endTimeMS/1000
+    end
+    return (startTimeMS/1000)-1,endTimeMS/1000
+end
+
 local StunSpell={
     -- [65]={},
     [102]={"Mighty Bash"--[[,"Maim","Incapacitating Roar"]]}, -- Balance
@@ -617,122 +632,18 @@ local StunSpell={
     [252]={"Asphyxiate"},
 
 }
-
-local StunSpellKnown={}
-
-local function isStunSpellReady()
-    if not StunSpell[IROSpecID] then return false end
-    for k,v in ipairs(StunSpell[IROSpecID]) do
-        if StunSpellKnown[IROSpecID][k] and TMW.CNDT.Env.CooldownDuration(v)==0 then
-            return true
-        end
-    end
-    return false
-end
-C_Timer.After(3,function()
-        if not IROVar then return end
-        IROVar.UseNPAWA=1
-        IROVar.NPA=IROVar.NPA or {}
-        IROVar.NPA.SpellID=IROVar.NPA.SpellID or {}
-        IROVar.NPA.isStunSpellReady=isStunSpellReady
-        for k,_ in pairs(aura_env.validSpellTypes) do
-            IROVar.NPA.SpellID[k]={}
-        end
-
-        for k,v in pairs(StunSpell) do
-            StunSpellKnown[k]={}
-            for kk,vv in ipairs(v) do
-                StunSpellKnown[k][kk]=GetSpellInfo(vv)~=nil
-            end
-        end
-
-        if IROVar.fspecOnEventCallBack then
-            if not IROVar.fspecOnEventCallBack["UseNPA"] then
-                IROVar.Register_TALENT_CHANGE_scrip_CALLBACK("UseNPA",function() -- recheck Known Skill?
-                        if not StunSpell[IROSpecID] then return end
-                        for k,v in ipairs(StunSpell[IROSpecID]) do
-                            StunSpellKnown[IROSpecID][k]=GetSpellInfo(v)~=nil
-                        end
-                end)
-            end
-        end
-        IROVar.NPA.stopcastingHandle=C_Timer.NewTimer(0.1,function() end)
-        IROVar.NPA.stopcastingCheckHandle=C_Timer.NewTimer(0.1,function() end)
-end)
-
 local GeroCheckSound = aura_env.CheckSound
-
-local function EndTimeUnitCast(u)
-    u=u or "target"
-    local _, _, _, _, EndTimeMS = UnitCastingInfo("player")
-    if not EndTimeMS then
-        _, _, _, _, EndTimeMS = UnitChannelInfo("player")
-    end
-    return EndTimeMS
-end
-
-local spellTypeDmgHandle=C_Timer.NewTimer(0,function() end)
-
 aura_env.CheckSound = function(...)
     local spellId, spellType, unitToken, event, enableSound, range, onlyIfTargeted, ttsTargeted, ttsInput=...
     local interruptReady, ccReady, unmuteIfTargeted
     enableSound, interruptReady, ccReady, unmuteIfTargeted = GeroCheckSound(...)
 
-    if not IROVar then return enableSound, interruptReady, ccReady, unmuteIfTargeted end
+    if not GeRODPS then return enableSound, interruptReady, ccReady, unmuteIfTargeted end
+    local GeRODPS=GeRODPS
 
-    IROVar.NPA.SpellID[spellType][spellId]=1
-    if enableSound then
-        local n=GetSpellInfo(spellId)
-        --print(enableSound and "sound" or "NOsound",spellId,spellType,n,ttsInput)
-        print(spellType,unitToken,UnitIsUnit("target",unitToken) and "TARGETED!!" or "",n,ttsInput and ttsInput or "")
-    end
+    GeRODPS.NPA.SpellID[spellType][spellId]=true
 
-    if enableSound and spellType=="damage" then
-        IROVar.UpdateCounter("npadmgnotify",ttsInput=="defensive" and 2 or 1)
-        spellTypeDmgHandle:Cancel()
-        do
-            local ttt=EndTimeUnitCast(unitToken)
-            ttt=ttt and (ttt/1000 - TMW.time + 0.1) or 2
-            spellTypeDmgHandle=C_Timer.NewTimer(ttt,function()
-                    IROVar.UpdateCounter("npadmgnotify",0)
-            end)
-        end
-    end
-
-    if ttsInput=="stop casting" then
-        IROVar.UpdateCounter("npastopcastingnotify",1)
-        local time_to_safe
-        local _, _, _, _, endTimeMS = UnitCastingInfo(unitToken)
-        time_to_safe = endTimeMS and (endTimeMS/1000) or (2 + TMW.time)
-        do
-            local ssId_Check,uT,TimeToSave=spellId,unitToken,time_to_safe
-            IROVar.NPA.stopcastingCheckHandle:Cancel()
-            IROVar.NPA.stopcastingCheckHandle=C_Timer.NewTicker(0.2,function()
-                    local  _, _, _, _, playereTMS, _, _, _, ssId = UnitCastingInfo(uT)
-                    if not ssId or ssId_Check~=ssId then
-                        --print("enemy Stop Cast")
-                        IROVar.NPA.stopcastingCheckHandle:Cancel()
-                        IROVar.NPA.stopcastingHandle:Cancel()
-                        IROVar.UpdateCounter("npastopcastingnotify",0)
-                        IROVar.UpdateCounter("npastopplayercasting",0)
-                    else
-                        --print("enemy Cast")
-                        playereTMS = EndTimeUnitCast("player")
-                        IROVar.UpdateCounter("npastopplayercasting",playereTMS and playereTMS/1000 > TimeToSave and 1 or 0)
-                    end
-            end)
-        end
-
-        IROVar.NPA.stopcastingHandle:Cancel()
-        IROVar.NPA.stopcastingHandle=C_Timer.NewTimer(time_to_safe-TMW.time,function()
-                IROVar.UpdateCounter("npastopcastingnotify",0)
-                IROVar.UpdateCounter("npastopplayercasting",0)
-                IROVar.NPA.stopcastingHandle:Cancel()
-        end)
-
-    end
-
-    if enableSound and spellType=="kick" and TMW_ST:GetCounter("cyclekick")==1 and TMW_ST:GetCounter("wantinterrupt")==1 then
+    if enableSound and spellType=="kick" and GeRODPS.Options.cycle and GeRODPS.Options.kick then
         do
             local tGUID=UnitGUID(unitToken)
             local tToken=unitToken
@@ -742,31 +653,19 @@ aura_env.CheckSound = function(...)
                 else
                     print("Queue KICK : not target")
                 end
-                IROVar.TargetEnemy.RegisterTargetting(tGUID,10,function()
-                        return not IsMyInterruptSpellReady() or not IROVar.TargetEnemy.IsTargetCasting(tGUID,tToken)
+                GeRODPS.TargetEnemy.RegisterTargetting(tGUID,10,function()
+                        return not GeRODPS.interruptSpellReady or not GeRODPS.TargetEnemy.IsUnitCasting(tGUID,tToken)
                 end)
             end
         end
     end
 
-    if enableSound and spellType=="stun" and TMW_ST:GetCounter("cyclekick")==1 and isStunSpellReady() and TMW_ST:GetCounter("wantstun")==1 then
-        --print ("stun trigger !!!!!")
-        do
-            local tGUID=UnitGUID(unitToken)
-            local tToken=unitToken
-            --print("Token :",unitToken)
-            --print("tGUID :",tGUID)
-            if tGUID then
-                if UnitIsUnit("target",unitToken) then
-                    print("Queue STUN : TARGETED!!")
-                else
-                    print("Queue STUN : not target")
-                end
-                IROVar.TargetEnemy.RegisterTargetting(tGUID,10,function()
-                        return not isStunSpellReady() or not IROVar.TargetEnemy.IsTargetCasting(tGUID,tToken)
-                end)
-            end
-        end
+    if enableSound and spellType=="damage" then
+        GeRODPS.NPA.damageStart,GeRODPS.NPA.damageEnd=PredictTimeDmgCome(unitToken)
+        GeRODPS.NPA.damage= ttsInput=="defensive" and 20 or 10 -- 0 none , 10 medium , 20 heavy
+        GeRODPS.NPA.damageUnit=unitToken
+        GeRODPS.NPA.damageUnitGUID=UnitGUID(unitToken)
+        GeRODPS.NPA.damageSpellID=spellId
     end
 
     return enableSound, interruptReady, ccReady, unmuteIfTargeted

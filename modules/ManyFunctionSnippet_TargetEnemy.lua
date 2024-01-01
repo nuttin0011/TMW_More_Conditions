@@ -3,6 +3,7 @@
 if not IROVar then IROVar={} end
 IROVar.TargetEnemy={}
 
+local function return_true_function() return true end
 IROVar.TargetEnemy.Cycling=false
 IROVar.TargetEnemy.CyclingH=C_Timer.NewTimer(0.1,function() end)
 IROVar.TargetEnemy.Cycle=false
@@ -19,10 +20,11 @@ IROVar.TargetEnemy.Pause=false
 ]]
 
 IROVar.TargetEnemy.tGUID=nil
-IROVar.TargetEnemy.tDone=function() return true end
+IROVar.TargetEnemy.tDone=return_true_function
 IROVar.TargetEnemy.tPriority=999
 IROVar.TargetEnemy.tTimesClick=1
 IROVar.TargetEnemy.tExpTime=TMW.time+9999
+local old_Hekili_cycle_status = Hekili.DB.profile.specs[IROSpecID].cycle
 
 function IROVar.TargetEnemy.RegisterTargetting(unitGUID,priority,DoneThisFunc,name,ExpTime)
     table.insert(IROVar.TargetEnemy.Queue,
@@ -30,8 +32,8 @@ function IROVar.TargetEnemy.RegisterTargetting(unitGUID,priority,DoneThisFunc,na
             ["TargetGUID"]=unitGUID,
             ["priority"]=priority,
             ["DoneThis"]=DoneThisFunc,
-            ["Name"]=name,
-            ["ExpTime"]=TMW.time + (ExpTime or 5),
+            ["Name"]=name or "noname",
+            ["ExpTime"]=TMW.time + (ExpTime or 3.4),
         })
     if not IROVar.TargetEnemy.Cycling or priority<IROVar.TargetEnemy.tPriority then
         IROVar.TargetEnemy.NextJob()
@@ -62,6 +64,10 @@ function IROVar.TargetEnemy.NextJob()
         end
     end
     if vv then
+        if not IROVar.TargetEnemy.Cycling then
+            old_Hekili_cycle_status=Hekili.DB.profile.specs[IROSpecID].cycle -- keep Hekili Auto Cycle status
+        end
+        Hekili.DB.profile.specs[IROSpecID].cycle=false -- turn off Hekili Auto Cycle
         if UnitGUID("target")==vv.TargetGUID then
             print("FoundEnemy")
             IROVar.UpdateCounter("cycletargetenemy",0)
@@ -77,8 +83,9 @@ function IROVar.TargetEnemy.NextJob()
         IROVar.TargetEnemy.tPriority=vv.priority
         IROVar.TargetEnemy.tExpTime=vv.ExpTime
     else
+        Hekili.DB.profile.specs[IROSpecID].cycle=old_Hekili_cycle_status-- turn Hekili Auto Cycle to old value
         IROVar.TargetEnemy.tGUID=nil
-        IROVar.TargetEnemy.tDone=function() return true end
+        IROVar.TargetEnemy.tDone=return_true_function
         IROVar.TargetEnemy.Cycling=false
         IROVar.TargetEnemy.Cycle=false
         IROVar.TargetEnemy.tPriority=999
@@ -99,8 +106,10 @@ end
     end
 end]]
 
-function IROVar.TargetEnemy.IntervalCheck() -- run check every 0.1 sec if Cycling
-    if not IROVar.TargetEnemy.Cycling then return end -- should Kill Tick Check interval
+local lastTimeCheck = TMW.time
+
+function IROVar.TargetEnemy.IntervalCheck() -- run check every 0.15 sec if Cycling
+    if #IROVar.TargetEnemy.Queue==0 or TMW.time < lastTimeCheck+0.15 then return end -- should Kill Tick Check interval
     if IROVar.TargetEnemy.tDone() or TMW.time > IROVar.TargetEnemy.tExpTime then
         IROVar.TargetEnemy.NextJob()
     elseif UnitGUID("target")~=IROVar.TargetEnemy.tGUID and not IROVar.TargetEnemy.Cycle then
@@ -108,14 +117,13 @@ function IROVar.TargetEnemy.IntervalCheck() -- run check every 0.1 sec if Cyclin
         IROVar.UpdateCounter("cycletargetenemy",1)
     end
 end
-
 C_Timer.NewTicker(0.15,IROVar.TargetEnemy.IntervalCheck)
 
 ---ClickMouse To Change Target is Pause Targeting for 1 sec
 
-function IROVar.TargetEnemy.AfterTargetEnemyMacro() -- Use after use Macro /targetenemy
-    IROVar.TargetEnemy.tTimesClick=IROVar.TargetEnemy.tTimesClick+1
-    if not IROVar.TargetEnemy.Cycling then return end
+function IROVar.TargetEnemy.AfterTargetEnemyMacro() -- Use after PLAYER_TARGET_CHANGED
+    lastTimeCheck = TMW.time
+    if #IROVar.TargetEnemy.Queue==0 then return end
     if IROVar.TargetEnemy.tDone() or TMW.time > IROVar.TargetEnemy.tExpTime then
         IROVar.TargetEnemy.NextJob()
     elseif UnitGUID("target")==IROVar.TargetEnemy.tGUID then
@@ -129,17 +137,12 @@ function IROVar.TargetEnemy.AfterTargetEnemyMacro() -- Use after use Macro /targ
     end
 end
 
+IROVar.Register_PLAYER_TARGET_CHANGED_scrip_CALLBACK("IROVar.TargetEnemy.AfterTargetEnemyMacro",IROVar.TargetEnemy.AfterTargetEnemyMacro)
+
 function IROVar.TargetEnemy.IsTargetCasting(tGUID,tUnitToken) -- Check Target token/GUID is casting?
     if UnitGUID(tUnitToken)~=tGUID then
-        local m
-        for i=1,30 do
-            local mm="nameplate"..i
-            if UnitGUID(mm)==tGUID then
-                m=mm
-                break
-            end
-        end
-        if m then tGUID=m else return false end
+        tUnitToken=Hekili.npUnits[tGUID]
+        if not tUnitToken then return end
     end
     local n=UnitCastingInfo(tUnitToken)
     if not n then
@@ -152,7 +155,20 @@ IROVar.UseNAPCycle=nil
 function IROVar.IsTargeted()
     if not IROVar.TargetEnemy.Cycle then return end
     print("TargetEnemy")
-    if IROVar.TargetEnemy.AfterTargetEnemyMacro() then print("FoundEnemy") end
+    if UnitGUID("target")==IROVar.TargetEnemy.tGUID then print("FoundEnemy") end
 end
 
 IROVar.UseNAPCyclingH=C_Timer.NewTimer(1,function()end)
+
+IROVar.RegisterOutcombatCallBackRun("TargetEnemy",function()
+    wipe(IROVar.TargetEnemy.Queue)
+    Hekili.DB.profile.specs[IROSpecID].cycle=old_Hekili_cycle_status
+    IROVar.TargetEnemy.tGUID=nil
+    IROVar.TargetEnemy.tDone=return_true_function
+    IROVar.TargetEnemy.Cycling=false
+    IROVar.TargetEnemy.Cycle=false
+    IROVar.TargetEnemy.tPriority=999
+    IROVar.TargetEnemy.tExpTime=TMW.time+9999
+    IROVar.UpdateCounter("cycletargetenemy",0)
+    IROVar.UpdateCounter("cycletargetingenemy",0)
+end)

@@ -115,6 +115,42 @@ for k,v in pairs(CounterToKey) do
     KeyEnable[v]=true
 end
 
+local KeyToColor={
+    [""]="ff000000",
+    ["1"]="ff001100",
+    ["2"]="ff001200",
+    ["3"]="ff001300",
+    ["4"]="ff001400",
+    ["5"]="ff001500",
+    ["6"]="ff001600",
+    ["7"]="ff001700",
+    ["8"]="ff001800",
+    ["9"]="ff001900",
+    ["0"]="ff001a00",
+    ["-"]="ff001b00",
+    ["="]="ff001c00",
+    ["F1"]="ff002100",
+    ["F2"]="ff002200",
+    ["F3"]="ff002300",
+    ["F4"]="ff002400",
+    ["F5"]="ff002500",
+    ["F6"]="ff002600",
+    ["F7"]="ff002700",["CF7"]="ff012701",["SF7"]="ff042704",
+    ["F8"]="ff002800",["CF8"]="ff012801",["SF8"]="ff042804",
+    ["F9"]="ff002900",["CF9"]="ff012901",["SF9"]="ff042904",
+    ["F10"]="ff002a00",["CF10"]="ff012a01",["SF10"]="ff042a04",
+    ["F11"]="ff002b00",["CF11"]="ff012b01",["SF11"]="ff042b04",
+    ["F12"]="ff002c00",["CF12"]="ff012c01",["SF12"]="ff042c04",
+    ["cycle"]="ff0a010a", -- click next enemy
+--    ["A"]=65,
+--    ["B"]=66,
+--    ["C"]=67,
+}
+local ColorToKey={}
+for k,v in pairs(KeyToColor) do
+    ColorToKey[v]=k
+end
+
 if not IROVar then IROVar={} end
 if not IROVar.Hekili then IROVar.Hekili={} end
 
@@ -324,6 +360,38 @@ local function CheckSpecialTreatment(skillName)
     return true
 end
 
+IROVar.Hekili.CheckSpecialTreatment = CheckSpecialTreatment
+
+if not TMWDB.offGCDSpellName then
+    TMWDB.offGCDSpellName={}
+    TMWDB.offGCDSpellName.version=select(1,GetBuildInfo())
+else
+    local version=GetBuildInfo()
+    if TMWDB.offGCDSpellName.version~=version then
+        TMWDB.offGCDSpellName={}
+        TMWDB.offGCDSpellName.version=version
+    end
+end
+--UNIT_SPELLCAST_SUCCEEDED
+TMW_ST:AddEvent("UNIT_SPELLCAST_SUCCEEDED",
+function(event,arg1,arg2)
+    if arg1~="player" then return end
+    if not TMWDB.offGCDSpellName[Hekili.State.player.lastoffgcd] then
+        TMWDB.offGCDSpellName[Hekili.State.player.lastoffgcd]=true
+    end
+end)
+
+local function Check1stSpellIsOffGCD(forced)
+    local firstAction = Hekili.DisplayPool.Primary.Recommendations[1].actionName
+    if forced==nil then
+        IROVar.UpdateCounter("hekilioffgcd",TMWDB.offGCDSpellName[firstAction] and 1 or 0)
+    else
+        IROVar.UpdateCounter("hekilioffgcd",forced and 1 or 0)
+    end
+end
+
+--C_Timer.NewTicker(0.1,Check1stSpellIsOffGCD)
+
 function IROVar.Hekili.UpdateToggleCounter()
     local cd=Hekili.DB.profile.toggles.cooldowns.value and 1 or 0
     local modevalue=Hekili.DB.profile.toggles.mode.value
@@ -390,16 +458,18 @@ function IROVar.Hekili.GetKeyBind()
         end
     end
     local key=""
-
+    local Primary=Hekili.DisplayPool.Primary
+    --Hekili.DisplayPool.Primary.Buttons[1]
     --not TMWDB.offGCDSpellName[Hekili.DisplayPool.Primary.Buttons[1].Action]
-    if Hekili.DisplayPool.Primary.Recommendations[1].exact_time and
-    not TMWDB.offGCDSpellName[Hekili.DisplayPool.Primary.Buttons[1].Action] and
-    Hekili.DisplayPool.Primary.Recommendations[1].exact_time-GetTime()>0.3 then
+    if Primary.Recommendations[1].exact_time and
+    Primary.Recommendations[1].indicator ~= "cycle" and
+    not TMWDB.offGCDSpellName[Primary.Buttons[1].Action] and
+    Primary.Recommendations[1].exact_time-TMW.time>0.3 then
         return ""
     end
     for i=1,9 do
-        if Hekili.DisplayPool.Primary.Buttons[i] then
-            local CSTStatus=CheckSpecialTreatment(Hekili.DisplayPool.Primary.Buttons[i].Action)
+        if Primary.Buttons[i] then
+            local CSTStatus=CheckSpecialTreatment(Primary.Buttons[i].Action)
             if CSTStatus then
                 if CSTStatus==_Wait then return "" end
                 if CSTStatus==_Tyrant then
@@ -413,17 +483,17 @@ function IROVar.Hekili.GetKeyBind()
                 local UseCD=COUNTERS["hekilicheckcd"]==1
                 local UseCycleEnemy=COUNTERS["cycleenemy"]==1
                 if UseCD then
-                    local lastStart = Hekili.DisplayPool.Primary.Buttons[i].Cooldown.lastStart or 0
+                    local lastStart = Primary.Buttons[i].Cooldown.lastStart or 0
                     --Hekili.DisplayPool.Primary.Buttons[1].Cooldown.lastStart
                     --Hekili.DisplayPool.Primary.Buttons[1].Cooldown.lastDuration
                     --Hekili.DisplayPool.Primary.Buttons[i].unusable
-                    local lastDuration= Hekili.DisplayPool.Primary.Buttons[i].Cooldown.lastDuration or 0
+                    local lastDuration= Primary.Buttons[i].Cooldown.lastDuration or 0
                     local CDready = (lastStart+lastDuration-TMW.time)<0.2
-                    local usable = not Hekili.DisplayPool.Primary.Buttons[i].unusable
+                    local usable = not Primary.Buttons[i].unusable
                     if CDready and usable then
-                        key=Hekili.DisplayPool.Primary.Buttons[i].Keybinding:GetText()
+                        key=Primary.Buttons[i].Keybinding:GetText()
                         if usedKey[key] and KeyEnable[key] then
-                            if UseCycleEnemy and Hekili.DisplayPool.Primary.Recommendations[i].indicator == "cycle" then
+                            if UseCycleEnemy and Primary.Recommendations[i].indicator == "cycle" then
                                 return "cycle"
                             end
                             --if not IsUsableSpell(Hekili.State.action[Hekili.DisplayPool.Primary.Buttons[i].Action].name) then return ""end
@@ -431,9 +501,9 @@ function IROVar.Hekili.GetKeyBind()
                         end
                     end
                 else
-                    key=Hekili.DisplayPool.Primary.Buttons[i].Keybinding:GetText()
+                    key=Primary.Buttons[i].Keybinding:GetText()
                     if usedKey[key] and KeyEnable[key] then
-                        if UseCycleEnemy and Hekili.DisplayPool.Primary.Recommendations[i].indicator == "cycle" then
+                        if UseCycleEnemy and Primary.Recommendations[i].indicator == "cycle" then
                             return "cycle"
                         end
                         --if not IsUsableSpell(Hekili.State.action[Hekili.DisplayPool.Primary.Buttons[i].Action].name) then return ""end
@@ -466,12 +536,45 @@ TMW_ST:AddEvent("UNIT_SPELLCAST_SUCCEEDED",function(event,unitToken)
     end
 end)
 
-
-C_Timer.NewTicker(0.05,function()
+local _KeyNextTime = 0
+HekiliIconSender={}
+local function UpdateKey()
     local k=IROVar.Hekili.GetKeyBind()
-    _CurrentKey=k
-    IROVar.UpdateCounter("hekilikey",usedKey[k])
-end)
+    --local currentKey=ColorToKey[HekiliIconSender[c].attributes.calculatedState.Color]
+    if _CurrentKey~=k or TMW.time > _KeyNextTime then
+        local c = COUNTERS.iconuse
+        c= c+1 > 4 and 1 or c+1
+        TMW_ST:UpdateCounter("iconuse",c)
+        _CurrentKey=k
+        _KeyNextTime=TMW.time+0.3
+        local color=KeyToColor[k]
+        HekiliIconSender[1].attributes.calculatedState.Color=color
+        HekiliIconSender[2].attributes.calculatedState.Color=color
+        HekiliIconSender[3].attributes.calculatedState.Color=color
+        HekiliIconSender[4].attributes.calculatedState.Color=color
+        HekiliIconSender[1]:Hide()
+        HekiliIconSender[2]:Hide()
+        HekiliIconSender[3]:Hide()
+        HekiliIconSender[4]:Hide()
+        HekiliIconSender[c]:Show()
+    end
+    if k=="cycle" then
+        Check1stSpellIsOffGCD(true)
+    else
+        Check1stSpellIsOffGCD()
+    end
+    --IROVar.UpdateCounter("hekilikey",usedKey[k])
+end
+
+local function SetupKey()
+    if HekiliIconSender[1] and HekiliIconSender[2] then
+        TMW_ST:UpdateCounter("iconuse",1)
+        C_Timer.NewTicker(0.05,UpdateKey)
+    else
+        C_Timer.After(0.8,SetupKey)
+    end
+end
+C_Timer.After(2,SetupKey)
 
 function IROVar.Hekili.cooldownsON()
     if not Hekili.DB.profile.toggles.cooldowns.value then
@@ -521,24 +624,7 @@ function IROVar.Hekili.CheckNextSkill(s1,counterName)
     end
 end
 
-if not TMWDB.offGCDSpellName then
-    TMWDB.offGCDSpellName={}
-end
---UNIT_SPELLCAST_SUCCEEDED
-TMW_ST:AddEvent("UNIT_SPELLCAST_SUCCEEDED",
-function(event,arg1,arg2)
-    if arg1~="player" then return end
-    if not TMWDB.offGCDSpellName[Hekili.State.player.lastoffgcd] then
-        TMWDB.offGCDSpellName[Hekili.State.player.lastoffgcd]=true
-    end
-end)
 
-local function Check1stSpellIsOffGCD()
-    local firstAction = Hekili.DisplayPool.Primary.Recommendations[1].actionName
-    IROVar.UpdateCounter("hekilioffgcd",TMWDB.offGCDSpellName[firstAction] and 1 or 0)
-end
-
-C_Timer.NewTicker(0.1,Check1stSpellIsOffGCD)
 
 local function SaveOptionToVar()
     local Options=TMWDB
@@ -619,7 +705,7 @@ end
 
 C_Timer.After(2,LoadOptionFromVar) -- load after login,
 
-local function CheckDragonfireBombDispenser()
+local function CheckDragonfireBombDispenser() -- Trinket in DF raid 2
     local id=408671
     --GetSpellCharges(408671)
     local currentCharges, maxCharges, cooldownStart, cooldownDuration, chargeModRate = GetSpellCharges(id)

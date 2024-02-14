@@ -599,11 +599,12 @@ local function PredictTimeDmgCome(unitToken) -- return start time , end time
         channel=false
         _,_,_,startTimeMS, endTimeMS,_,notInterruptible,spellId=UnitChannelInfo("unitToken")
     end
-    if not spellId then return GeRODPS.time+10000,GeRODPS.time+10000 end
+    if not spellId then return GeRODPS.time,GeRODPS.time+1 end
+    endTimeMS=endTimeMS/1000
     if channel then
-        return GeRODPS.time,endTimeMS/1000
+        return GeRODPS.time,endTimeMS
     end
-    return (startTimeMS/1000)-1,endTimeMS/1000
+    return endTimeMS-1,endTimeMS
 end
 
 local StunSpell={
@@ -643,7 +644,9 @@ aura_env.CheckSound = function(...)
 
     GeRODPS.NPA.SpellID[spellType][spellId]=true
 
-    if enableSound and spellType=="kick" and GeRODPS.Options.cycle and GeRODPS.Options.kick then
+    if enableSound and spellType=="kick" and GeRODPS.Options.cycle and GeRODPS.Options.kick and
+    GeRODPS.interruptSpellName and IsSpellInRange(GeRODPS.interruptSpellName,unitToken)==1
+    then
         do
             local tGUID=UnitGUID(unitToken)
             local tToken=unitToken

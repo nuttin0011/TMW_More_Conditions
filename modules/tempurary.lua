@@ -1,12 +1,18 @@
-function IROVar.TargetEnemy.IsUnitCasting(tGUID,tUnitToken) -- Check Target token/GUID is casting?
-    if UnitGUID(tUnitToken)~=tGUID then
-        tUnitToken=Hekili.npUnits[tGUID]
-        if not tUnitToken then return end
+
+local config=aura_env.config
+
+for k,v in pairs(config) do
+    if type(v)=="table" then
+        if not GeRODPS.Options[k] then
+            GeRODPS.Options[k]={}
+        end
+        for k2,v2 in pairs(v) do
+            GeRODPS.Options[k][k2]=v2
+        end
+    else
+        GeRODPS.Options[k]=v
     end
-    local n=UnitCastingInfo(tUnitToken)
-    if not n then
-        n=UnitChannelInfo(tUnitToken)
-    end
-    if n then return true else return false end
 end
+
+
 

@@ -34,7 +34,10 @@
         "ItemRefTooltip",
         "enabled",
         "USE",
-        "BOOKTYPE_SPELL"
+        "BOOKTYPE_SPELL",
+        "UnitAura",
+        "UnitBuff",
+        "UnitDebuff"
     ],
     "Lua.diagnostics.disable": [
         "deprecated"

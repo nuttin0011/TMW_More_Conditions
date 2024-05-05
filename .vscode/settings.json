@@ -37,7 +37,13 @@
         "BOOKTYPE_SPELL",
         "UnitAura",
         "UnitBuff",
-        "UnitDebuff"
+        "UnitDebuff",
+        "setglobal",
+        "AuraUtil",
+        "ceil",
+        "wipe",
+        "GetBuildInfo",
+        "strfind"
     ],
     "Lua.diagnostics.disable": [
         "deprecated"

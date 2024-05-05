@@ -6,6 +6,9 @@ if not _G.GeRODPS then
     setglobal("GeRODPS",{1,2,3})
 end
 local GeRODPS=GeRODPS
+GeRODPS.LoadingComplete=false
+GeRODPS.LoadingComplete2=true
+GeRODPS.LoadingStatus="GeRODPS Load INCOMPLETE tryto /reload......................"
 GeRODPS.time=GetTime()
 GeRODPS.timeMarker1sec=GetTime()
 GeRODPS.lastsection=0 -- last Calculated + Update if Needed
@@ -976,3 +979,5 @@ function GeRODPS.CheckSkillDelay()
 end
 
 GeRODPS.SpellCanReflect={}
+GeRODPS.LoadingStatus="GeRODPS Loading Complete"
+GeRODPS.LoadingComplete=true

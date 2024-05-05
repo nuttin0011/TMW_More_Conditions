@@ -1,6 +1,6 @@
 -- On SHOW
 local GeRODPS,Hekili,WeakAuras=GeRODPS,Hekili,WeakAuras
-
+GeRODPS.LoadingComplete2=false
 local impending_victory_ans,victory_rush_ans
 GeRODPS.SpecialSkillIcon1 = { 
     ["WARRIOR"] =
@@ -357,8 +357,12 @@ if not GeRODPS.KeyBind.Button then
 end
 
 function GeRODPS.UpdatePotionKey()
-    local macro="/use "..GeRODPS.Options.CurrentHealingPotion
-    GeRODPS.KeyBind.Button["ALT-F7"]:SetAttribute("macrotext", macro);
+    if not InCombatLockdown() then
+        local macro="/use "..GeRODPS.Options.CurrentHealingPotion
+        GeRODPS.KeyBind.Button["ALT-F7"]:SetAttribute("macrotext", macro);
+    else
+        C_Timer.After(3,GeRODPS.UpdatePotionKey)
+    end
 end
 C_Timer.After(3,GeRODPS.UpdatePotionKey)
 -- Set Console Button
@@ -550,3 +554,43 @@ function GeRODPS.GerSkillStatus(s)
         return "null"
     end
 end
+
+local re1=WeakAuras.GetRegion("GeRODPS Hekili CD off")
+local re2=WeakAuras.GetRegion("GeRODPS Hekili CD")
+local re3=WeakAuras.GetRegion("GeRODPS Hekili CD on")
+function GeRODPS.ClickCDMode(mode)
+    if mode=="auto" then
+        if GeRODPS.Options.CDmode~=1 then
+            re1:Color(0.5,0.5,0.5)re2:Color(0.1,0.8,0.1)re3:Color(0.5,0.5,0.5)
+            GeRODPS.Options.CDmode=1
+        else
+            if GeRODPS.Options.CDTTDthreshold<=5 then
+                GeRODPS.Options.CDTTDthreshold=10
+            else
+                GeRODPS.Options.CDTTDthreshold=GeRODPS.Options.CDTTDthreshold+10
+            end
+            if GeRODPS.Options.CDTTDthreshold>60 then GeRODPS.Options.CDTTDthreshold=5 end
+            for k,v in pairs(re2.subRegions) do
+                if v.type=="subtext" and v.text_text~="Auto" then
+                    v:ChangeText(tostring(GeRODPS.Options.CDTTDthreshold))
+                    break
+                end
+            end
+        end
+    elseif mode=="off" then
+        re1:Color(0.8,0.1,0.1)re2:Color(0.5,0.5,0.5)re3:Color(0.5,0.5,0.5)
+        if Hekili.State.toggle.cooldowns then
+            Hekili:FireToggle("cooldowns")
+        end
+        GeRODPS.Options.CDmode=0
+    elseif mode=="on" then
+        re1:Color(0.5,0.5,0.5)re2:Color(0.5,0.5,0.5)re3:Color(0.5,0.9,0.6)
+        if not Hekili.State.toggle.cooldowns then
+            Hekili:FireToggle("cooldowns")
+        end
+        GeRODPS.Options.CDmode=2
+    end
+end
+
+print(GeRODPS.LoadingStatus)
+GeRODPS.LoadingComplete2=true

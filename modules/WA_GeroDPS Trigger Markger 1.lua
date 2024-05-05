@@ -38,6 +38,10 @@ no action
 function()
     local Hekili=Hekili
     local GeRODPS=GeRODPS
+    if not GeRODPS.LoadingComplete or not GeRODPS.LoadingComplete2 then
+        print("GeRODPS Load Incomplete, try Reload ................")
+        return true
+    end
     GeRODPS.time=GetTime()
     if GeRODPS.time-GeRODPS.lastsection < GeRODPS.Options.system.update_interval_time then
         if GeRODPS.time>GeRODPS.timeMarker1sec then

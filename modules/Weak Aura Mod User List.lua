@@ -80,9 +80,13 @@ aura_env.unitAndSpellList = {
         },
     }, 
 
-    [186206] = -- Cruel Bonecrusher -- test at BHH
+    [186206] = -- Cruel Bonecrusher -- test at BHH -- cannot interrupt
     {
         [382593] = "damage/onlyIfOnMe", -- crushing smash
        
-    }, 
+    },
+    [185528] = --Trickclaw Mystic  -- test at BHH -- can interrupt
+    {
+        [382249] = "kick"
+    }
 }

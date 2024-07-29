@@ -1,5 +1,13 @@
 -- On SHOW
+-- GeRODPS.BigWigs_GetTimeRemaining(text)
 local GeRODPS,Hekili,WeakAuras=GeRODPS,Hekili,WeakAuras
+local IsSpellInRange=C_Spell.IsSpellInRange
+Hekili.State.gerodps=GeRODPS
+Hekili.State.AuraUtil=AuraUtil
+Hekili.State.next=next
+Hekili.State.debuff_lanced=function()
+    return Hekili.State.target.npcid==186616 and AuraUtil.FindAuraByName("Lanced!","target","HARMFUL")
+end
 GeRODPS.LoadingComplete2=false
 local impending_victory_ans,victory_rush_ans
 GeRODPS.SpecialSkillIcon1 = { 
@@ -11,7 +19,7 @@ GeRODPS.SpecialSkillIcon1 = {
             local talen = Hekili.State.talent.impending_victory.enabled
             local CD = GeRODPS.CDReady(202168)
             local HP = GeRODPS.health_abs <= GeRODPS.Options.warrior.hp_victory_rush
-            impending_victory_ans=options and def and HP and talen and CD and IsSpellInRange("Slam","target")==1
+            impending_victory_ans=options and def and HP and talen and CD and IsSpellInRange("Slam","target")
             return impending_victory_ans
         end},
         {"victory_rush",function()--GeRODPS.SpecialSkillIcon1.WARRIOR[2][2]()
@@ -21,17 +29,61 @@ GeRODPS.SpecialSkillIcon1 = {
             local CD = GeRODPS.CDReady(34428)
             local HP = GeRODPS.health_abs <= GeRODPS.Options.warrior.hp_victory_rush
             local usable = IsUsableSpell(34428)
-            victory_rush_ans=options and def and HP and talen and CD and usable and IsSpellInRange("Slam","target")==1
+            victory_rush_ans=options and def and HP and talen and CD and usable and IsSpellInRange("Slam","target")
             return victory_rush_ans
         end},
     },
-    ["PALADIN"] = 
+    ["PALADIN"] =
     {
+        {"word_of_glory",function()
+            if GeRODPS.specID~=70 and GeRODPS.specID~=66 then return false end--ret,port
+            local incombat = GeRODPS.incombat
+            local use = GeRODPS.Options.Def and GeRODPS.Options.paladin.use_word_of_glory
+            local usable = function() return IsUsableSpell(85673)end
+            local known = Hekili.State:IsKnown(85673)
+            local HP = GeRODPS.health_abs <= GeRODPS.Options.paladin.word_of_glory_treshold
+            local target = function() return UnitCanAttack("player","target") or not UnitExists("target") or UnitIsUnit("target","player")end
+            return incombat and use and HP and known and usable() and target()
+        end},
+        {"flash_of_light",function()
+            if GeRODPS.specID~=70 and GeRODPS.specID~=66 then return false end--ret,port
+            local incombat = GeRODPS.incombat
+            local use = GeRODPS.Options.Def and GeRODPS.Options.paladin.use_flash_of_light
+            local usable = function() return IsUsableSpell(19750)end
+            local HPveryLow = GeRODPS.health_abs <= GeRODPS.Options.paladin.flash_of_light_treshold
+            local HPLow = GeRODPS.health_abs <= GeRODPS.Options.paladin.flash_of_light_outcombat_treshold
+            local targetSelf = function() return UnitCanAttack("player","target") or not UnitExists("target") or UnitIsUnit("target","player")end
+            local mana_reserved = Hekili.State.mana.pct>GeRODPS.Options.paladin.fol_mana_reserved
+            return use and (HPveryLow or not incombat and HPLow)and mana_reserved and usable() and targetSelf()
+        end}
     },
-    ["HUNTER"] = 
+    ["HUNTER"] =
     {
+        {"exhilaration",function()
+            local incombat = GeRODPS.incombat
+            local def = GeRODPS.Options.Def
+            local known = Hekili.State:IsKnown(109304)
+            local CD = GeRODPS.CDReady(109304)
+            local hunter=GeRODPS.Options.hunter
+            local useskill = (hunter.use_exhilaration and GeRODPS.health_abs<hunter.exhilaration_threshold) or
+            (hunter.use_exhilaration_pet and Hekili.State.pet.alive and Hekili.State.pet.health_pct<hunter.exhilaration_pet_threshold)
+            --Hekili.State.pet.alive
+            return incombat and def and known and CD and useskill
+        end},
+        {"mend_pet",function()--136
+            local def = GeRODPS.Options.Def
+            local known = Hekili.State:IsKnown(136)
+            local CD = GeRODPS.CDReady(136)
+            local use = GeRODPS.Options.hunter.use_mend_pet and Hekili.State.pet.alive and Hekili.State.pet.health_pct<GeRODPS.Options.hunter.mend_pet_threshold
+            return def and known and CD and use
+        end},
+        {"ALT-F9",function() -- only Hunter
+            local pet_dead_message = GeRODPS.pet_is_dead_use_revive_pet
+            local pet_dead = UnitExists("pet") and UnitIsDead("pet")
+            return pet_dead_message or pet_dead
+        end}
     },
-    ["ROGUE"] = 
+    ["ROGUE"] =
     {
         {"feint",function() -- 1966
             local exclude = GeRODPS.ExcludeDEF["ROGUE"][GeRODPS.ZoneName]
@@ -41,8 +93,8 @@ GeRODPS.SpecialSkillIcon1 = {
             local CD = GeRODPS.CDReady(1966)
             local useable=IsUsableSpell(1966)
             local DmgCome=(GeRODPS.time>GeRODPS.NPA.damageStart-2) and (GeRODPS.time<GeRODPS.NPA.damageEnd)
-            local aura = WA_GetUnitBuff("player",1966,"PLAYER")==nil
-            return known and useskill and def and DmgCome and CD and useable and aura and not exclude
+            local aura = function() return WA_GetUnitBuff("player",1966,"PLAYER")==nil end
+            return known and useskill and def and DmgCome and CD and useable and not exclude and aura()
         end},
         {"crimson_vial",function() --crimson vail 185311
             local incombat = GeRODPS.incombat
@@ -55,10 +107,10 @@ GeRODPS.SpecialSkillIcon1 = {
             return incombat and HP and def and useskill and known and CD and useable
         end},
     },
-    ["PRIEST"] = 
+    ["PRIEST"] =
     {
     },
-    ["DEATHKNIGHT"] = 
+    ["DEATHKNIGHT"] =
     {
         {"death_strike",function() --49998
             local HP = GeRODPS.health_abs <= 60
@@ -66,20 +118,20 @@ GeRODPS.SpecialSkillIcon1 = {
             local known = Hekili.State:IsKnown(49998)
             local CD = GeRODPS.CDReady(49998)
             local useable=IsUsableSpell(49998)
-            local range=IsSpellInRange("death strike","target")==1
+            local range=IsSpellInRange("death strike","target")
             local canattack = UnitCanAttack("player","target")
             return known and def and CD and useable and HP and range and canattack
         end},
     },
-    ["SHAMAN"] = 
+    ["SHAMAN"] =
     {
     },
-    ["MAGE"] = 
+    ["MAGE"] =
     {
         {"ALT-F8",GeRODPS.Condition_Use_HealthStone},
         {"ALT-F7",GeRODPS.Condition_Use_HealingPotion}, -- Healing Potion
     },
-    ["WARLOCK"] = 
+    ["WARLOCK"] =
     {
         {"ALT-F8",GeRODPS.Condition_Use_HealthStone},
         {"ALT-F7",GeRODPS.Condition_Use_HealingPotion}, -- Healing Potion
@@ -102,19 +154,26 @@ GeRODPS.SpecialSkillIcon1 = {
             return known and def and deftrigger and hptrigger and CD
         end},
     },
-    ["MONK"] = 
+    ["MONK"] =
     {
     },
-    ["DRUID"] = 
+    ["DRUID"] =
+    {
+        {"regrowth",function()--feral regrowth
+            if GeRODPS.specID~=103 then return false end
+            local use = GeRODPS.Options.Def and GeRODPS.Options.druid.use_feral_regrowth
+            local HP = GeRODPS.health_abs <= GeRODPS.Options.druid.feral_regrowth_treshold
+            local aura = function() return WA_GetUnitBuff("player",69369,"PLAYER")~=nil end--Predatory Swiftness
+            return use and HP and aura()
+        end}
+    },
+    ["DEMONHUNTER"] =
     {
     },
-    ["DEMONHUNTER"] = 
+    ["EVOKER"] =
     {
     },
-    ["EVOKER"] = 
-    {
-    },
-    ["NONE"] = 
+    ["NONE"] =
     {
     },
 }
@@ -131,31 +190,43 @@ GeRODPS.SpecialSkillIcon2 = {
         {"defensive_stance",function()
             local def = GeRODPS.Options.Def
             local options = GeRODPS.Options.warrior.use_defensive_stance
-            local nothasDS=WA_GetUnitBuff("player",386208,"PLAYER")==nil --defensive stance
+            local nothasDS=function() return WA_GetUnitBuff("player",386208,"PLAYER")==nil end --defensive stance
             local DmgCome=(GeRODPS.time>GeRODPS.NPA.damageStart-GeRODPS.Options.warrior.use_defensive_stance_time) and (GeRODPS.time<GeRODPS.NPA.damageEnd)
             local aggro = Hekili.State.aggro
             local CD=GetSpellCooldown(386208)==0
-            return options and def and nothasDS and (DmgCome or aggro) and CD
+            return options and def and (DmgCome or aggro) and CD and nothasDS()
         end},
         {"berserker_stance",function()
             local aggro = Hekili.State.aggro
             local role = Hekili.State.role.attack
             local known = Hekili.State:IsKnown(386196)
-            local nothasBS=WA_GetUnitBuff("player",386196,"PLAYER")==nil --Berserker Stance
+            local nothasBS=function() return WA_GetUnitBuff("player",386196,"PLAYER")==nil end--Berserker Stance
             local DmgNone=(GeRODPS.time>GeRODPS.NPA.damageEnd)
             local HP=GeRODPS.health_abs>=80
-            local CD=GetSpellCooldown(386196)==0
-            return not aggro and role and known and nothasBS and DmgNone and HP and CD
+            local CD=function() return GetSpellCooldown(386196)==0 end
+            local DmgUnitCastDone=function()
+            if UnitExists(GeRODPS.NPA.damageUnit) then
+                return not(UnitCastingInfo(GeRODPS.NPA.damageUnit) or UnitChannelInfo(GeRODPS.NPA.damageUnit))
+            else
+                return true
+            end end
+            return not aggro and role and known and DmgNone and HP and CD() and DmgUnitCastDone() and nothasBS()
         end},
         {"battle_stance",function()
             local aggro = Hekili.State.aggro
             local role = Hekili.State.role.attack
             local known = Hekili.State:IsKnown(386164)
-            local nothasBS=WA_GetUnitBuff("player",386164,"PLAYER")==nil --battle_stance
+            local nothasBS=function() return WA_GetUnitBuff("player",386164,"PLAYER")==nil end --battle_stance
             local DmgNone=(GeRODPS.time>GeRODPS.NPA.damageEnd)
             local HP=GeRODPS.health_abs>=80
-            local CD=GetSpellCooldown(386164)==0
-            return not aggro and role and known and nothasBS and DmgNone and HP and CD
+            local CD=function() return GetSpellCooldown(386164)==0 end
+            local DmgUnitCastDone=function()
+                if UnitExists(GeRODPS.NPA.damageUnit) then
+                    return not(UnitCastingInfo(GeRODPS.NPA.damageUnit) or UnitChannelInfo(GeRODPS.NPA.damageUnit))
+                else
+                    return true
+                end end
+            return not aggro and role and known and DmgNone and HP and CD() and DmgUnitCastDone() and nothasBS()
         end},
     },
     ["PALADIN"] =
@@ -181,22 +252,22 @@ GeRODPS.SpecialSkillIcon2 = {
     ["ROGUE"] =
     {
         {"ALT-F8",GeRODPS.Condition_Use_HealthStone},
-        {"ALT-F7",GeRODPS.Condition_Use_HealingPotion}, -- Healing Potion
+        {"ALT-F7",GeRODPS.Condition_Use_HealingPotion},
     },
     ["PRIEST"] =
     {
         {"ALT-F8",GeRODPS.Condition_Use_HealthStone},
-        {"ALT-F7",GeRODPS.Condition_Use_HealingPotion}, -- Healing Potion
+        {"ALT-F7",GeRODPS.Condition_Use_HealingPotion},
     },
     ["DEATHKNIGHT"] =
     {
         {"ALT-F8",GeRODPS.Condition_Use_HealthStone},
-        {"ALT-F7",GeRODPS.Condition_Use_HealingPotion}, -- Healing Potion
+        {"ALT-F7",GeRODPS.Condition_Use_HealingPotion},
     },
     ["SHAMAN"] =
     {
         {"ALT-F8",GeRODPS.Condition_Use_HealthStone},
-        {"ALT-F7",GeRODPS.Condition_Use_HealingPotion}, -- Healing Potion
+        {"ALT-F7",GeRODPS.Condition_Use_HealingPotion},
     },
     ["MAGE"] =
     {
@@ -205,7 +276,7 @@ GeRODPS.SpecialSkillIcon2 = {
         end},
         {"ALT-F7",function()
             return GeRODPS.InGCDnoCast() and GeRODPS.Condition_Use_HealingPotion()
-        end}, -- Healing Potion
+        end},
     },
     ["WARLOCK"] =
     {
@@ -214,8 +285,8 @@ GeRODPS.SpecialSkillIcon2 = {
         end},
         {"ALT-F7",function()
             return GeRODPS.InGCDnoCast() and GeRODPS.Condition_Use_HealingPotion()
-        end}, -- Healing Potion
-        {"dark_pact",function() --id 108416
+        end},
+        {"dark_pact",function() --108416
             local incombat = GeRODPS.incombat
             local def = GeRODPS.Options.Def
             local deftrigger = GeRODPS.Options.warlock.use_dark_pact_def_trigger and GeRODPS.time<GeRODPS.NPA.damageEnd
@@ -226,7 +297,7 @@ GeRODPS.SpecialSkillIcon2 = {
             local CD = GetSpellCooldown(108416)==0
             return incombat and def and trigger and inGCD and known and CD
         end},
-        {"unending_resolve",function() -- 104773
+        {"unending_resolve",function() --104773
             local def = GeRODPS.incombat and GeRODPS.Options.Def and GeRODPS.Options.warlock.use_unending_def_if_cannot_dark_pact
             local deftrigger = GeRODPS.Options.warlock.use_dark_pact_def_trigger and GeRODPS.time<GeRODPS.NPA.damageEnd and GeRODPS.time>GeRODPS.NPA.damageStart-2
             local hptrigger = GeRODPS.Options.warlock.use_dark_pact_hp_trigger and GeRODPS.health_abs <= 90
@@ -238,35 +309,43 @@ GeRODPS.SpecialSkillIcon2 = {
         {"burning_rush",function()
             local options = GeRODPS.Options.warlock.cancel_burning_rush
             local talent = Hekili.State.talent.burning_rush.enabled
-            local buff = WA_GetUnitBuff("player", "Burning Rush")~=nil
+            local buff = function() return WA_GetUnitBuff("player", "Burning Rush")~=nil end
             local time = GeRODPS.time-GeRODPS.playerStandLastTime>GeRODPS.Options.warlock.cancel_burning_rush_time
-            return options and talent and buff and time
+            return options and talent and time and buff()
         end},
     },
     ["MONK"] =
     {
         {"ALT-F8",GeRODPS.Condition_Use_HealthStone},
-        {"ALT-F7",GeRODPS.Condition_Use_HealingPotion}, -- Healing Potion
+        {"ALT-F7",GeRODPS.Condition_Use_HealingPotion},
     },
     ["DRUID"] =
     {
         {"ALT-F8",GeRODPS.Condition_Use_HealthStone},
-        {"ALT-F7",GeRODPS.Condition_Use_HealingPotion}, -- Healing Potion
+        {"ALT-F7",GeRODPS.Condition_Use_HealingPotion},
+        {"renewal",function() --108238
+            local incombat = GeRODPS.incombat
+            local known = Hekili.State:IsKnown(108238)
+            local use = GeRODPS.Options.Def and GeRODPS.Options.druid.use_renewal
+            local HP = GeRODPS.health_abs <= GeRODPS.Options.druid.renewal_treshold
+            local CD = GetSpellCooldown(108238)==0
+            return incombat and known and use and HP and CD and GeRODPS.InGCDnoCast()
+        end},
     },
     ["DEMONHUNTER"] =
     {
         {"ALT-F8",GeRODPS.Condition_Use_HealthStone},
-        {"ALT-F7",GeRODPS.Condition_Use_HealingPotion}, -- Healing Potion
+        {"ALT-F7",GeRODPS.Condition_Use_HealingPotion},
     },
     ["EVOKER"] =
     {
         {"ALT-F8",GeRODPS.Condition_Use_HealthStone},
-        {"ALT-F7",GeRODPS.Condition_Use_HealingPotion}, -- Healing Potion
+        {"ALT-F7",GeRODPS.Condition_Use_HealingPotion},
     },
     ["NONE"] =
     {
         {"ALT-F8",GeRODPS.Condition_Use_HealthStone},
-        {"ALT-F7",GeRODPS.Condition_Use_HealingPotion}, -- Healing Potion
+        {"ALT-F7",GeRODPS.Condition_Use_HealingPotion},
     },
 }
 function GeRODPS.SSmorethan(n)
@@ -318,18 +397,20 @@ function GeRODPS.SpecialTreatment(skillName) -- skillName= hekiliaction , return
         end
     elseif GeRODPS.specID==103 then -- druid Feral
         if skillName=="tigers_fury" then
-            if IsSpellInRange("rake","target")~=1 then
+            if not IsSpellInRange("rake","target") then
                 return "wait"
             end
         elseif skillName=="berserk" then
-            if IsSpellInRange("rake","target")~=1 then
+            if not IsSpellInRange("rake","target") then
                 return "wait"
             end
         elseif skillName=="incarnation_avatar_of_ashamane" then
-            if IsSpellInRange("rake","target")~=1 then
+            if not IsSpellInRange("rake","target") then
                 return "wait"
             end
         end
+    elseif skillName=="manic_grieftorch" then -- all other
+        if GeRODPS.Options.manic_grieftorch_GCD_0 and WeakAuras.gcdDuration()>0 then return "wait" end
     end
     return skillName
 end
@@ -343,6 +424,9 @@ GeRODPS.KeyBind.Key={
     ["ALT-F11"]={"/run print('ALT-F11')","ff022b02"},
     ["ALT-F12"]={"/run print('ALT-F12')","ff022c02"},
 }
+if select(2,UnitClass("player"))=="HUNTER" then
+    GeRODPS.KeyBind.Key["ALT-F9"]={"/cast revive pet","ff022902"}
+end
 if not GeRODPS.KeyBind.Button then
     GeRODPS.KeyBind.Button={}
     for k,v in pairs(GeRODPS.KeyBind.Key) do
@@ -447,6 +531,13 @@ for k,v in pairs(region.subRegions) do
         v:ChangeText(modeText)
         break
     end
+end
+
+region=WeakAuras.GetRegion("GeRODPS Dispel/Soothe")
+if GeRODPS.Options.UseDispel_Soothe then
+    region:Color(0.1,0.8,0.1)
+else
+    region:Color(0.5,0.5,0.5)
 end
 
 -- Set Console Button End
@@ -589,6 +680,57 @@ function GeRODPS.ClickCDMode(mode)
             Hekili:FireToggle("cooldowns")
         end
         GeRODPS.Options.CDmode=2
+    end
+end
+
+--BigWigs_timer_init
+local owner = {}
+if not GeRODPS.BigWigs_GetTimeRemaining then
+    if not BigWigsLoader then
+        print("BigWigsLoader wasn't loaded when BigWigs timer conditions tried to initialize.")
+        function GeRODPS.BigWigs_GetTimeRemaining()
+            return 0, 0
+        end
+    else
+        local Timers = {}
+        local function stop(module, text)
+            for k = #Timers, 1, -1 do
+                local t = Timers[k]
+                if t.module == module and (not text or t.text == text) then
+                    tremove(Timers, k)
+                elseif t.start + t.duration < GeRODPS.time then
+                    tremove(Timers, k)
+                end
+            end
+        end
+        BigWigsLoader.RegisterMessage(owner, "BigWigs_StartBar", function(_, module, key, text, time)
+                stop(module, text)
+                tinsert(Timers, {module = module, key = key, text = text:lower(), start = GeRODPS.time, duration = time})
+        end)
+        BigWigsLoader.RegisterMessage(owner, "BigWigs_StopBar", function(_, module, text)
+                stop(module, text)
+        end)
+        BigWigsLoader.RegisterMessage(owner, "BigWigs_StopBars", function(_, module)
+                stop(module)
+        end)
+        BigWigsLoader.RegisterMessage(owner, "BigWigs_OnBossDisable", function(_, module)
+                stop(module)
+        end)
+        BigWigsLoader.RegisterMessage(owner, "BigWigs_OnPluginDisable", function(_, module)
+                stop(module)
+        end)
+        function GeRODPS.BigWigs_GetTimeRemaining(text)
+            for k = 1, #Timers do
+                local t = Timers[k]
+                if t.text:match(text) then
+                    local expirationTime = t.start + t.duration
+                    local remaining = (expirationTime) - GeRODPS.time
+                    if remaining < 0 then remaining = 0 end
+                    return remaining, expirationTime
+                end
+            end
+            return 0, 0
+        end
     end
 end
 

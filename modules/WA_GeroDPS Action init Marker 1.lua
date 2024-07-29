@@ -1,7 +1,7 @@
 --Init
 
---function GeRODPS.CastSkill(skill,delay,icon) -- skill = Hekili Skill , delay = dealy or 0 , icon = icon or 1
-
+--function GeRODPS.CastSkill(skill,delay,icon,condition,timeout) -- skill = Hekili Skill , delay = dealy or 0 , icon = icon or 1
+--function GeRODPS.PauseDPS(dealy) -- sec
 if not _G.GeRODPS then
     setglobal("GeRODPS",{1,2,3})
 end
@@ -255,7 +255,43 @@ GeRODPS.interruptsList = {
     {
     },
 }
+GeRODPS.DispleList = {
+    [278326] = "consume_magic", -- Consume Magic
+    [19801] = "tranquilizing_shot", -- Tranquilizing Shot
+    [30449] = "spellsteal", -- Spellsteal
+    [528] = "dispel_magic", -- Dispel Magic
+    [32375] = "mass_dispel", -- Mass Dispel
+    [370] = "purge", -- Purge
+    [378773] = "greater_purge", -- Greater Purge
+}
+GeRODPS.sootheList ={
+    [2908] = true, -- Soothe
+    [374346] = true, -- Overawe
+    [19801] = true, -- Tranquilizing Shot
+    [5938] = true, -- Shiv
+}
 
+function GeRODPS.MyPurgeSpell()
+    for spellID,SpellHekiliName in pairs(GeRODPS.DispleList) do
+        if IsSpellKnown(spellID) or IsSpellKnown(spellID, true) then
+            local SpellName = GetSpellInfo(spellID)
+            return spellID,SpellHekiliName,SpellName
+        end
+    end
+    return nil
+end
+GeRODPS.purgeSpellID,GeRODPS.purgeSpellHekiliName,GeRODPS.purgeSpellName=GeRODPS.MyPurgeSpell()
+function GeRODPS.IsMyPurgeSpellReady()
+    if not GeRODPS.purgeSpellID then return false end
+    if IsUsableSpell(GeRODPS.purgeSpellID) then
+        local _,cd = GetSpellCooldown(GeRODPS.purgeSpellID)
+        if cd==0 or cd==WeakAuras.gcdDuration() then
+            return true
+        end
+    end
+    return false
+end
+GeRODPS.purgeSpellReady=GeRODPS.IsMyPurgeSpellReady()
 GeRODPS.CheckInterruptSpell = function()
     for spell,hekiliName in pairs(GeRODPS.interruptsList[GeRODPS.class]) do
         if IsSpellKnown(spell) or IsSpellKnown(spell, true) then
@@ -267,7 +303,6 @@ GeRODPS.CheckInterruptSpell = function()
     return nil
 end
 GeRODPS.interruptSpell,GeRODPS.interruptSpellHekiliName,GeRODPS.interruptSpellName=GeRODPS.CheckInterruptSpell()
-
 GeRODPS.IsMyInterruptSpellReady = function()
     if not GeRODPS.interruptSpell then return false end
     if IsUsableSpell(GeRODPS.interruptSpell) then
@@ -278,14 +313,15 @@ GeRODPS.IsMyInterruptSpellReady = function()
     end
     return false
 end
-
 if not GeRODPS.CheckInterruptSpellH then
     GeRODPS.CheckInterruptSpellH=C_Timer.NewTicker(2,function()
         GeRODPS.interruptSpell,GeRODPS.interruptSpellHekiliName,GeRODPS.interruptSpellName=GeRODPS.CheckInterruptSpell()
+        GeRODPS.purgeSpellID,GeRODPS.purgeSpellHekiliName,GeRODPS.purgeSpellName=GeRODPS.MyPurgeSpell()
     end)
     GeRODPS.IsMyInterruptSpellReadyH=C_Timer.NewTicker(0.3,
     function()
         GeRODPS.interruptSpellReady=GeRODPS.IsMyInterruptSpellReady()
+        GeRODPS.purgeSpellReady=GeRODPS.IsMyPurgeSpellReady()
     end)
 end
 
@@ -299,6 +335,8 @@ GeRODPS.NPA.validSpellTypes= {
     ["damage"] = true,
     ["avoid"] = true,
     ["alert"] = true,
+    ["dispel"] = true, -- added by me
+    ["enrage"] = true, -- added by me
 }
 GeRODPS.NPA.SpellID={}
 for k,_ in pairs(GeRODPS.NPA.validSpellTypes) do
@@ -323,7 +361,7 @@ function GeRODPS.NPA.IsTargetCasting(percenCastCheck) -- percenCast start = 0 , 
     local casted=GeRODPS.time-startTimeMS
     local percenCast=(casted/castTime)*100
     if percenCast>percenCastCheck then
-        return spellId
+        return spellId,notInterruptible
     else
         return false
     end
@@ -358,7 +396,7 @@ function GeRODPS.TargetEnemy.RegisterTargetting(unitGUID,priority,DoneThisFunc,n
     table.insert(GeRODPS.TargetEnemy.Queue,
         {
             ["TargetGUID"]=unitGUID,
-            ["priority"]=priority,
+            ["priority"]=priority, -- lower number first
             ["DoneThis"]=DoneThisFunc,
             ["Name"]=name or "noname",
             ["ExpTime"]=GeRODPS.time + (ExpTime or 3.4),
@@ -466,6 +504,19 @@ function GeRODPS.TargetEnemy.IsUnitCasting(tGUID,tUnitToken) -- Check Target tok
         n=UnitChannelInfo(tUnitToken)
     end
     if n then return true else return false end
+end
+
+function GeRODPS.TargetEnemy.IsUnitMustPurge(tGUID,tUnitToken)
+    if UnitGUID(tUnitToken)~=tGUID then
+        tUnitToken=Hekili.npUnits[tGUID]
+        if not tUnitToken then return end
+    end
+    local dispelType,spellId
+    for i=1,40 do
+        _, _, _, dispelType, _, _, _, _, _,spellId = UnitBuff(tUnitToken,i)
+        if not spellId then return false end
+        if GeRODPS.NPA.SpellID["dispel"][spellId] and dispelType=="Magic" then return true end
+    end
 end
 
 GeRODPS.incombat = UnitAffectingCombat("player")
@@ -621,11 +672,21 @@ function GeRODPS.IsSkillCycle(n) -- return true / false
     local Recommended=Hekili.DisplayPool.Primary.Recommendations[n]
     return Recommended and Recommended.indicator == "cycle"
 end
+local SkillGCD=false
+local SkillOffGCD=true
+
+--override
+local GCDSkillStatus ={ -- false = GCD , true = offGCD , nil = not known
+    ["manic_grieftorch"]=SkillGCD,
+}
 
 function GeRODPS.IsSkillOffGCD(n)
     n=n or 1
     local Recommended=Hekili.DisplayPool.Primary.Recommendations[n]
     local actionName=Recommended.actionName
+    if GCDSkillStatus[actionName]~=nil then
+        return GCDSkillStatus[actionName]
+    end
     if Hekili.State.trinket[1].__ability==actionName then
         --trinket1
         if WeakAuras.gcdDuration()>0 and select(2,GetItemCooldown(Hekili.State.trinket[1].__id))==0 then
@@ -693,11 +754,12 @@ end
 function GeRODPS.GetKickColorIfNeeded() -- return Kick Color when Kick needed
     local KickColor=nil
     if not GeRODPS.Options.kick or GeRODPS.skillDelay[GeRODPS.interruptSpellHekiliName] then return false end
-    local TargetCastSpellID=GeRODPS.NPA.IsTargetCasting(GeRODPS.Options.kickthreshold)
+    local TargetCastSpellID,notInterruptible=GeRODPS.NPA.IsTargetCasting(GeRODPS.Options.kickthreshold)
     if TargetCastSpellID and
         GeRODPS.NPA.SpellID["kick"][TargetCastSpellID] and
         GeRODPS.interruptSpell and
-        GeRODPS.interruptSpellReady
+        GeRODPS.interruptSpellReady and
+        not notInterruptible
     then
         KickColor=GeRODPS.KeyToColor[GeRODPS.GetKey(GeRODPS.interruptSpellHekiliName)]
     end
@@ -981,3 +1043,13 @@ end
 GeRODPS.SpellCanReflect={}
 GeRODPS.LoadingStatus="GeRODPS Loading Complete"
 GeRODPS.LoadingComplete=true
+
+GeRODPS.PauseTime={0,0,0}
+function GeRODPS.PauseDPS(dealy,icon_sender) -- dealy(s) , icon = 1,2,3
+    local t=GeRODPS.time+dealy
+    if not icon_sender then
+        GeRODPS.PauseTime={t,t,t}
+    else
+        GeRODPS.PauseTime[icon_sender]=t
+    end
+end

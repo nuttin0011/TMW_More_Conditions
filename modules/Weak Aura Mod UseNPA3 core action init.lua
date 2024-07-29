@@ -934,33 +934,33 @@ end
 -----------------------------------------------------
 ------------------ GeRODPS MOD ----------------------
 -----------------------------------------------------
-
+local IsSpellInRange=C_Spell.IsSpellInRange
 local function PredictTimeDmgCome(unitToken) -- return start time , end time
-    local notInterruptible,spellId,startTimeMS, endTimeMS , channel
-    channel=true
-    _,_,_,startTimeMS, endTimeMS,_,_,notInterruptible,spellId=UnitCastingInfo(unitToken)
-    if not spellId then
-        channel=false
-        _,_,_,startTimeMS, endTimeMS,_,notInterruptible,spellId=UnitChannelInfo(unitToken)
+    local spellId, endTimeMS
+    _,_,_,_, endTimeMS,_,_,_,spellId=UnitCastingInfo(unitToken)
+    if spellId then
+        endTimeMS=endTimeMS/1000
+        return endTimeMS-0.1,endTimeMS+10
     end
-    if not spellId then return GeRODPS.time,GeRODPS.time+1 end
-    endTimeMS=endTimeMS/1000
-    if channel then
-        return GeRODPS.time,endTimeMS
+    _,_,_,_, endTimeMS,_,_,spellId=UnitChannelInfo(unitToken)
+    if spellId then
+        endTimeMS=endTimeMS/1000
+        return GeRODPS.time-0.1,endTimeMS+10
     end
-    return endTimeMS-1,endTimeMS
+    return GeRODPS.time-0.1,GeRODPS.time+5
 end
 
 local GeroPlaySound = aura_env.PlaySound
+local predictDmgEndHandle = C_Timer.NewTimer(0.1,function() end)
 aura_env.PlaySound = function(npa)
-    
+
     local GeRODPS=GeRODPS
     if not GeRODPS then GeroPlaySound(npa) end
     GeRODPS.npa=npa
     GeRODPS.NPA.SpellID[npa.spellType or "damage"][npa.spellID or 0]=true
-    
+
     if npa.enableSound and npa.spellType=="kick" and GeRODPS.Options.cycle and GeRODPS.Options.kick and
-    GeRODPS.interruptSpellName and IsSpellInRange(GeRODPS.interruptSpellName,npa.unitToken)==1
+    GeRODPS.interruptSpellName and IsSpellInRange(GeRODPS.interruptSpellName,npa.unitToken)
     then do
             local tGUID,tToken=npa.guid,npa.unitToken
             if tGUID then
@@ -971,17 +971,38 @@ aura_env.PlaySound = function(npa)
                 end)
         end end
     end
-    
     if npa.enableSound and npa.spellType=="damage" then
         GeRODPS.NPA.damageStart,GeRODPS.NPA.damageEnd=PredictTimeDmgCome(npa.unitToken)
         GeRODPS.NPA.damage= npa.ttsInput=="defensive" and 20 or 10 -- 0 none , 10 medium , 20 heavy
         GeRODPS.NPA.damageUnit=npa.unitToken
         GeRODPS.NPA.damageUnitGUID=npa.guid
         GeRODPS.NPA.damageSpellID=npa.spellID
+        GeRODPS.NPA.damageSpellName=C_Spell.GetSpellInfo(npa.spellID).name
+        predictDmgEndHandle:Cancel()
+        predictDmgEndHandle=C_Timer.NewTicker(0.3,function()
+            local name=UnitCastingInfo(GeRODPS.NPA.damageUnit)
+            if not name then name = UnitChannelInfo(GeRODPS.NPA.damageUnit) end
+            if name ~= GeRODPS.NPA.damageSpellName then
+                GeRODPS.NPA.damageEnd=GeRODPS.time+0.2
+                predictDmgEndHandle:Cancel()
+            end
+        end)
     end
-    
+    if npa.enableSound and npa.spellType=="alert" and string.find(npa.ttsInput,"dispel") then
+        GeRODPS.NPA.SpellID["dispel"][npa.spellID or 0]=true
+        do
+            local tGUID,tToken=npa.guid,npa.unitToken
+            if GeRODPS.Options.UseDispel_Soothe and tGUID and GeRODPS.purgeSpellReady and
+            IsSpellInRange(GeRODPS.purgeSpellName,npa.unitToken) then
+                if UnitIsUnit("target",tToken) then print("Queue DISPEL : TARGETED!!")
+                else print("Queue DISPEL : not target") end
+                C_Timer.After(0.2,function() -- must delay for Aura Up after Mob Cast Spell
+                    GeRODPS.TargetEnemy.RegisterTargetting(tGUID,5,function()
+                        return not GeRODPS.purgeSpellReady or not GeRODPS.TargetEnemy.IsUnitMustPurge(tGUID,tToken)
+                    end)
+                end)
+            end
+        end
+    end
     GeroPlaySound(npa)
 end
-
-
-

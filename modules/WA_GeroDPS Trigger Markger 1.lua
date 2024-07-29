@@ -112,7 +112,9 @@ function()
     else
         icon1Swipe=GeRODPS.GetHekiliSwipeStatus(1)
     end
-    local color1 = (not icon1Swipe and GeRODPS.GetColorFromCastSequence(1)) or
+    local color1 = (GeRODPS.time<GeRODPS.PauseTime[1] and "ff000000") or
+    (not icon1Swipe and GeRODPS.GetColorFromCastSequence(1)) or
+    (not icon1Swipe and GeRODPS.Options.UseDispel_Soothe and GeRODPS.purgeSpellReady and GeRODPS.TargetEnemy.IsUnitMustPurge(UnitGUID("target"),"target") and GeRODPS.HekiliActionToColor(GeRODPS.purgeSpellHekiliName)) or
     (not icon1Swipe and GeRODPS.GetSpecialSkillColor(GeRODPS.SpecialSkillIcon1)) or
     (not icon1Swipe and GeRODPS._ShouldUseOldKey and GeRODPS.KeyToColor[GeRODPS._OldKey]) or
     (GeRODPS.KeyToColor[useCycle and (GeRODPS.IsSkillCycle(1) or GeRODPS.Options.cycle_enemy_icon2 and Recommendations[1].actionName~=Recommendations[2].actionName and GeRODPS.IsSkillCycle(2) and icon1Swipe) and "cycle" or "none"]) or
@@ -123,7 +125,8 @@ function()
     "ff000000"
 
     
-    local color2 =  GeRODPS.GetColorFromCastSequence(2) or
+    local color2 = (GeRODPS.time<GeRODPS.PauseTime[2] and "ff000000") or
+    GeRODPS.GetColorFromCastSequence(2) or
     GeRODPS.GetSpecialSkillColor(GeRODPS.SpecialSkillIcon2) or
     (icon1OffGlobal and GeRODPS.GetColorFromRecommended(1)) or
     "ff000000"
@@ -135,7 +138,8 @@ function()
         skill2IsInterrupt=Recommendations[2] and Hekili.State.action[Recommendations[2].actionName] and Hekili.State.action[Recommendations[2].actionName].toggle=="interrupts"
     end
 
-    local color3 =  GeRODPS.GetColorFromCastSequence(3) or
+    local color3 = (GeRODPS.time<GeRODPS.PauseTime[3] and "ff000000") or
+    GeRODPS.GetColorFromCastSequence(3) or
     GeRODPS.GetKickColorIfNeeded() or
     (GeRODPS.TargetEnemy.Cycle and GeRODPS.KeyToColor["cycle"]) or
     (skill1IsInterrupt and GeRODPS.GetColorFromRecommended(1)) or --Hekili Interrupt
